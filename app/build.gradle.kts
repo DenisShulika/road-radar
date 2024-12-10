@@ -6,12 +6,12 @@ plugins {
 
 android {
     namespace = "com.denisshulika.road_radar"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.denisshulika.road_radar"
         minSdk = 29
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
