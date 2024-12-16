@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.Roadradar" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.Roadradar" parent="android:Theme.Material.Light.NoActionBar">
+        <!-- Прозорий статус-бар -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <!-- Прозора навігаційна панель -->
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <!-- Якщо потрібен світлий статус-бар -->
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
 </resources>
