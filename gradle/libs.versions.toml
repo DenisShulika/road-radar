@@ -18,11 +18,14 @@ lifecycleLivedataKtx = "2.7.1"
 lifecycleRuntimeKtx = "2.8.7"
 activityCompose = "1.9.3"
 composeBom = "2024.04.01"
+material3 = "1.1.0"
 mockitoCore = "4.8.0"
 navigationCompose = "2.5.3"
 retrofit = "2.9.0"
 roomRuntime = "2.5.0"
 timber = "5.0.1"
+ui = "1.4.0"
+uiToolingPreview = "1.4.0"
 workRuntimeKtx = "2.10.0"
 
 [libraries]
@@ -56,9 +59,12 @@ androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-man
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
 leakcanary-android = { module = "com.squareup.leakcanary:leakcanary-android", version.ref = "leakcanaryAndroid" }
+material3 = { module = "androidx.compose.material3:material3", version.ref = "material3" }
 mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockitoCore" }
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
+ui = { module = "androidx.compose.ui:ui", version.ref = "ui" }
+ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview", version.ref = "uiToolingPreview" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
