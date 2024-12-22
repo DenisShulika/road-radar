@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId = "com.denisshulika.road_radar"
-        minSdk = 29
+        minSdk = 24
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
