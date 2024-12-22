@@ -28,6 +28,8 @@ timber = "5.0.1"
 ui = "1.4.0"
 uiToolingPreview = "1.4.0"
 workRuntimeKtx = "2.10.0"
+firebaseAuthKtx = "23.1.0"
+firebaseDatabaseKtx = "21.0.0"
 
 [libraries]
 accompanist-navigation-material = { module = "com.google.accompanist:accompanist-navigation-material", version.ref = "accompanistSystemuicontroller" }
@@ -68,6 +70,8 @@ retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 ui = { module = "androidx.compose.ui:ui", version.ref = "ui" }
 ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview", version.ref = "uiToolingPreview" }
+firebase-auth-ktx = { group = "com.google.firebase", name = "firebase-auth-ktx", version.ref = "firebaseAuthKtx" }
+firebase-database-ktx = { group = "com.google.firebase", name = "firebase-database-ktx", version.ref = "firebaseDatabaseKtx" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
