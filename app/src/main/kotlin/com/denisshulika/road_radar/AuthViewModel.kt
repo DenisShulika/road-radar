@@ -84,7 +84,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             .addCredentialOption(googleIdOption)
             .build()
 
-        coroutineScope.launch (Dispatchers.IO) {
+        coroutineScope.launch(Dispatchers.IO) {
             try {
                 val result = credentialManager.getCredential(
                     request = request,
@@ -103,20 +103,26 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
                 auth.signInWithCredential(authCredential)
                     .addOnCompleteListener { task ->
-                        if (task.isSuccessful) {
-                            _authState.value = AuthState.Authenticated
-                        } else {
-                            _authState.value = AuthState.Error(
-                                task.exception?.message ?: "Something went wrong"
-                            )
+                        coroutineScope.launch(Dispatchers.Main) {
+                            if (task.isSuccessful) {
+                                _authState.value = AuthState.Authenticated
+                            } else {
+                                _authState.value = AuthState.Error(task.exception?.message ?: "Something went wrong")
+                            }
                         }
                     }
             } catch (e: GetCredentialException) {
-                _authState.value = AuthState.Error(e.message ?: "Something went wrong")
+                coroutineScope.launch(Dispatchers.Main) {
+                    _authState.value = AuthState.Error(e.message ?: "Something went wrong")
+                }
             } catch (e: GoogleIdTokenParsingException) {
-                _authState.value = AuthState.Error(e.message ?: "Something went wrong")
+                coroutineScope.launch(Dispatchers.Main) {
+                    _authState.value = AuthState.Error(e.message ?: "Something went wrong")
+                }
             } catch (e: Exception) {
-                _authState.value = AuthState.Error(e.message ?: "Unknown error occurred")
+                coroutineScope.launch(Dispatchers.Main) {
+                    _authState.value = AuthState.Error(e.message ?: "Unknown error occurred")
+                }
             }
         }
     }
