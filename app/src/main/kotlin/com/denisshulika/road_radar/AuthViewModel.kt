@@ -13,6 +13,7 @@ import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -22,7 +23,6 @@ import java.util.UUID
 
 class AuthViewModel(application: Application) : AndroidViewModel(application) {
     private val auth : FirebaseAuth = FirebaseAuth.getInstance()
-    private val user = auth.currentUser
 
     private val _authState = MutableLiveData<AuthState>()
     val authState : LiveData<AuthState> = _authState
@@ -149,21 +149,21 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         _authState.value = AuthState.Unauthenticated
     }
 
-    fun deleteAccount() {
-        user?.let {
-            it.delete()
-                .addOnCompleteListener { task ->
-                    if (task.isSuccessful) {
-                        signout()
-                    } else {
-                        _authState.value = AuthState.Error(
-                            task.exception?.message ?: "Something went wrong"
-                        )
-                    }
+    fun deleteAccount(
+        context: Context,
+        user: FirebaseUser
+    ) {
+        user.delete()
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    signout()
+                } else {
+                    Toast.makeText(context,
+                        task.exception?.message ?: "Unknown error",
+                        Toast.LENGTH_LONG)
+                        .show()
                 }
-        } ?: run {
-            _authState.value = AuthState.Error("No user logged in")
-        }
+            }
     }
 
     fun resetPassword(

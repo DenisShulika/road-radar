@@ -54,9 +54,13 @@ fun NewsPage(
         Button(
             onClick = {
                 if (auth.currentUser != null) {
-                    authViewModel.deleteAccount()
+                    authViewModel.deleteAccount(context = context, auth.currentUser!!)
                 } else {
-                    Toast.makeText(context, "No account logged in", Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        context,
+                        "No account logged in",
+                        Toast.LENGTH_LONG)
+                        .show()
                 }
             }
         ) {
