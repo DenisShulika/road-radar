@@ -1,8 +1,9 @@
 plugins {
+    id("com.google.gms.google-services")
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    id("com.google.gms.google-services") version "4.4.2" apply false
+    kotlin("plugin.serialization") version "2.1.0"
 }
 
 android {
@@ -57,6 +58,10 @@ dependencies {
     implementation(libs.firebase.auth.ktx)
     implementation(libs.firebase.database.ktx)
     implementation(libs.play.services.auth)
+    implementation(libs.firebase.crashlytics.buildtools)
+    implementation(libs.androidx.runtime.livedata)
+    implementation(libs.googleid)
+    implementation(libs.androidx.espresso.core)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -75,11 +80,14 @@ dependencies {
     implementation(libs.androidx.lifecycle.livedata.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.work.runtime.ktx)
-    debugImplementation(libs.leakcanary.android)
     testImplementation(libs.mockito.core)
     implementation(libs.accompanist.navigation.material)
     implementation(libs.accompanist.systemuicontroller)
     implementation(libs.timber)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
+    implementation(libs.firebase.auth.ktx)
+    implementation(libs.play.services.auth)
+    implementation(libs.androidx.credentials)
+    implementation (libs.androidx.material.icons.extended)
 }
