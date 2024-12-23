@@ -27,8 +27,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     private val _authState = MutableLiveData<AuthState>()
     val authState : LiveData<AuthState> = _authState
 
-    private val _resetPasswordState = MutableLiveData<ResetPasswordState>()
-    val resetPasswordState: LiveData<ResetPasswordState> = _resetPasswordState
+    private val _resetPasswordState = MutableLiveData<ResetPasswordState?>()
+    val resetPasswordState: MutableLiveData<ResetPasswordState?> = _resetPasswordState
 
     private val webClientID =
         "634464591851-se26913skmd19o6li8ul9jcie2dt4lkc.apps.googleusercontent.com"
@@ -198,6 +198,7 @@ sealed class AuthState {
 sealed class ResetPasswordState {
     data object Success : ResetPasswordState()
     data object Loading : ResetPasswordState()
+    data object Null : ResetPasswordState()
     data class Error(val message: String) : ResetPasswordState()
 }
 

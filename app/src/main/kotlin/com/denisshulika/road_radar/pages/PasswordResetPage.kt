@@ -44,6 +44,7 @@ fun PasswordResetPage(
         when (resetPasswordState.value) {
             is ResetPasswordState.Success -> {
                 navController.navigate(Routes.LOGIN)
+                authViewModel.resetPasswordState.value = ResetPasswordState.Null
             }
             is ResetPasswordState.Error -> {
                 Toast.makeText(
@@ -105,6 +106,10 @@ fun PasswordResetPage(
 
         Button(
             onClick = {
+                isEmailEmpty = email.isEmpty()
+                if(isEmailEmpty) {
+                    return@Button
+                }
                 authViewModel.resetPassword(
                     emailAddress = email,
                     context = context
