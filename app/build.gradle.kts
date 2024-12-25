@@ -89,7 +89,9 @@ dependencies {
     implementation(libs.firebase.auth.ktx)
     implementation(libs.play.services.auth)
     implementation(libs.androidx.credentials)
-    implementation (libs.androidx.material.icons.extended)
-    implementation (libs.androidx.runtime)
+    implementation(libs.androidx.material.icons.extended)
+    implementation(libs.androidx.runtime)
     implementation(libs.androidx.ui.text)
+    implementation(libs.libphonenumber)
+    implementation (libs.coil.compose)
 }
