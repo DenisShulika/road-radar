@@ -1,16 +1,28 @@
 package com.denisshulika.road_radar.pages
 
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -18,22 +30,27 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.paint
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.denisshulika.road_radar.AuthViewModel
+import com.denisshulika.road_radar.R
 import com.denisshulika.road_radar.ResetPasswordState
 import com.denisshulika.road_radar.Routes
+import com.denisshulika.road_radar.ui.components.StyledBasicTextField
 
 @Composable
 fun PasswordResetPage(
-    modifier: Modifier = Modifier,
+    @Suppress("UNUSED_PARAMETER") modifier: Modifier = Modifier,
     navController: NavController,
     authViewModel: AuthViewModel
 ) {
@@ -50,8 +67,9 @@ fun PasswordResetPage(
             is ResetPasswordState.Error -> {
                 Toast.makeText(
                     context,
-                    (resetPasswordState as ResetPasswordState.Error).message,
+                    (resetPasswordState.value as ResetPasswordState.Error).message,
                     Toast.LENGTH_LONG).show()
+                authViewModel.setResetPasswordState(ResetPasswordState.Null)
             }
             else -> Unit
         }
@@ -61,75 +79,138 @@ fun PasswordResetPage(
     var emailError by remember { mutableStateOf(false) }
     var isEmailEmpty by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .paint(painterResource(R.drawable.auth_background), contentScale = ContentScale.Crop)
     ) {
-        Text(text = "Password Rest Page", fontSize = 32.sp)
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        OutlinedTextField(
-            value = email,
-            onValueChange = {
-                email = it
-                emailError = !isValidEmail(it)
-                isEmailEmpty = email.isEmpty()
-            },
-            label = {
-                Text(text = "Email")
-            },
-            isError = emailError,
-            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Email)
-        )
-
-        if (emailError) {
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                "Invalid email address",
-                color = Color.Red,
-                style = MaterialTheme.typography.bodySmall
-            )
-        }
-
-        if (isEmailEmpty) {
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                "Email cant be empty",
-                color = Color.Red,
-                style = MaterialTheme.typography.bodySmall
-            )
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Button(
-            onClick = {
-                isEmailEmpty = email.isEmpty()
-                if(isEmailEmpty) {
-                    return@Button
-                }
-                authViewModel.resetPassword(
-                    emailAddress = email,
-                    context = context
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(
+                    top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding(),
+                    bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
                 )
-            },
-            enabled = resetPasswordState.value != ResetPasswordState.Loading
         ) {
-            Text(text = "RESET IT")
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Button(
-            onClick = {
-                navController.navigate(Routes.LOGIN)
-            },
-            enabled = resetPasswordState.value != ResetPasswordState.Loading
-        ) {
-            Text(text = "GO BACK")
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxSize()
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = "Reset",
+                    fontSize = 64.sp,
+                    color = Color.White,
+                    fontFamily = RubikFont,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = "Password",
+                    fontSize = 64.sp,
+                    color = Color.White,
+                    fontFamily = RubikFont,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(topStart = 25.dp, topEnd = 25.dp))
+                    .background(Color.White),
+                verticalArrangement = Arrangement.Top
+            ) {
+                Column(
+                    modifier = Modifier
+                        .padding(20.dp)
+                        .fillMaxSize()
+                ) {
+                    Spacer(modifier = Modifier.size(20.dp))
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(20.dp)
+                    ) {
+                        Text(
+                            text = "Email",
+                            fontSize = 24.sp,
+                            fontFamily = RubikFont,
+                            fontWeight = FontWeight.Normal
+                        )
+                        StyledBasicTextField(
+                            value = email,
+                            onValueChange = {
+                                email = it
+                                emailError = !isValidEmail(it)
+                                isEmailEmpty = email.isEmpty()
+                            },
+                            placeholder = "Enter your email",
+                            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Email)
+                        )
+                    }
+                    if (isEmailEmpty) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            "Email cant be empty",
+                            color = Color(0xFFB71C1C),
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    } else if (emailError) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            "Invalid email address",
+                            color = Color(0xFFB71C1C),
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                    Spacer(modifier = Modifier.size(32.dp))
+                    Button(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                        onClick = {
+                            isEmailEmpty = email.isEmpty()
+                            if(isEmailEmpty) {
+                                return@Button
+                            }
+                            authViewModel.resetPassword(
+                                emailAddress = email,
+                                context = context
+                            )
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF474EFF)),
+                        enabled = resetPasswordState.value != ResetPasswordState.Loading
+                    ) {
+                        Text(
+                            text = "Reset Password",
+                            fontSize = 24.sp,
+                            fontFamily = RubikFont,
+                            fontWeight = FontWeight.Normal
+                        )
+                    }
+                    Spacer(modifier = Modifier.size(12.dp))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        TextButton(
+                            onClick = {
+                                navController.navigate(Routes.LOGIN)
+                            },
+                            enabled = resetPasswordState.value != ResetPasswordState.Loading
+                        ) {
+                            Text(
+                                text = "Go back",
+                                fontSize = 16.sp,
+                                color = Color(0xFF6369FF),
+                                fontFamily = RubikFont,
+                                fontWeight = FontWeight.Normal
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.size(16.dp))
+                }
+            }
         }
     }
 }

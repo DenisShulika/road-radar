@@ -47,6 +47,10 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         _authState.value = state
     }
 
+    fun setResetPasswordState(state: ResetPasswordState) {
+        _resetPasswordState.value = state
+    }
+
     fun login(
         email : String,
         password : String

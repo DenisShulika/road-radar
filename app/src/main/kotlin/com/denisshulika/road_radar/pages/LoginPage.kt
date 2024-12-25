@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -40,22 +39,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.paint
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -63,6 +57,7 @@ import com.denisshulika.road_radar.AuthState
 import com.denisshulika.road_radar.AuthViewModel
 import com.denisshulika.road_radar.R
 import com.denisshulika.road_radar.Routes
+import com.denisshulika.road_radar.ui.components.StyledBasicTextField
 
 val RubikFont = FontFamily(
     Font(R.font.rubik_medium, FontWeight.Normal),
@@ -71,7 +66,7 @@ val RubikFont = FontFamily(
 
 @Composable
 fun LoginPage(
-    modifier: Modifier = Modifier,
+    @Suppress("UNUSED_PARAMETER") modifier: Modifier = Modifier,
     navController: NavController,
     authViewModel: AuthViewModel
 ) {
@@ -354,59 +349,6 @@ fun LoginPage(
                 }
             }
         }
-    }
-}
-
-@Composable
-fun StyledBasicTextField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    placeholder: String,
-    keyboardOptions : KeyboardOptions = KeyboardOptions.Default,
-    isVisible : Boolean = true
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(36.dp)
-            .drawBehind {
-                val strokeWidth = 1.dp.toPx()
-                val y = size.height - strokeWidth / 2
-                drawLine(
-                    color = Color.LightGray,
-                    start = Offset(0f, 0.75f * y),
-                    end = Offset(size.width, 0.75f * y),
-                    strokeWidth = strokeWidth
-                )
-            }
-    ) {
-        BasicTextField(
-            modifier = Modifier.fillMaxSize(),
-            value = value,
-            onValueChange = onValueChange,
-            textStyle = TextStyle(
-                color = Color.Black,
-                fontSize = 20.sp
-            ),
-            decorationBox = { innerTextField ->
-                if (value.isEmpty()) {
-                    Text(
-                        text = placeholder,
-                        style = TextStyle(
-                            color = Color(0xFFADADAD),
-                            fontSize = 20.sp,
-                            lineHeight = 20.sp
-                        ),
-                        fontFamily = RubikFont,
-                        fontWeight = FontWeight.Normal
-                    )
-                }
-                innerTextField()
-            },
-            singleLine = true,
-            keyboardOptions = keyboardOptions,
-            visualTransformation = if (isVisible) VisualTransformation.None else PasswordVisualTransformation()
-        )
     }
 }
 
