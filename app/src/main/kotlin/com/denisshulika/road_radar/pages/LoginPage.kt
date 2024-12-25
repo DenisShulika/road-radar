@@ -1,20 +1,32 @@
 package com.denisshulika.road_radar.pages
 
+import android.util.Patterns
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -27,8 +39,20 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.paint
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -37,7 +61,13 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.denisshulika.road_radar.AuthState
 import com.denisshulika.road_radar.AuthViewModel
+import com.denisshulika.road_radar.R
 import com.denisshulika.road_radar.Routes
+
+val RubikFont = FontFamily(
+    Font(R.font.rubik_medium, FontWeight.Normal),
+    Font(R.font.rubik_semibold, FontWeight.SemiBold)
+)
 
 @Composable
 fun LoginPage(
@@ -51,7 +81,7 @@ fun LoginPage(
 
     var password by remember { mutableStateOf("") }
     var isPasswordEmpty by remember { mutableStateOf(false) }
-    var passwordVisible by remember { mutableStateOf(false) }
+    var isPasswordVisible by remember { mutableStateOf(false) }
 
     val authState = authViewModel.authState.observeAsState()
 
@@ -62,142 +92,327 @@ fun LoginPage(
         when(authState.value) {
             is AuthState.Authenticated ->
                 navController.navigate(Routes.NEWS)
-            is AuthState.Error ->
+            is AuthState.Error -> {
                 Toast.makeText(context, (authState.value as AuthState.Error).message, Toast.LENGTH_LONG).show()
+                authViewModel.setAuthState(AuthState.Null)
+            }
             else -> Unit
         }
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .paint(painterResource(R.drawable.auth_background), contentScale = ContentScale.Crop)
     ) {
-        Text(text = "Login Page", fontSize = 32.sp)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(
+                    top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding(),
+                    bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+                )
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .weight(1f)
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = "Login",
+                    fontSize = 72.sp,
+                    color = Color.White,
+                    fontFamily = RubikFont,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+            Column(
+                modifier = Modifier
+                    .weight(2f)
+                    .clip(RoundedCornerShape(topStart = 25.dp, topEnd = 25.dp))
+                    .background(Color.White),
+                verticalArrangement = Arrangement.Top
+            ) {
+                Column(
+                    modifier = Modifier
+                        .padding(20.dp)
+                ) {
+                    Spacer(modifier = Modifier.size(16.dp))
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(20.dp)
+                    ) {
+                        Text(
+                            text = "Email",
+                            fontSize = 24.sp,
+                            fontFamily = RubikFont,
+                            fontWeight = FontWeight.Normal
+                        )
+                        StyledBasicTextField(
+                            value = email,
+                            onValueChange = {
+                                email = it
+                                emailError = !isValidEmail(it)
+                                isEmailEmpty = email.isEmpty()
+                            },
+                            placeholder = "Enter your email",
+                            KeyboardOptions.Default.copy(keyboardType = KeyboardType.Email)
+                        )
+                    }
+                    if (isEmailEmpty) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            "Email cant be empty",
+                            color = Color(0xFFB71C1C),
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    } else if (emailError) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            "Invalid email address",
+                            color = Color(0xFFB71C1C),
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                    Spacer(modifier = Modifier.size(32.dp))
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(20.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "Password",
+                                fontSize = 24.sp,
+                                fontFamily = RubikFont,
+                                fontWeight = FontWeight.Normal
+                            )
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        OutlinedTextField(
-            value = email,
-            onValueChange = {
-                email = it
-                emailError = !isValidEmail(it)
-                isEmailEmpty = email.isEmpty()
-            },
-            label = {
-                Text(text = "Email")
-            },
-            isError = emailError,
-            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Email)
-        )
-
-        if (emailError) {
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                "Invalid email address",
-                color = Color.Red,
-                style = MaterialTheme.typography.bodySmall
-            )
-        }
-
-        if (isEmailEmpty) {
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                "Email cant be empty",
-                color = Color.Red,
-                style = MaterialTheme.typography.bodySmall
-            )
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        OutlinedTextField(
-            value = password,
-            onValueChange = {
-                password = it
-                isPasswordEmpty = password.isEmpty()
-            },
-            label = {
-                Text(text = "Password")
-            },
-            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-            trailingIcon = {
-                IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                    Icon(imageVector = Icons.Default.Visibility, contentDescription = null)
+                            IconButton(
+                                modifier = Modifier
+                                    .size(24.dp),
+                                onClick = {
+                                    isPasswordVisible = !isPasswordVisible
+                                }
+                            ) {
+                                Icon(
+                                    contentDescription = "",
+                                    imageVector =
+                                    if (isPasswordVisible) {
+                                        ImageVector.vectorResource(R.drawable.visibility)
+                                    } else {
+                                        ImageVector.vectorResource(R.drawable.visibility_off)
+                                    },
+                                    tint = Color(0xFFADADAD)
+                                )
+                            }
+                        }
+                        StyledBasicTextField(
+                            value = password,
+                            onValueChange = {
+                                password = it
+                                isPasswordEmpty = password.isEmpty()
+                            },
+                            placeholder = "Enter your password",
+                            isVisible = isPasswordVisible
+                        )
+                    }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(40.dp),
+                        horizontalArrangement =
+                            if (isPasswordEmpty) {
+                                Arrangement.SpaceBetween
+                            } else {
+                                Arrangement.End
+                            },
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (isPasswordEmpty) {
+                            Text(
+                                "Password cant be empty",
+                                color = Color(0xFFB71C1C),
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                        TextButton(
+                            onClick = {
+                                navController.navigate(Routes.PASSWORD_RESET)
+                            }
+                        ) {
+                            Text(
+                                text = "Forgot password?",
+                                fontSize = 14.sp,
+                                color = Color(0xFF6369FF),
+                                fontFamily = RubikFont,
+                                fontWeight = FontWeight.Normal
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.size(24.dp))
+                    Button(
+                        modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                        onClick = {
+                            if (isEmailEmpty || isPasswordEmpty) {
+                                Toast.makeText(context, "Email or password cannot be empty", Toast.LENGTH_LONG).show()
+                                return@Button
+                            } else if (emailError) {
+                                Toast.makeText(context, "Invalid email address", Toast.LENGTH_LONG).show()
+                                return@Button
+                            }
+                            authViewModel.login(email, password)
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF474EFF)),
+                        enabled = authState.value != AuthState.Loading
+                    ) {
+                        if (authState.value is AuthState.Loading) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier
+                                        .align(Alignment.Center),
+                                    color = Color(0xFF474EFF)
+                                )
+                            }
+                        } else {
+                            Text(
+                                text = "Login",
+                                fontSize = 24.sp,
+                                fontFamily = RubikFont,
+                                fontWeight = FontWeight.Normal
+                            )
+                        }
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        TextButton(
+                            modifier = Modifier
+                                .padding(top = 2.dp, bottom = 2.dp),
+                            onClick = {
+                                navController.navigate(Routes.SIGNUP)
+                            }
+                        ) {
+                            Text(
+                                text = "Don't have an account yet? Register here",
+                                fontSize = 14.sp,
+                                color = Color(0xFF6369FF),
+                                fontFamily = RubikFont,
+                                fontWeight = FontWeight.Normal
+                            )
+                        }
+                    }
+                    Box {
+                        HorizontalDivider(
+                            modifier = Modifier
+                                .padding(top = 8.dp),
+                            thickness = 1.dp,
+                            color = Color(0xFFADADAD)
+                        )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                modifier = Modifier
+                                    .background(Color.White)
+                                    .padding(start = 4.dp, end = 4.dp),
+                                text = "Or login with",
+                                color = Color(0xFF707070),
+                                fontFamily = RubikFont,
+                                fontWeight = FontWeight.Normal
+                            )
+                        }
+                    }
+                    IconButton(
+                        onClick = {
+                            authViewModel.signInWithGoogle(context, coroutineScope)
+                        },
+                        modifier = Modifier
+                            .size(52.dp)
+                            .align(Alignment.CenterHorizontally)
+                    ) {
+                        Icon(
+                            modifier = Modifier
+                                .size(40.dp),
+                            imageVector = ImageVector.vectorResource(R.drawable.google_icon),
+                            contentDescription = "",
+                            tint = Color.Unspecified
+                        )
+                    }
                 }
             }
-        )
-
-        if (isPasswordEmpty) {
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                "Password cant be empty",
-                color = Color.Red,
-                style = MaterialTheme.typography.bodySmall
-            )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(
-            onClick = {
-                if (email.isEmpty() || password.isEmpty()) {
-                    Toast.makeText(context, "Email or password cannot be empty", Toast.LENGTH_SHORT).show()
-                    return@Button
-                }
-                authViewModel.login(email, password)
-            },
-            enabled = authState.value != AuthState.Loading
-        ) {
-            Text(text = "Login")
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        TextButton(
-            onClick = {
-                navController.navigate(Routes.SIGNUP)
-            }
-        ) {
-            Text(text = "Don't have an account? Register here")
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(text = "Or login with")
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Button(
-            onClick = {
-                authViewModel.signInWithGoogle(context, coroutineScope)
-            }
-        ) {
-            Icon(
-                imageVector = Icons.Default.Email,
-                contentDescription = null
-            )
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Button(
-            onClick = {
-                navController.navigate(Routes.PASSWORD_RESET)
-            }
-        ) {
-            Text(text = "PASSWORD RESET")
         }
     }
 }
 
+@Composable
+fun StyledBasicTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    keyboardOptions : KeyboardOptions = KeyboardOptions.Default,
+    isVisible : Boolean = true
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(36.dp)
+            .drawBehind {
+                val strokeWidth = 1.dp.toPx()
+                val y = size.height - strokeWidth / 2
+                drawLine(
+                    color = Color.LightGray,
+                    start = Offset(0f, 0.75f * y),
+                    end = Offset(size.width, 0.75f * y),
+                    strokeWidth = strokeWidth
+                )
+            }
+    ) {
+        BasicTextField(
+            modifier = Modifier.fillMaxSize(),
+            value = value,
+            onValueChange = onValueChange,
+            textStyle = TextStyle(
+                color = Color.Black,
+                fontSize = 20.sp
+            ),
+            decorationBox = { innerTextField ->
+                if (value.isEmpty()) {
+                    Text(
+                        text = placeholder,
+                        style = TextStyle(
+                            color = Color(0xFFADADAD),
+                            fontSize = 20.sp,
+                            lineHeight = 20.sp
+                        ),
+                        fontFamily = RubikFont,
+                        fontWeight = FontWeight.Normal
+                    )
+                }
+                innerTextField()
+            },
+            singleLine = true,
+            keyboardOptions = keyboardOptions,
+            visualTransformation = if (isVisible) VisualTransformation.None else PasswordVisualTransformation()
+        )
+    }
+}
+
 private fun isValidEmail(email: String): Boolean {
-    return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
+    return Patterns.EMAIL_ADDRESS.matcher(email).matches()
 }
 
 //TODO()
 // add a visual loading indicator (eg CircularProgressIndicator)
-
-//TODO()
-// Icon for login through Google

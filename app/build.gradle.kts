@@ -90,4 +90,6 @@ dependencies {
     implementation(libs.play.services.auth)
     implementation(libs.androidx.credentials)
     implementation (libs.androidx.material.icons.extended)
+    implementation (libs.androidx.runtime)
+    implementation(libs.androidx.ui.text)
 }

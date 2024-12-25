@@ -43,6 +43,10 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun setAuthState(state: AuthState) {
+        _authState.value = state
+    }
+
     fun login(
         email : String,
         password : String
@@ -198,6 +202,7 @@ sealed class AuthState {
     data object Authenticated : AuthState()
     data object Unauthenticated : AuthState()
     data object Loading : AuthState()
+    data object Null : AuthState()
     data class Error(val message: String) : AuthState()
 }
 
