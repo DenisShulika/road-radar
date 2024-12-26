@@ -173,6 +173,12 @@ fun PasswordResetPage(
                         onClick = {
                             isEmailEmpty = email.isEmpty()
                             if(isEmailEmpty) {
+                                Toast.makeText(context, "Please, enter your email", Toast.LENGTH_LONG).show()
+                                return@Button
+                            }
+                            emailError = !isValidEmail(email)
+                            if(emailError) {
+                                Toast.makeText(context, "Please, enter correct email address", Toast.LENGTH_LONG).show()
                                 return@Button
                             }
                             authViewModel.resetPassword(

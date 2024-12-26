@@ -31,7 +31,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material3.Button
@@ -197,7 +196,7 @@ fun SignUpPage(
             ) {
                 Text(
                     text = "Sign Up",
-                    fontSize = 56.sp,
+                    fontSize = 64.sp,
                     color = Color.White,
                     fontFamily = RubikFont,
                     fontWeight = FontWeight.SemiBold
@@ -302,7 +301,7 @@ fun SignUpPage(
                                 onValueChange = {
                                     phoneNumber = it
                                     isPhoneNumberEmpty = phoneNumber.isEmpty()
-                                    phoneNumberError = isValidPhoneNumber(phoneNumber)
+                                    phoneNumberError = !isValidPhoneNumber(it)
                                 },
                                 placeholder = "Your phone, e.g: +380 xx xxx xx xx"
                             )
@@ -618,18 +617,66 @@ fun SignUpPage(
                         Spacer(modifier = Modifier.size(24.dp))
                         Button(
                             onClick = {
-                                passwordError = password.length < 6
-                                confirmPasswordError = password != confirmPassword
-                                if (isNameEmpty || emailError || isEmailEmpty || phoneNumberError || isPhoneNumberEmpty || passwordError || isPasswordEmpty || isConfirmPasswordEmpty || confirmPasswordError) {
+                                isNameEmpty = name.isEmpty()
+                                if(isNameEmpty) {
+                                    Toast.makeText(context, "Please, enter your name", Toast.LENGTH_LONG).show()
                                     return@Button
-                                } else if (selectedArea == null) {
+                                }
+                                isEmailEmpty = email.isEmpty()
+                                if(isEmailEmpty) {
+                                    Toast.makeText(context, "Please, enter your email", Toast.LENGTH_LONG).show()
+                                    return@Button
+                                }
+                                emailError = !isValidEmail(email)
+                                if(emailError) {
+                                    Toast.makeText(context, "Please, enter correct email address", Toast.LENGTH_LONG).show()
+                                    return@Button
+                                }
+                                isPhoneNumberEmpty = phoneNumber.isEmpty()
+                                if(isPhoneNumberEmpty) {
+                                    Toast.makeText(context, "Please, enter your phone", Toast.LENGTH_LONG).show()
+                                    return@Button
+                                }
+                                phoneNumberError = !isValidPhoneNumber(phoneNumber)
+                                if(phoneNumberError) {
+                                    Toast.makeText(context, "Please, enter correct phone number", Toast.LENGTH_LONG).show()
+                                    return@Button
+                                }
+                                if(selectedArea == null) {
                                     Toast.makeText(context, "Please, select your area", Toast.LENGTH_LONG).show()
-                                } else if (selectedRegion == null) {
+                                    return@Button
+                                }
+                                if(selectedRegion == null) {
                                     Toast.makeText(context, "Please, select your region", Toast.LENGTH_LONG).show()
-                                } else if (croppedImageUri == null) {
-                                    Toast.makeText(context, "Please, re-add your avatar", Toast.LENGTH_LONG).show()
-                                } else if (!isImageSelected) {
+                                    return@Button
+                                }
+                                isPasswordEmpty = password.isEmpty()
+                                if(isPasswordEmpty) {
+                                    Toast.makeText(context, "Please, enter a password", Toast.LENGTH_LONG).show()
+                                    return@Button
+                                }
+                                passwordError = password.length < 6
+                                if(passwordError) {
+                                    Toast.makeText(context, "Password must be at least 6 symbols", Toast.LENGTH_LONG).show()
+                                    return@Button
+                                }
+                                isConfirmPasswordEmpty = confirmPassword.isEmpty()
+                                if(isConfirmPasswordEmpty) {
+                                    Toast.makeText(context, "Please, confirm your password", Toast.LENGTH_LONG).show()
+                                    return@Button
+                                }
+                                confirmPasswordError = password != confirmPassword
+                                if(confirmPasswordError) {
+                                    Toast.makeText(context, "Passwords don't match", Toast.LENGTH_LONG).show()
+                                    return@Button
+                                }
+                                if(!isImageSelected) {
                                     Toast.makeText(context, "Please, add your avatar", Toast.LENGTH_LONG).show()
+                                    return@Button
+                                }
+                                if(croppedImageUri == null) {
+                                    Toast.makeText(context, "Please, re-add your avatar", Toast.LENGTH_LONG).show()
+                                    return@Button
                                 } else {
                                     authViewModel.signup(email, password)
                                 }
@@ -746,23 +793,23 @@ fun bitmapToUri(context: Context, bitmap: Bitmap): Uri? {
 }
 
 private fun isValidPhoneNumber(phone: String): Boolean {
-    if (phone.length != 17) {
-        return false
+    val codesUkraine = arrayOf("50", "66", "95", "99", "75", "67", "68", "96", "97", "98", "63", "73", "93", "91", "92", "94")
+
+    if (phone.length == 13 && phone.startsWith("+380")) {
+        val remainingPhone = phone.substring(4)
+        val code = remainingPhone.take(2)
+        return code in codesUkraine && remainingPhone.all { it.isDigit() }
     }
 
-    val cleanedPhone = phone.replace(" ", "")
-
-    if (cleanedPhone.length != 13 || !cleanedPhone.startsWith("+380")) {
-        return false
+    if (phone.length == 10 && phone.startsWith("0")) {
+        val remainingPhone = phone.substring(1)
+        val code = remainingPhone.take(2)
+        return code in codesUkraine && remainingPhone.all { it.isDigit() }
     }
 
-    val remainingPhone = cleanedPhone.substring(4)
-    return remainingPhone.all { it.isDigit() }
+    return false
 }
 
 private fun isValidEmail(email: String): Boolean {
     return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
 }
-
-//TODO()
-// add a visual loading indicator (eg CircularProgressIndicator)

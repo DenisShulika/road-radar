@@ -117,7 +117,7 @@ fun LoginPage(
             ) {
                 Text(
                     text = "Login",
-                    fontSize = 72.sp,
+                    fontSize = 64.sp,
                     color = Color.White,
                     fontFamily = RubikFont,
                     fontWeight = FontWeight.SemiBold
@@ -355,6 +355,3 @@ fun LoginPage(
 private fun isValidEmail(email: String): Boolean {
     return Patterns.EMAIL_ADDRESS.matcher(email).matches()
 }
-
-//TODO()
-// add a visual loading indicator (eg CircularProgressIndicator)
