@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -30,6 +31,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.paint
@@ -42,6 +44,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.denisshulika.road_radar.AuthState
 import com.denisshulika.road_radar.AuthViewModel
 import com.denisshulika.road_radar.R
 import com.denisshulika.road_radar.ResetPasswordState
@@ -180,12 +183,25 @@ fun PasswordResetPage(
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF474EFF)),
                         enabled = resetPasswordState.value != ResetPasswordState.Loading
                     ) {
-                        Text(
-                            text = "Reset Password",
-                            fontSize = 24.sp,
-                            fontFamily = RubikFont,
-                            fontWeight = FontWeight.Normal
-                        )
+                        if (resetPasswordState.value is ResetPasswordState.Loading) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier
+                                        .align(Alignment.Center),
+                                    color = Color(0xFF474EFF)
+                                )
+                            }
+                        } else {
+                            Text(
+                                text = "Reset Password",
+                                fontSize = 24.sp,
+                                fontFamily = RubikFont,
+                                fontWeight = FontWeight.Normal
+                            )
+                        }
                     }
                     Spacer(modifier = Modifier.size(12.dp))
                     Row(
@@ -218,6 +234,3 @@ fun PasswordResetPage(
 private fun isValidEmail(email: String): Boolean {
     return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
 }
-
-//TODO()
-// add a visual loading indicator (eg CircularProgressIndicator)

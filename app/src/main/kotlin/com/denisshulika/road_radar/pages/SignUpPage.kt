@@ -59,9 +59,11 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.paint
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -74,7 +76,6 @@ import com.denisshulika.road_radar.AuthViewModel
 import com.denisshulika.road_radar.R
 import com.denisshulika.road_radar.Routes
 import com.denisshulika.road_radar.ui.components.StyledBasicTextField
-import com.google.i18n.phonenumbers.PhoneNumberUtil
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -216,11 +217,14 @@ fun SignUpPage(
                 ) {
                     Column(
                         modifier = Modifier
-                            .padding(20.dp)
+                            .padding(
+                                start = 20.dp,
+                                top = 50.dp,
+                                end = 20.dp,
+                                bottom = 20.dp)
                             .fillMaxSize()
                             .verticalScroll(rememberScrollState())
                     ) {
-                        Spacer(modifier = Modifier.size(32.dp))
                         Column(
                             verticalArrangement = Arrangement.spacedBy(20.dp)
                         ) {
@@ -236,7 +240,7 @@ fun SignUpPage(
                                     name = it
                                     isNameEmpty = name.isEmpty()
                                 },
-                                placeholder = "Your Name"
+                                placeholder = "Your Name, e.g: John Doe"
                             )
                         }
                         if (isNameEmpty) {
@@ -264,7 +268,7 @@ fun SignUpPage(
                                     emailError = !isValidEmail(it)
                                     isEmailEmpty = email.isEmpty()
                                 },
-                                placeholder = "Your email",
+                                placeholder = "Your email, e.g: john@gmail.com",
                                 keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Email)
                             )
                         }
@@ -616,12 +620,14 @@ fun SignUpPage(
                             onClick = {
                                 passwordError = password.length < 6
                                 confirmPasswordError = password != confirmPassword
-                                if (passwordError || confirmPasswordError) {
+                                if (isNameEmpty || emailError || isEmailEmpty || phoneNumberError || isPhoneNumberEmpty || passwordError || isPasswordEmpty || isConfirmPasswordEmpty || confirmPasswordError) {
                                     return@Button
                                 } else if (selectedArea == null) {
                                     Toast.makeText(context, "Please, select your area", Toast.LENGTH_LONG).show()
                                 } else if (selectedRegion == null) {
                                     Toast.makeText(context, "Please, select your region", Toast.LENGTH_LONG).show()
+                                } else if (croppedImageUri == null) {
+                                    Toast.makeText(context, "Please, re-add your avatar", Toast.LENGTH_LONG).show()
                                 } else if (!isImageSelected) {
                                     Toast.makeText(context, "Please, add your avatar", Toast.LENGTH_LONG).show()
                                 } else {
@@ -680,7 +686,7 @@ fun SignUpPage(
                 Box(
                     modifier = Modifier
                         .size(100.dp)
-                        .offset(y = (-70).dp)
+                        .offset(y = (-50).dp)
                         .align(Alignment.TopCenter)
                         .clip(RoundedCornerShape(10.dp))
                         .background(Color(0xFFEFF1F3))
@@ -697,7 +703,7 @@ fun SignUpPage(
                         )
                     } else {
                         Icon(
-                            imageVector = Icons.Default.Email,
+                            imageVector = ImageVector.vectorResource(R.drawable.add_photo_alternate),
                             contentDescription = "Upload Photo",
                             tint = Color(0xFF606060),
                             modifier = Modifier.size(36.dp)
@@ -740,13 +746,18 @@ fun bitmapToUri(context: Context, bitmap: Bitmap): Uri? {
 }
 
 private fun isValidPhoneNumber(phone: String): Boolean {
-    val phoneUtil = PhoneNumberUtil.getInstance()
-    return try {
-        val number = phoneUtil.parse(phone, "UA")
-        phoneUtil.isValidNumber(number)
-    } catch (e: Exception) {
-        false
+    if (phone.length != 17) {
+        return false
     }
+
+    val cleanedPhone = phone.replace(" ", "")
+
+    if (cleanedPhone.length != 13 || !cleanedPhone.startsWith("+380")) {
+        return false
+    }
+
+    val remainingPhone = cleanedPhone.substring(4)
+    return remainingPhone.all { it.isDigit() }
 }
 
 private fun isValidEmail(email: String): Boolean {
