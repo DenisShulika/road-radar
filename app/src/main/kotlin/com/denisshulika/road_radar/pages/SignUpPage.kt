@@ -805,7 +805,8 @@ fun bitmapToUri(context: Context, bitmap: Bitmap): Uri? {
     }
 }
 
-private fun isValidPhoneNumber(phone: String): Boolean {
+private fun isValidPhoneNumber(phoneNumber: String): Boolean {
+    val phone = phoneNumber.replace(" ", "")
     val codesUkraine = arrayOf("50", "66", "95", "99", "75", "67", "68", "96", "97", "98", "63", "73", "93", "91", "92", "94")
 
     if (phone.length == 13 && phone.startsWith("+380")) {
