@@ -2,6 +2,7 @@ package com.denisshulika.road_radar
 
 import android.app.Application
 import android.content.Context
+import android.net.Uri
 import android.widget.Toast
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
@@ -9,23 +10,29 @@ import androidx.credentials.exceptions.GetCredentialException
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.viewModelScope
+import com.denisshulika.road_radar.local.UserLocalStorage
+import com.denisshulika.road_radar.model.UserData
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.auth.userProfileChangeRequest
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import java.security.MessageDigest
 import java.util.UUID
 
 class AuthViewModel(application: Application) : AndroidViewModel(application) {
-    private val auth : FirebaseAuth = FirebaseAuth.getInstance()
+    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
+    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
 
     private val _authState = MutableLiveData<AuthState>()
-    val authState : LiveData<AuthState> = _authState
+    val authState: LiveData<AuthState> = _authState
 
     private val _resetPasswordState = MutableLiveData<ResetPasswordState?>()
     val resetPasswordState: MutableLiveData<ResetPasswordState?> = _resetPasswordState
@@ -33,13 +40,23 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     private val webClientID =
         "634464591851-se26913skmd19o6li8ul9jcie2dt4lkc.apps.googleusercontent.com"
 
-    init { checkAuthStatus() }
+    init {
+        checkAuthStatus()
+    }
 
     private fun checkAuthStatus() {
-        _authState.value = if (auth.currentUser == null) {
-            AuthState.Unauthenticated
+        val user = auth.currentUser
+
+        if (user == null) {
+            _authState.value = AuthState.Unauthenticated
         } else {
-            AuthState.Authenticated
+            viewModelScope.launch {
+                if (userFinishedRegistrating()) {
+                    _authState.value = AuthState.Authenticated
+                } else {
+                    _authState.value = AuthState.Registrating
+                }
+            }
         }
     }
 
@@ -52,17 +69,118 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun login(
-        email : String,
-        password : String
+        email: String,
+        password: String,
+        context: Context,
+        coroutineScope: CoroutineScope
     ) {
         _authState.value = AuthState.Loading
         auth.signInWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    _authState.value = AuthState.Authenticated
+                    val user = auth.currentUser
+                    user?.let { firebaseUser ->
+                        val uid = firebaseUser.uid
+                        firestore.collection("users").document(uid).get()
+                            .addOnSuccessListener { document ->
+                                val phoneNumber = document.getString("phoneNumber") ?: ""
+                                val area = document.getString("area") ?: ""
+                                val region = document.getString("region") ?: ""
+                                val photoUrl = firebaseUser.photoUrl?.toString()
+
+                                val userData = UserData(
+                                    uid = uid,
+                                    email = email,
+                                    name = firebaseUser.displayName ?: "",
+                                    phoneNumber = phoneNumber,
+                                    area = area,
+                                    region = region,
+                                    photoUrl = photoUrl
+                                )
+
+                                coroutineScope.launch {
+                                    val localStorage = UserLocalStorage(context)
+                                    localStorage.saveUser(userData)
+                                    _authState.value = AuthState.Authenticated
+                                }
+                            }
+                            .addOnFailureListener {
+                                _authState.value = AuthState.Error("Failed to load user data")
+                            }
+                    }
                 } else {
                     _authState.value = AuthState.Error(
-                        task.exception?.message?:"Something went wrong"
+                        task.exception?.message ?: "Something went wrong"
+                    )
+                }
+            }
+    }
+
+    fun signup(
+        email: String,
+        password: String,
+        name: String,
+        phoneNumber: String,
+        area: String,
+        region: String,
+        photo: Uri,
+        context: Context,
+        coroutineScope: CoroutineScope
+    ) {
+        _authState.value = AuthState.Loading
+        auth.createUserWithEmailAndPassword(email, password)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    val user = auth.currentUser
+                    val uid = user?.uid ?: ""
+
+                    val profileUpdates = userProfileChangeRequest {
+                        displayName = name
+                        photoUri = photo
+                    }
+
+                    user?.updateProfile(profileUpdates)
+                        ?.addOnCompleteListener { profileTask ->
+                            if (!profileTask.isSuccessful) {
+                                _authState.value = AuthState.Error(
+                                    task.exception?.message ?: "Something went wrong"
+                                )
+                            }
+                        }
+
+                    val userData = hashMapOf(
+                        "phoneNumber" to phoneNumber,
+                        "area" to area,
+                        "region" to region
+                    )
+                    firestore.collection("users")
+                        .document(uid)
+                        .set(userData)
+                        .addOnSuccessListener {
+                            val userDataToSave = UserData(
+                                uid = uid,
+                                email = email,
+                                name = name,
+                                phoneNumber = phoneNumber,
+                                area = area,
+                                region = region,
+                                photoUrl = photo.toString()
+                            )
+
+                            coroutineScope.launch {
+                                val localStorage = UserLocalStorage(context)
+                                localStorage.saveUser(userDataToSave)
+                                _authState.value = AuthState.Authenticated
+                            }
+                            _authState.value = AuthState.Authenticated
+                        }
+                        .addOnFailureListener {
+                            _authState.value = AuthState.Error("Failed to save user data")
+                        }
+
+                } else {
+                    _authState.value = AuthState.Error(
+                        task.exception?.message ?: "Something went wrong"
                     )
                 }
             }
@@ -80,7 +198,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         val bytes = rawNonce.toByteArray()
         val md = MessageDigest.getInstance("SHA-256")
         val digest = md.digest(bytes)
-        val hashedNonce = digest.fold("") {str, it -> str + "%02x".format(it)}
+        val hashedNonce = digest.fold("") { str, it -> str + "%02x".format(it) }
 
         val googleIdOption = GetGoogleIdOption.Builder()
             .setFilterByAuthorizedAccounts(false)
@@ -99,23 +217,26 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                     context = context,
                 )
                 val credential = result.credential
-
                 val googleIdTokenCredential =
                     GoogleIdTokenCredential.createFrom(credential.data)
-
                 val googleIdToken = googleIdTokenCredential.idToken
-
                 val authCredential = GoogleAuthProvider.getCredential(googleIdToken, null)
 
                 val auth = FirebaseAuth.getInstance()
-
                 auth.signInWithCredential(authCredential)
                     .addOnCompleteListener { task ->
                         coroutineScope.launch(Dispatchers.Main) {
                             if (task.isSuccessful) {
-                                _authState.value = AuthState.Authenticated
+                                val isRegistered = userFinishedRegistrating()
+                                if (isRegistered) {
+                                    _authState.value = AuthState.Authenticated
+                                } else {
+                                    _authState.value = AuthState.Registrating
+                                }
                             } else {
-                                _authState.value = AuthState.Error(task.exception?.message ?: "Something went wrong")
+                                _authState.value = AuthState.Error(
+                                    task.exception?.message ?: "Something went wrong"
+                                )
                             }
                         }
                     }
@@ -135,43 +256,111 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun signup(
-        email : String,
-        password : String
+    fun completeRegistrationViaGoogle(
+        area: String,
+        region: String,
+        context: Context,
+        coroutineScope: CoroutineScope
     ) {
-        _authState.value = AuthState.Loading
-        auth.createUserWithEmailAndPassword(email, password)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
+        val user = auth.currentUser
+        if (user == null) {
+            _authState.value = AuthState.Error("User is not authenticated")
+            return
+        }
+
+        val firestore = FirebaseFirestore.getInstance()
+        val userData = hashMapOf(
+            "phoneNumber" to (user.phoneNumber ?: ""),
+            "area" to area,
+            "region" to region
+        )
+
+        val uid = user.uid
+        firestore.collection("users")
+            .document(uid)
+            .set(userData)
+            .addOnSuccessListener {
+                val userDataToSave = UserData(
+                    uid = uid,
+                    email = user.email ?: "",
+                    name = user.displayName ?: "",
+                    phoneNumber = user.phoneNumber ?: "",
+                    area = area,
+                    region = region,
+                    photoUrl = user.photoUrl?.toString() ?: ""
+                )
+
+                coroutineScope.launch {
+                    val localStorage = UserLocalStorage(context)
+                    localStorage.saveUser(userDataToSave)
                     _authState.value = AuthState.Authenticated
-                } else {
-                    _authState.value = AuthState.Error(
-                        task.exception?.message?:"Something went wrong"
-                    )
                 }
+
+                _authState.value = AuthState.Authenticated
+            }
+            .addOnFailureListener { e ->
+                _authState.value = AuthState.Error("Failed to save user data: ${e.message}")
             }
     }
 
-    fun signout() {
+    private suspend fun userFinishedRegistrating(): Boolean {
+        val user = auth.currentUser
+        val uid = user?.uid ?: return false
+
+        val firestore = FirebaseFirestore.getInstance()
+        val userRef = firestore.collection("users").document(uid)
+
+        return try {
+            val document = userRef.get().await()
+            val area = document.getString("area")
+            val region = document.getString("region")
+            !area.isNullOrEmpty() && !region.isNullOrEmpty()
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    fun signout(context: Context, coroutineScope: CoroutineScope) {
         auth.signOut()
+        coroutineScope.launch {
+            val localStorage = UserLocalStorage(context)
+            localStorage.clearUserData()
+        }
         _authState.value = AuthState.Unauthenticated
     }
 
     fun deleteAccount(
         context: Context,
-        user: FirebaseUser
+        coroutineScope: CoroutineScope
     ) {
-        user.delete()
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    signout()
-                } else {
-                    Toast.makeText(context,
-                        task.exception?.message ?: "Unknown error",
-                        Toast.LENGTH_LONG)
-                        .show()
+        val user = auth.currentUser
+        user?.let { firebaseUser ->
+            val uid = firebaseUser.uid
+
+            firestore.collection("users").document(uid).delete()
+                .addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        firebaseUser.delete()
+                            .addOnCompleteListener { deleteTask ->
+                                if (deleteTask.isSuccessful) {
+                                    signout(context, coroutineScope)
+                                } else {
+                                    Toast.makeText(
+                                        context,
+                                        deleteTask.exception?.message ?: "Failed to delete account",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                }
+                            }
+                    } else {
+                        Toast.makeText(
+                            context,
+                            task.exception?.message ?: "Failed to delete Firestore data",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
                 }
-            }
+        }
     }
 
     fun resetPassword(
@@ -206,6 +395,7 @@ sealed class AuthState {
     data object Authenticated : AuthState()
     data object Unauthenticated : AuthState()
     data object Loading : AuthState()
+    data object Registrating : AuthState()
     data object Null : AuthState()
     data class Error(val message: String) : AuthState()
 }

@@ -62,6 +62,7 @@ dependencies {
     implementation(libs.androidx.runtime.livedata)
     implementation(libs.googleid)
     implementation(libs.androidx.espresso.core)
+    implementation(libs.firebase.firestore.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -94,4 +95,6 @@ dependencies {
     implementation(libs.androidx.ui.text)
     implementation(libs.libphonenumber)
     implementation (libs.coil.compose)
+    implementation (libs.androidx.datastore.preferences)
+    implementation (libs.androidx.datastore)
 }

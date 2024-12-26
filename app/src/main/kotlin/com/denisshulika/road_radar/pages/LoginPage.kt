@@ -87,6 +87,8 @@ fun LoginPage(
         when(authState.value) {
             is AuthState.Authenticated ->
                 navController.navigate(Routes.NEWS)
+            is AuthState.Registrating ->
+                navController.navigate(Routes.GOOGLE_REGISTRATING)
             is AuthState.Error -> {
                 Toast.makeText(context, (authState.value as AuthState.Error).message, Toast.LENGTH_LONG).show()
                 authViewModel.setAuthState(AuthState.Null)
@@ -255,14 +257,22 @@ fun LoginPage(
                         .fillMaxWidth()
                         .height(52.dp),
                         onClick = {
-                            if (isEmailEmpty || isPasswordEmpty) {
-                                Toast.makeText(context, "Email or password cannot be empty", Toast.LENGTH_LONG).show()
+                            isEmailEmpty = email.isEmpty()
+                            if(isEmailEmpty) {
+                                Toast.makeText(context, "Please, enter your email", Toast.LENGTH_LONG).show()
                                 return@Button
-                            } else if (emailError) {
+                            }
+                            isPasswordEmpty = password.isEmpty()
+                            if(isPasswordEmpty) {
+                                Toast.makeText(context, "Please, enter a password", Toast.LENGTH_LONG).show()
+                                return@Button
+                            }
+                            emailError = email.isEmpty()
+                            if (emailError) {
                                 Toast.makeText(context, "Invalid email address", Toast.LENGTH_LONG).show()
                                 return@Button
                             }
-                            authViewModel.login(email, password)
+                            authViewModel.login(email, password, context, coroutineScope)
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF474EFF)),
                         enabled = authState.value != AuthState.Loading
@@ -323,7 +333,7 @@ fun LoginPage(
                                 modifier = Modifier
                                     .background(Color.White)
                                     .padding(start = 4.dp, end = 4.dp),
-                                text = "Or login with",
+                                text = "Or Sign In with",
                                 color = Color(0xFF707070),
                                 fontFamily = RubikFont,
                                 fontWeight = FontWeight.Normal

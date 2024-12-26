@@ -44,7 +44,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.denisshulika.road_radar.AuthState
 import com.denisshulika.road_radar.AuthViewModel
 import com.denisshulika.road_radar.R
 import com.denisshulika.road_radar.ResetPasswordState

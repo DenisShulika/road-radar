@@ -9,6 +9,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -25,6 +26,7 @@ fun NewsPage(
     authViewModel: AuthViewModel
 ) {
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
     val auth : FirebaseAuth = FirebaseAuth.getInstance()
     val authState = authViewModel.authState.observeAsState()
@@ -40,21 +42,18 @@ fun NewsPage(
         modifier = modifier
     ) {
         Spacer(modifier = Modifier.height(20.dp))
-
         Button(
             onClick = {
-                authViewModel.signout()
+                authViewModel.signout(context, coroutineScope)
             }
         ) {
             Text(text = "SignOut")
         }
-
         Spacer(modifier = Modifier.height(20.dp))
-
         Button(
             onClick = {
                 if (auth.currentUser != null) {
-                    authViewModel.deleteAccount(context = context, auth.currentUser!!)
+                    authViewModel.deleteAccount(context = context, coroutineScope)
                 } else {
                     Toast.makeText(
                         context,
