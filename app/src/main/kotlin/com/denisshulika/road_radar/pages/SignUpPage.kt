@@ -75,6 +75,8 @@ import com.denisshulika.road_radar.AuthState
 import com.denisshulika.road_radar.AuthViewModel
 import com.denisshulika.road_radar.R
 import com.denisshulika.road_radar.Routes
+import com.denisshulika.road_radar.isValidEmail
+import com.denisshulika.road_radar.isValidPhoneNumber
 import com.denisshulika.road_radar.ui.components.StyledBasicTextField
 import java.io.File
 import java.io.FileOutputStream
@@ -92,7 +94,7 @@ fun SignUpPage(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
-    val regionsByArea = mapOf(
+    @Suppress("SpellCheckingInspection") val regionsByArea = mapOf(
         "Avtonomna Respublika Krym" to listOf("Bakhchysaraiskyi", "Bilogirskyi", "Dzhankoyskyi", "Yevpatoriiskyi", "Kerchenskyi", "Kurmanskyi", "Perekopskyi", "Simferopolskyi", "Feodosiiskyi", "Yaltynskyi"),
         "Vinnytska" to listOf("Vinnytskyi", "Haisynskyi", "Zhmerynskyi", "Mohyliv-Podilskyi", "Tulchynskyi", "Khmilnytskyi"),
         "Volynska" to listOf("Volodymyr-Volynskyi", "Kamin-Kashyrskyi", "Kovelskyi", "Lutskyi"),
@@ -169,7 +171,7 @@ fun SignUpPage(
     LaunchedEffect(authState.value) {
         when(authState.value) {
             is AuthState.Authenticated ->
-                navController.navigate(Routes.NEWS)
+                navController.navigate(Routes.INCIDENTS)
             is AuthState.Error ->
                 Toast.makeText(context, (authState.value as AuthState.Error).message, Toast.LENGTH_LONG).show()
             else -> Unit
@@ -213,7 +215,8 @@ fun SignUpPage(
                     modifier = Modifier
                         .clip(RoundedCornerShape(topStart = 25.dp, topEnd = 25.dp))
                         .background(Color.White)
-                        .fillMaxSize(),
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.Top
                 ) {
                     Column(
@@ -803,27 +806,4 @@ fun bitmapToUri(context: Context, bitmap: Bitmap): Uri? {
         e.printStackTrace()
         return null
     }
-}
-
-private fun isValidPhoneNumber(phoneNumber: String): Boolean {
-    val phone = phoneNumber.replace(" ", "")
-    val codesUkraine = arrayOf("50", "66", "95", "99", "75", "67", "68", "96", "97", "98", "63", "73", "93", "91", "92", "94")
-
-    if (phone.length == 13 && phone.startsWith("+380")) {
-        val remainingPhone = phone.substring(4)
-        val code = remainingPhone.take(2)
-        return code in codesUkraine && remainingPhone.all { it.isDigit() }
-    }
-
-    if (phone.length == 10 && phone.startsWith("0")) {
-        val remainingPhone = phone.substring(1)
-        val code = remainingPhone.take(2)
-        return code in codesUkraine && remainingPhone.all { it.isDigit() }
-    }
-
-    return false
-}
-
-private fun isValidEmail(email: String): Boolean {
-    return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
 }

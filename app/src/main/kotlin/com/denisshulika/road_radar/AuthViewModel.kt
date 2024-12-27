@@ -257,6 +257,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun completeRegistrationViaGoogle(
+        phoneNumber: String,
         area: String,
         region: String,
         context: Context,
@@ -270,7 +271,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
         val firestore = FirebaseFirestore.getInstance()
         val userData = hashMapOf(
-            "phoneNumber" to (user.phoneNumber ?: ""),
+            "phoneNumber" to (phoneNumber),
             "area" to area,
             "region" to region
         )
@@ -284,7 +285,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                     uid = uid,
                     email = user.email ?: "",
                     name = user.displayName ?: "",
-                    phoneNumber = user.phoneNumber ?: "",
+                    phoneNumber = phoneNumber,
                     area = area,
                     region = region,
                     photoUrl = user.photoUrl?.toString() ?: ""
@@ -385,6 +386,29 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 }
         }
     }
+}
+
+fun isValidPhoneNumber(phoneNumber: String): Boolean {
+    val phone = phoneNumber.replace(" ", "")
+    val codesUkraine = arrayOf("50", "66", "95", "99", "75", "67", "68", "96", "97", "98", "63", "73", "93", "91", "92", "94")
+
+    if (phone.length == 13 && phone.startsWith("+380")) {
+        val remainingPhone = phone.substring(4)
+        val code = remainingPhone.take(2)
+        return code in codesUkraine && remainingPhone.all { it.isDigit() }
+    }
+
+    if (phone.length == 10 && phone.startsWith("0")) {
+        val remainingPhone = phone.substring(1)
+        val code = remainingPhone.take(2)
+        return code in codesUkraine && remainingPhone.all { it.isDigit() }
+    }
+
+    return false
+}
+
+fun isValidEmail(email: String): Boolean {
+    return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
 }
 
 private fun showToast(context: Context, message: String) {

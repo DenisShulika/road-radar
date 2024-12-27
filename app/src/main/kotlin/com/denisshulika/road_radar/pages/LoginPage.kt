@@ -17,8 +17,10 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -86,7 +88,7 @@ fun LoginPage(
     LaunchedEffect(authState.value) {
         when(authState.value) {
             is AuthState.Authenticated ->
-                navController.navigate(Routes.NEWS)
+                navController.navigate(Routes.INCIDENTS)
             is AuthState.Registrating ->
                 navController.navigate(Routes.GOOGLE_REGISTRATING)
             is AuthState.Error -> {
@@ -135,6 +137,7 @@ fun LoginPage(
                 Column(
                     modifier = Modifier
                         .padding(20.dp)
+                        .verticalScroll(rememberScrollState())
                 ) {
                     Spacer(modifier = Modifier.size(16.dp))
                     Column(

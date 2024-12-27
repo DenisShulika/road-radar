@@ -20,7 +20,7 @@ import com.denisshulika.road_radar.Routes
 import com.google.firebase.auth.FirebaseAuth
 
 @Composable
-fun NewsPage(
+fun IncidentsPage(
     modifier: Modifier = Modifier,
     navController: NavController,
     authViewModel: AuthViewModel

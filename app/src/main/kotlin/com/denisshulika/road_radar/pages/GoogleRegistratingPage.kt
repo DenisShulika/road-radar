@@ -28,6 +28,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -59,6 +60,8 @@ import com.denisshulika.road_radar.AuthState
 import com.denisshulika.road_radar.AuthViewModel
 import com.denisshulika.road_radar.R
 import com.denisshulika.road_radar.Routes
+import com.denisshulika.road_radar.isValidPhoneNumber
+import com.denisshulika.road_radar.ui.components.StyledBasicTextField
 
 @Composable
 fun GoogleRegistratingPage(
@@ -71,7 +74,7 @@ fun GoogleRegistratingPage(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
-    val regionsByArea = mapOf(
+    @Suppress("SpellCheckingInspection") val regionsByArea = mapOf(
         "Avtonomna Respublika Krym" to listOf("Bakhchysaraiskyi", "Bilogirskyi", "Dzhankoyskyi", "Yevpatoriiskyi", "Kerchenskyi", "Kurmanskyi", "Perekopskyi", "Simferopolskyi", "Feodosiiskyi", "Yaltynskyi"),
         "Vinnytska" to listOf("Vinnytskyi", "Haisynskyi", "Zhmerynskyi", "Mohyliv-Podilskyi", "Tulchynskyi", "Khmilnytskyi"),
         "Volynska" to listOf("Volodymyr-Volynskyi", "Kamin-Kashyrskyi", "Kovelskyi", "Lutskyi"),
@@ -102,6 +105,10 @@ fun GoogleRegistratingPage(
     )
     val areas = regionsByArea.keys.toList()
 
+    var phoneNumber by remember { mutableStateOf("") }
+    var phoneNumberError by remember { mutableStateOf(false) }
+    var isPhoneNumberEmpty by remember { mutableStateOf(false) }
+
     var selectedArea by remember { mutableStateOf<String?>(null) }
     val isAreaDropdownExpanded = remember { mutableStateOf(false) }
     val areaItemPosition = remember { mutableIntStateOf(0) }
@@ -113,7 +120,7 @@ fun GoogleRegistratingPage(
     LaunchedEffect(authState.value) {
         when(authState.value) {
             is AuthState.Authenticated ->
-                navController.navigate(Routes.NEWS)
+                navController.navigate(Routes.INCIDENTS)
             is AuthState.Unauthenticated ->
                 navController.navigate(Routes.LOGIN)
             is AuthState.Error ->
@@ -175,7 +182,55 @@ fun GoogleRegistratingPage(
                             .fillMaxSize()
                             .verticalScroll(rememberScrollState())
                     ) {
+                        Spacer(modifier = Modifier.size(8.dp))
+                        Column (
+                            horizontalAlignment = Alignment.Start,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                text = "To complete Google sign in, please provide us with additional information",
+                                fontSize = 14.sp,
+                                fontFamily = RubikFont,
+                                fontWeight = FontWeight.Normal,
+                                color = Color(0xFFADADAD)
+                            )
+                        }
                         Spacer(modifier = Modifier.size(20.dp))
+                        Column (
+                            verticalArrangement = Arrangement.spacedBy(20.dp)
+                        ) {
+                            Text(
+                                text = "Phone Number",
+                                fontSize = 24.sp,
+                                fontFamily = RubikFont,
+                                fontWeight = FontWeight.Normal
+                            )
+                            StyledBasicTextField(
+                                value = phoneNumber,
+                                onValueChange = {
+                                    phoneNumber = it
+                                    isPhoneNumberEmpty = phoneNumber.isEmpty()
+                                    phoneNumberError = !isValidPhoneNumber(it)
+                                },
+                                placeholder = "Your phone, e.g: +380 xx xxx xx xx"
+                            )
+                        }
+                        if (isPhoneNumberEmpty) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                "Phone number cant be empty",
+                                color = Color(0xFFB71C1C),
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        } else if (phoneNumberError) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                "Invalid phone number",
+                                color = Color(0xFFB71C1C),
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                        Spacer(modifier = Modifier.size(32.dp))
                         Column(
                             verticalArrangement = Arrangement.spacedBy(20.dp)
                         ) {
@@ -263,7 +318,7 @@ fun GoogleRegistratingPage(
 
                         if (selectedArea != null) {
                             Spacer(modifier = Modifier.size(32.dp))
-                            Column(
+                            Column (
                                 verticalArrangement = Arrangement.spacedBy(20.dp)
                             ) {
                                 Text(
@@ -352,6 +407,16 @@ fun GoogleRegistratingPage(
                         Spacer(modifier = Modifier.size(24.dp))
                         Button(
                             onClick = {
+                                isPhoneNumberEmpty = phoneNumber.isEmpty()
+                                if(isPhoneNumberEmpty) {
+                                    Toast.makeText(context, "Please, enter your phone", Toast.LENGTH_LONG).show()
+                                    return@Button
+                                }
+                                phoneNumberError = !isValidPhoneNumber(phoneNumber)
+                                if(phoneNumberError) {
+                                    Toast.makeText(context, "Please, enter correct phone number", Toast.LENGTH_LONG).show()
+                                    return@Button
+                                }
                                 if(selectedArea == null) {
                                     Toast.makeText(context, "Please, select your area", Toast.LENGTH_LONG).show()
                                     return@Button
@@ -360,6 +425,7 @@ fun GoogleRegistratingPage(
                                     return@Button
                                 } else {
                                     authViewModel.completeRegistrationViaGoogle(
+                                        phoneNumber,
                                         selectedArea!!,
                                         selectedRegion!!,
                                         context,
@@ -386,7 +452,7 @@ fun GoogleRegistratingPage(
                                 }
                             } else {
                                 Text(
-                                    text = "Finish Signing Up",
+                                    text = "Complete Signing Up",
                                     fontSize = 24.sp,
                                     fontFamily = RubikFont,
                                     fontWeight = FontWeight.Normal
