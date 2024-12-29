@@ -8,19 +8,15 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -60,10 +56,13 @@ import com.denisshulika.road_radar.AuthViewModel
 import com.denisshulika.road_radar.R
 import com.denisshulika.road_radar.Routes
 import com.denisshulika.road_radar.ui.components.StyledBasicTextField
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
 val RubikFont = FontFamily(
     Font(R.font.rubik_medium, FontWeight.Normal),
-    Font(R.font.rubik_semibold, FontWeight.SemiBold)
+    Font(R.font.rubik_semibold, FontWeight.SemiBold),
+    Font(R.font.rubik_bold, FontWeight.Bold),
+    Font(R.font.rubik_extrabold, FontWeight.ExtraBold)
 )
 
 @Composable
@@ -72,6 +71,17 @@ fun LoginPage(
     navController: NavController,
     authViewModel: AuthViewModel
 ) {
+    val systemUiController = rememberSystemUiController()
+
+    systemUiController.setStatusBarColor(
+        color = Color.Transparent,
+        darkIcons = false
+    )
+    systemUiController.setNavigationBarColor(
+        color = Color.Transparent,
+        darkIcons = false
+    )
+
     var email by remember { mutableStateOf("") }
     var emailError by remember { mutableStateOf(false) }
     var isEmailEmpty by remember { mutableStateOf(false) }
@@ -107,10 +117,8 @@ fun LoginPage(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(
-                    top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding(),
-                    bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-                )
+                .statusBarsPadding()
+                .navigationBarsPadding()
         ) {
             Column(
                 modifier = Modifier
@@ -137,7 +145,6 @@ fun LoginPage(
                 Column(
                     modifier = Modifier
                         .padding(20.dp)
-                        .verticalScroll(rememberScrollState())
                 ) {
                     Spacer(modifier = Modifier.size(16.dp))
                     Column(
@@ -243,7 +250,8 @@ fun LoginPage(
                         TextButton(
                             onClick = {
                                 navController.navigate(Routes.PASSWORD_RESET)
-                            }
+                            },
+                            enabled = authState.value != AuthState.Loading
                         ) {
                             Text(
                                 text = "Forgot password?",
@@ -309,7 +317,8 @@ fun LoginPage(
                                 .padding(top = 2.dp, bottom = 2.dp),
                             onClick = {
                                 navController.navigate(Routes.SIGNUP)
-                            }
+                            },
+                            enabled = authState.value != AuthState.Loading
                         ) {
                             Text(
                                 text = "Don't have an account yet? Register here",

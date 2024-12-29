@@ -16,8 +16,11 @@ import com.denisshulika.road_radar.model.UserData
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.auth.userProfileChangeRequest
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.CoroutineScope
@@ -44,7 +47,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         checkAuthStatus()
     }
 
-    private fun checkAuthStatus() {
+     fun checkAuthStatus() {
         val user = auth.currentUser
 
         if (user == null) {
@@ -66,6 +69,16 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setResetPasswordState(state: ResetPasswordState) {
         _resetPasswordState.value = state
+    }
+
+    private fun isUserLoggedInWithGoogle(): Boolean {
+        val user = auth.currentUser
+        return user?.providerData?.any { it.providerId == GoogleAuthProvider.PROVIDER_ID } == true
+    }
+
+    private fun isUserLoggedInWithEmailPassword(): Boolean {
+        val user = auth.currentUser
+        return user?.providerData?.any { it.providerId == EmailAuthProvider.PROVIDER_ID } == true
     }
 
     fun login(
@@ -229,7 +242,36 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                             if (task.isSuccessful) {
                                 val isRegistered = userFinishedRegistrating()
                                 if (isRegistered) {
-                                    _authState.value = AuthState.Authenticated
+                                    val user = auth.currentUser
+                                    user?.let { firebaseUser ->
+                                        val uid = firebaseUser.uid
+                                        firestore.collection("users").document(uid).get()
+                                            .addOnSuccessListener { document ->
+                                                val phoneNumber = document.getString("phoneNumber") ?: ""
+                                                val area = document.getString("area") ?: ""
+                                                val region = document.getString("region") ?: ""
+                                                val photoUrl = firebaseUser.photoUrl?.toString()
+
+                                                val userData = UserData(
+                                                    uid = uid,
+                                                    email = user.email ?: "",
+                                                    name = firebaseUser.displayName ?: "",
+                                                    phoneNumber = phoneNumber,
+                                                    area = area,
+                                                    region = region,
+                                                    photoUrl = photoUrl
+                                                )
+
+                                                coroutineScope.launch {
+                                                    val localStorage = UserLocalStorage(context)
+                                                    localStorage.saveUser(userData)
+                                                    _authState.value = AuthState.Authenticated
+                                                }
+                                            }
+                                            .addOnFailureListener {
+                                                _authState.value = AuthState.Error("Failed to load user data")
+                                            }
+                                    }
                                 } else {
                                     _authState.value = AuthState.Registrating
                                 }
@@ -332,11 +374,33 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     fun deleteAccount(
         context: Context,
-        coroutineScope: CoroutineScope
+        coroutineScope: CoroutineScope,
+        email : String? = "denisshulika31@gmail.com",
+        password: String? = "111111"
     ) {
         val user = auth.currentUser
         user?.let { firebaseUser ->
             val uid = firebaseUser.uid
+
+            val credential = if (isUserLoggedInWithGoogle()) {
+                GoogleAuthProvider.getCredential(user.getIdToken(true).toString(), null)
+            } else if(isUserLoggedInWithEmailPassword()) {
+                EmailAuthProvider.getCredential(email ?: "", password ?: "")
+            } else {
+                null
+            }
+
+            if(credential != null) {
+                user.reauthenticate(credential)
+                    .addOnCompleteListener {}
+            } else {
+                Toast.makeText(
+                    context,
+                    "Failed to Re-auth. Try to delete later",
+                    Toast.LENGTH_LONG
+                ).show()
+                return
+            }
 
             firestore.collection("users").document(uid).delete()
                 .addOnCompleteListener { task ->

@@ -8,15 +8,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -62,6 +60,7 @@ import com.denisshulika.road_radar.R
 import com.denisshulika.road_radar.Routes
 import com.denisshulika.road_radar.isValidPhoneNumber
 import com.denisshulika.road_radar.ui.components.StyledBasicTextField
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
 @Composable
 fun GoogleRegistratingPage(
@@ -69,6 +68,17 @@ fun GoogleRegistratingPage(
     navController: NavController,
     authViewModel: AuthViewModel
 ) {
+    val systemUiController = rememberSystemUiController()
+
+    systemUiController.setStatusBarColor(
+        color = Color.Transparent,
+        darkIcons = false
+    )
+    systemUiController.setNavigationBarColor(
+        color = Color.Transparent,
+        darkIcons = false
+    )
+
     val authState = authViewModel.authState.observeAsState()
 
     val context = LocalContext.current
@@ -118,6 +128,7 @@ fun GoogleRegistratingPage(
     val regionItemPosition = remember { mutableIntStateOf(0) }
 
     LaunchedEffect(authState.value) {
+        authViewModel.checkAuthStatus()
         when(authState.value) {
             is AuthState.Authenticated ->
                 navController.navigate(Routes.INCIDENTS)
@@ -137,10 +148,8 @@ fun GoogleRegistratingPage(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(
-                    top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding(),
-                    bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-                )
+                .statusBarsPadding()
+                .navigationBarsPadding()
         ) {
             Column(
                 modifier = Modifier
