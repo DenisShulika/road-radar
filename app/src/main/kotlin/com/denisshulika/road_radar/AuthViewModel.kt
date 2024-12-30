@@ -63,6 +63,10 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun getCurrentUser(): FirebaseUser? {
+        return auth.currentUser
+    }
+
     fun setAuthState(state: AuthState) {
         _authState.value = state
     }
@@ -76,9 +80,32 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         return user?.providerData?.any { it.providerId == GoogleAuthProvider.PROVIDER_ID } == true
     }
 
-    private fun isUserLoggedInWithEmailPassword(): Boolean {
+    fun isUserLoggedInWithEmailPassword(): Boolean {
         val user = auth.currentUser
         return user?.providerData?.any { it.providerId == EmailAuthProvider.PROVIDER_ID } == true
+    }
+
+    fun updateUserProfile(
+        name : String,
+        photo: String,
+        context: Context,
+        coroutineScope: CoroutineScope
+    ) {
+        val user = auth.currentUser!!
+
+        val profileUpdates = userProfileChangeRequest {
+            displayName = name
+            photoUri = Uri.parse(photo)
+        }
+
+        user.updateProfile(profileUpdates)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    Toast.makeText(context, "Profile updated successfully", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(context, "Failed to update profile", Toast.LENGTH_SHORT).show()
+                }
+            }
     }
 
     fun login(

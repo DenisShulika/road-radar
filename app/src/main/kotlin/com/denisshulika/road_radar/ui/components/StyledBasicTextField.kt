@@ -16,6 +16,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.denisshulika.road_radar.pages.RubikFont
@@ -26,19 +27,20 @@ fun StyledBasicTextField(
     onValueChange: (String) -> Unit,
     placeholder: String,
     keyboardOptions : KeyboardOptions = KeyboardOptions.Default,
-    isVisible : Boolean = true
+    isVisible : Boolean = true,
+    fontSize : TextUnit = 20.sp
 ) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(36.dp)
+            .height(28.dp)
             .drawBehind {
                 val strokeWidth = 1.dp.toPx()
                 val y = size.height - strokeWidth / 2
                 drawLine(
-                    color = Color.LightGray,
-                    start = Offset(0f, 0.75f * y),
-                    end = Offset(size.width, 0.75f * y),
+                    color = Color(0xFFD3D3D3),
+                    start = Offset(0f, 1f * y),
+                    end = Offset(size.width, 1f * y),
                     strokeWidth = strokeWidth
                 )
             }
@@ -49,7 +51,9 @@ fun StyledBasicTextField(
             onValueChange = onValueChange,
             textStyle = TextStyle(
                 color = Color.Black,
-                fontSize = 20.sp
+                fontSize = fontSize,
+                fontFamily = RubikFont,
+                fontWeight = FontWeight.Normal
             ),
             decorationBox = { innerTextField ->
                 if (value.isEmpty()) {
@@ -57,8 +61,8 @@ fun StyledBasicTextField(
                         text = placeholder,
                         style = TextStyle(
                             color = Color(0xFFADADAD),
-                            fontSize = 20.sp,
-                            lineHeight = 20.sp
+                            fontSize = fontSize,
+                            lineHeight = fontSize
                         ),
                         fontFamily = RubikFont,
                         fontWeight = FontWeight.Normal

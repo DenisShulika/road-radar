@@ -315,7 +315,7 @@ fun SignUpPage(
                                     isPhoneNumberEmpty = phoneNumber.isEmpty()
                                     phoneNumberError = !isValidPhoneNumber(it)
                                 },
-                                placeholder = "Your phone, e.g: +380 xx xxx xx xx"
+                                placeholder = "Your phone, e.g: +380.. or 0.."
                             )
                         }
                         if (isPhoneNumberEmpty) {
@@ -350,7 +350,7 @@ fun SignUpPage(
                                         val strokeWidth = 1.dp.toPx()
                                         val y = size.height - strokeWidth / 2
                                         drawLine(
-                                            color = Color(0xFFADADAD),
+                                            color = Color(0xFFD3D3D3),
                                             start = Offset(0f, 0.75f * y),
                                             end = Offset(size.width, 0.75f * y),
                                             strokeWidth = strokeWidth
@@ -374,7 +374,7 @@ fun SignUpPage(
                                         Text(
                                             text = selectedArea?.takeIf { it.isNotBlank() } ?: "Choose your area",
                                             style = TextStyle(
-                                                color = Color(0xFFADADAD),
+                                                color = if (selectedArea != null) Color(0xFF000000) else Color(0xFFADADAD),
                                                 fontSize = 20.sp,
                                                 lineHeight = 20.sp
                                             ),
@@ -424,7 +424,7 @@ fun SignUpPage(
                                 verticalArrangement = Arrangement.spacedBy(20.dp)
                             ) {
                                 Text(
-                                    text = "Your district",
+                                    text = "Your region",
                                     fontSize = 24.sp,
                                     fontFamily = RubikFont,
                                     fontWeight = FontWeight.Normal
@@ -436,7 +436,7 @@ fun SignUpPage(
                                             val strokeWidth = 1.dp.toPx()
                                             val y = size.height - strokeWidth / 2
                                             drawLine(
-                                                color = Color(0xFFADADAD),
+                                                color = Color(0xFFD3D3D3),
                                                 start = Offset(0f, 0.75f * y),
                                                 end = Offset(size.width, 0.75f * y),
                                                 strokeWidth = strokeWidth
@@ -458,9 +458,9 @@ fun SignUpPage(
                                                 .fillMaxWidth()
                                         ) {
                                             Text(
-                                                text = selectedRegion?.takeIf { it.isNotBlank() } ?: "Choose your district",
+                                                text = selectedRegion?.takeIf { it.isNotBlank() } ?: "Choose your region",
                                                 style = TextStyle(
-                                                    color = Color(0xFFADADAD),
+                                                    color = if (selectedRegion != null) Color(0xFF000000) else Color(0xFFADADAD),
                                                     fontSize = 20.sp,
                                                     lineHeight = 20.sp
                                                 ),

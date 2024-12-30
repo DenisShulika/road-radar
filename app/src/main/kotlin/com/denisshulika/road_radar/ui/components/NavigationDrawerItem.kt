@@ -31,13 +31,13 @@ fun NavigationDrawerItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(99.dp))
+            .clip(RoundedCornerShape(30))
             .clickable {
                 onClick()
             }
             .background(
                 if (selected) Color(0xFF474EFF) else Color(0xFF6369FF),
-                RoundedCornerShape(99.dp)
+                RoundedCornerShape(30)
             )
             .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically

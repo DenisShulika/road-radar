@@ -14,9 +14,12 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.navigation.NavController
+import com.denisshulika.road_radar.AuthState
 import com.denisshulika.road_radar.AuthViewModel
 import com.denisshulika.road_radar.Routes
 
@@ -27,6 +30,16 @@ fun AddNewIncidentPage(
     navController: NavController,
     authViewModel: AuthViewModel
 ) {
+    val authState = authViewModel.authState.observeAsState()
+
+    LaunchedEffect(authState.value) {
+        authViewModel.checkAuthStatus()
+        when (authState.value) {
+            is AuthState.Unauthenticated -> navController.navigate(Routes.LOGIN)
+            else -> Unit
+        }
+    }
+
     Box(
         modifier = Modifier
             .statusBarsPadding()

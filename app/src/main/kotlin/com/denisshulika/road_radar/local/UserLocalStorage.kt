@@ -50,15 +50,39 @@ class UserLocalStorage(private val context: Context) {
         }
     }
 
-    suspend fun getUserPhotoUrl() : String? {
+    suspend fun getUserEmail() : String? {
         return context.dataStore.data.map { prefs ->
-            prefs[PHOTO_URL_KEY]
+            prefs[EMAIL_KEY]
         }.firstOrNull()
     }
 
     suspend fun getUserName() : String? {
         return context.dataStore.data.map { prefs ->
             prefs[NAME_KEY]
+        }.firstOrNull()
+    }
+
+    suspend fun getUserPhoneNuber() : String? {
+        return context.dataStore.data.map { prefs ->
+            prefs[PHONE_KEY]
+        }.firstOrNull()
+    }
+
+    suspend fun getUserArea() : String? {
+        return context.dataStore.data.map { prefs ->
+            prefs[AREA_KEY]
+        }.firstOrNull()
+    }
+
+    suspend fun getUserRegion() : String? {
+        return context.dataStore.data.map { prefs ->
+            prefs[REGION_KEY]
+        }.firstOrNull()
+    }
+
+    suspend fun getUserPhotoUrl() : String? {
+        return context.dataStore.data.map { prefs ->
+            prefs[PHOTO_URL_KEY]
         }.firstOrNull()
     }
 
