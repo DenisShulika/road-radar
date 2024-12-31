@@ -99,7 +99,6 @@ fun ProfilePage(
     authViewModel: AuthViewModel
 ) {
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
 
     val authState = authViewModel.authState.observeAsState()
 
@@ -112,7 +111,7 @@ fun ProfilePage(
     }
 
     var drawerState by remember { mutableStateOf(CustomDrawerState.Closed) }
-    var selectedNavigationItem by remember { mutableStateOf(NavigationItem.Profile) }
+    var selectedNavigationItem by remember { mutableStateOf(NavigationItem.Profile) } //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     val configuration = LocalConfiguration.current
     val destiny = LocalDensity.current.density
@@ -208,7 +207,7 @@ fun ProfilePage(
     LaunchedEffect(Unit) {
         userName = userLocalStorage.getUserName().toString()
         userEmail = userLocalStorage.getUserEmail().toString()
-        userPhoneNumber = userLocalStorage.getUserPhoneNuber().toString()
+        userPhoneNumber = userLocalStorage.getUserPhoneNumber().toString()
         userArea = userLocalStorage.getUserArea().toString()
         userRegion = userLocalStorage.getUserRegion().toString()
         userPhoto = userLocalStorage.getUserPhotoUrl().toString()
@@ -770,7 +769,7 @@ fun ProfilePage(
                                     CoroutineScope(Dispatchers.Main).launch {
                                         userName = userLocalStorage.getUserName().toString()
                                         userEmail = userLocalStorage.getUserEmail().toString()
-                                        userPhoneNumber = userLocalStorage.getUserPhoneNuber().toString()
+                                        userPhoneNumber = userLocalStorage.getUserPhoneNumber().toString()
                                         userArea = userLocalStorage.getUserArea().toString()
                                         userRegion = userLocalStorage.getUserRegion().toString()
                                         userPhoto = userLocalStorage.getUserPhotoUrl().toString()
@@ -824,12 +823,16 @@ fun ProfilePage(
                                             authViewModel.updateUserProfile(
                                                 name = userName,
                                                 photo = userPhoto,
-                                                context = context,
-                                                coroutineScope = coroutineScope
+                                                context = context
                                             )
+                                            var userPassword = ""
+                                            CoroutineScope(Dispatchers.Main).launch {
+                                                userPassword = userLocalStorage.getUserPassword().toString()
+                                            }
                                             val userLocalData = UserData(
                                                 uid = uid,
                                                 email = userEmail,
+                                                password = userPassword,
                                                 name = userName,
                                                 phoneNumber = userPhoneNumber,
                                                 area = userArea,

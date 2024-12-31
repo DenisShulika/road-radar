@@ -5,7 +5,6 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.denisshulika.road_radar.model.UserData
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 
@@ -15,6 +14,7 @@ class UserLocalStorage(private val context: Context) {
     companion object {
         val UID_KEY = stringPreferencesKey("uid")
         val EMAIL_KEY = stringPreferencesKey("email")
+        val PASSWORD_KEY = stringPreferencesKey("password")
         val NAME_KEY = stringPreferencesKey("name")
         val PHONE_KEY = stringPreferencesKey("phoneNumber")
         val AREA_KEY = stringPreferencesKey("area")
@@ -26,27 +26,12 @@ class UserLocalStorage(private val context: Context) {
         context.dataStore.edit { prefs ->
             prefs[UID_KEY] = user.uid
             prefs[EMAIL_KEY] = user.email
+            prefs[PASSWORD_KEY] = user.password
             prefs[NAME_KEY] = user.name
             prefs[PHONE_KEY] = user.phoneNumber
             prefs[AREA_KEY] = user.area
             prefs[REGION_KEY] = user.region
             user.photoUrl?.let { prefs[PHOTO_URL_KEY] = it }
-        }
-    }
-
-    val userFlow: Flow<UserData?> = context.dataStore.data.map { prefs ->
-        val uid = prefs[UID_KEY]
-        val email = prefs[EMAIL_KEY]
-        val name = prefs[NAME_KEY]
-        val phoneNumber = prefs[PHONE_KEY]
-        val area = prefs[AREA_KEY]
-        val region = prefs[REGION_KEY]
-        val photoUrl = prefs[PHOTO_URL_KEY]
-
-        if (uid != null && email != null && name != null && phoneNumber != null && area != null && region != null) {
-            UserData(uid, email, name, phoneNumber, area, region, photoUrl)
-        } else {
-            null
         }
     }
 
@@ -56,13 +41,19 @@ class UserLocalStorage(private val context: Context) {
         }.firstOrNull()
     }
 
+    suspend fun getUserPassword() : String? {
+        return context.dataStore.data.map { prefs ->
+            prefs[PASSWORD_KEY]
+        }.firstOrNull()
+    }
+
     suspend fun getUserName() : String? {
         return context.dataStore.data.map { prefs ->
             prefs[NAME_KEY]
         }.firstOrNull()
     }
 
-    suspend fun getUserPhoneNuber() : String? {
+    suspend fun getUserPhoneNumber() : String? {
         return context.dataStore.data.map { prefs ->
             prefs[PHONE_KEY]
         }.firstOrNull()

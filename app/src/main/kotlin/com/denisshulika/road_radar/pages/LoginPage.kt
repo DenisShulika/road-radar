@@ -59,7 +59,8 @@ import com.denisshulika.road_radar.ui.components.StyledBasicTextField
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
 val RubikFont = FontFamily(
-    Font(R.font.rubik_medium, FontWeight.Normal),
+    Font(R.font.rubik, FontWeight.Normal),
+    Font(R.font.rubik_medium, FontWeight.Medium),
     Font(R.font.rubik_semibold, FontWeight.SemiBold),
     Font(R.font.rubik_bold, FontWeight.Bold),
     Font(R.font.rubik_extrabold, FontWeight.ExtraBold)
@@ -124,7 +125,7 @@ fun LoginPage(
                 modifier = Modifier
                     .fillMaxSize()
                     .weight(1f)
-                    .padding(20.dp),
+                    .padding(top = 20.dp, start = 20.dp, end = 20.dp, bottom = 10.dp),
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
@@ -265,8 +266,8 @@ fun LoginPage(
                     Spacer(modifier = Modifier.size(24.dp))
                     Button(
                         modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp),
+                            .fillMaxWidth()
+                            .height(52.dp),
                         onClick = {
                             isEmailEmpty = email.isEmpty()
                             if(isEmailEmpty) {

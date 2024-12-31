@@ -9,6 +9,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.denisshulika.road_radar.pages.AboutPage
 import com.denisshulika.road_radar.pages.AddNewIncidentPage
+import com.denisshulika.road_radar.pages.EmailResetPage
 import com.denisshulika.road_radar.pages.GoogleRegistratingPage
 import com.denisshulika.road_radar.pages.IncidentsPage
 import com.denisshulika.road_radar.pages.LoginPage
@@ -49,6 +50,9 @@ fun RoadRadarNavigation(
             composable(Routes.PASSWORD_RESET) {
                 PasswordResetPage(modifier, navController, authViewModel)
             }
+            composable(Routes.EMAIL_RESET) {
+                EmailResetPage(modifier, navController, authViewModel)
+            }
             composable(Routes.GOOGLE_REGISTRATING) {
                 GoogleRegistratingPage(modifier, navController, authViewModel)
             }
@@ -78,6 +82,7 @@ object Routes {
     const val LOGIN = "login"
     const val SIGNUP = "signup"
     const val PASSWORD_RESET = "password_reset"
+    const val EMAIL_RESET = "email_reset"
     const val GOOGLE_REGISTRATING = "google_registrating"
     const val INCIDENTS = "incidents"
     const val ADD_NEW_INCIDENT = "add_new_incident"

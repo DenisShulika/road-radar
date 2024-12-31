@@ -187,7 +187,7 @@ fun GoogleRegistratingPage(
                 ) {
                     Column(
                         modifier = Modifier
-                            .padding(20.dp)
+                            .padding(top = 20.dp, start = 20.dp, end = 20.dp, bottom = 10.dp)
                             .fillMaxSize()
                             .verticalScroll(rememberScrollState())
                     ) {
@@ -477,6 +477,8 @@ fun GoogleRegistratingPage(
                                     .padding(top = 2.dp, bottom = 2.dp),
                                 onClick = {
                                     authViewModel.deleteAccount(
+                                        email = "",
+                                        password = "",
                                         context = context,
                                         coroutineScope = coroutineScope
                                     )

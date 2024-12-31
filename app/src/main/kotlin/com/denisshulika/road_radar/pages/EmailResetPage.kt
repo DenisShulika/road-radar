@@ -46,13 +46,14 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.denisshulika.road_radar.AuthViewModel
 import com.denisshulika.road_radar.R
-import com.denisshulika.road_radar.ResetPasswordState
+import com.denisshulika.road_radar.ResetEmailState
 import com.denisshulika.road_radar.Routes
+import com.denisshulika.road_radar.local.UserLocalStorage
 import com.denisshulika.road_radar.ui.components.StyledBasicTextField
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
 @Composable
-fun PasswordResetPage(
+fun EmailResetPage(
     @Suppress("UNUSED_PARAMETER") modifier: Modifier = Modifier,
     navController: NavController,
     authViewModel: AuthViewModel
@@ -70,29 +71,37 @@ fun PasswordResetPage(
 
     val context = LocalContext.current
 
+    val resetEmailState = authViewModel.resetEmailState.observeAsState()
 
-    val resetPasswordState = authViewModel.resetPasswordState.observeAsState()
-
-    LaunchedEffect(resetPasswordState.value) {
-        when (resetPasswordState.value) {
-            is ResetPasswordState.Success -> {
+    LaunchedEffect(resetEmailState.value) {
+        when (resetEmailState.value) {
+            is ResetEmailState.Success -> {
                 navController.navigate(Routes.LOGIN)
-                authViewModel.resetPasswordState.value = ResetPasswordState.Null
+                authViewModel.resetEmailState.value = ResetEmailState.Null
             }
-            is ResetPasswordState.Error -> {
+            is ResetEmailState.Error -> {
                 Toast.makeText(
                     context,
-                    (resetPasswordState.value as ResetPasswordState.Error).message,
+                    (resetEmailState.value as ResetEmailState.Error).message,
                     Toast.LENGTH_LONG).show()
-                authViewModel.setResetPasswordState(ResetPasswordState.Null)
+                authViewModel.setResetEmailState(ResetEmailState.Null)
             }
             else -> Unit
         }
     }
 
+    var newEmail by remember { mutableStateOf("") }
+    var newEmailError by remember { mutableStateOf(false) }
+    var isNewEmailEmpty by remember { mutableStateOf(false) }
+
     var email by remember { mutableStateOf("") }
-    var emailError by remember { mutableStateOf(false) }
-    var isEmailEmpty by remember { mutableStateOf(false) }
+    var password by remember { mutableStateOf("") }
+
+    val userLocalStorage = UserLocalStorage(context)
+    LaunchedEffect(Unit) {
+        email = userLocalStorage.getUserEmail().toString()
+        password = userLocalStorage.getUserPassword().toString()
+    }
 
     Box(
         modifier = Modifier
@@ -120,7 +129,7 @@ fun PasswordResetPage(
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    text = "Password",
+                    text = "Email",
                     fontSize = 64.sp,
                     color = Color.White,
                     fontFamily = RubikFont,
@@ -145,30 +154,30 @@ fun PasswordResetPage(
                         verticalArrangement = Arrangement.spacedBy(20.dp)
                     ) {
                         Text(
-                            text = "Email",
+                            text = "New Email",
                             fontSize = 24.sp,
                             fontFamily = RubikFont,
                             fontWeight = FontWeight.Normal
                         )
                         StyledBasicTextField(
-                            value = email,
+                            value = newEmail,
                             onValueChange = {
-                                email = it
-                                emailError = !isValidEmail(it)
-                                isEmailEmpty = email.isEmpty()
+                                newEmail = it
+                                newEmailError = !isValidEmail(it)
+                                isNewEmailEmpty = newEmail.isEmpty()
                             },
-                            placeholder = "Enter your email",
+                            placeholder = "Enter your new email",
                             keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Email)
                         )
                     }
-                    if (isEmailEmpty) {
+                    if (isNewEmailEmpty) {
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             "Email cant be empty",
                             color = Color(0xFFB71C1C),
                             style = MaterialTheme.typography.bodySmall
                         )
-                    } else if (emailError) {
+                    } else if (newEmailError) {
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             "Invalid email address",
@@ -182,25 +191,27 @@ fun PasswordResetPage(
                             .fillMaxWidth()
                             .height(52.dp),
                         onClick = {
-                            isEmailEmpty = email.isEmpty()
-                            if(isEmailEmpty) {
+                            isNewEmailEmpty = newEmail.isEmpty()
+                            if(isNewEmailEmpty) {
                                 Toast.makeText(context, "Please, enter your email", Toast.LENGTH_LONG).show()
                                 return@Button
                             }
-                            emailError = !isValidEmail(email)
-                            if(emailError) {
+                            newEmailError = !isValidEmail(newEmail)
+                            if(newEmailError) {
                                 Toast.makeText(context, "Please, enter correct email address", Toast.LENGTH_LONG).show()
                                 return@Button
                             }
-                            authViewModel.resetPassword(
-                                emailAddress = email,
+                            authViewModel.resetEmail(
+                                newEmailAddress = newEmail,
+                                email = email,
+                                password = password,
                                 context = context
                             )
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF474EFF)),
-                        enabled = resetPasswordState.value != ResetPasswordState.Loading
+                        enabled = resetEmailState.value != ResetEmailState.Loading
                     ) {
-                        if (resetPasswordState.value is ResetPasswordState.Loading) {
+                        if (resetEmailState.value is ResetEmailState.Loading) {
                             Box(
                                 modifier = Modifier
                                     .fillMaxSize()
@@ -213,7 +224,7 @@ fun PasswordResetPage(
                             }
                         } else {
                             Text(
-                                text = "Reset Password",
+                                text = "Reset Email",
                                 fontSize = 24.sp,
                                 fontFamily = RubikFont,
                                 fontWeight = FontWeight.Normal
@@ -230,7 +241,7 @@ fun PasswordResetPage(
                             onClick = {
                                 navController.navigate(Routes.LOGIN)
                             },
-                            enabled = resetPasswordState.value != ResetPasswordState.Loading
+                            enabled = resetEmailState.value != ResetEmailState.Loading
                         ) {
                             Text(
                                 text = "Go back",

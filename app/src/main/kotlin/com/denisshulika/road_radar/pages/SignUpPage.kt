@@ -232,7 +232,7 @@ fun SignUpPage(
                                 start = 20.dp,
                                 top = 50.dp,
                                 end = 20.dp,
-                                bottom = 20.dp)
+                                bottom = 10.dp)
                             .fillMaxSize()
                             .verticalScroll(rememberScrollState())
                     ) {

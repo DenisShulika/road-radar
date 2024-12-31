@@ -20,7 +20,6 @@ import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
-import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.auth.userProfileChangeRequest
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.CoroutineScope
@@ -39,6 +38,9 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _resetPasswordState = MutableLiveData<ResetPasswordState?>()
     val resetPasswordState: MutableLiveData<ResetPasswordState?> = _resetPasswordState
+
+    private val _resetEmailState = MutableLiveData<ResetEmailState?>()
+    val resetEmailState: MutableLiveData<ResetEmailState?> = _resetEmailState
 
     private val webClientID =
         "634464591851-se26913skmd19o6li8ul9jcie2dt4lkc.apps.googleusercontent.com"
@@ -75,6 +77,10 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         _resetPasswordState.value = state
     }
 
+    fun setResetEmailState(state: ResetEmailState) {
+        _resetEmailState.value = state
+    }
+
     private fun isUserLoggedInWithGoogle(): Boolean {
         val user = auth.currentUser
         return user?.providerData?.any { it.providerId == GoogleAuthProvider.PROVIDER_ID } == true
@@ -88,8 +94,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     fun updateUserProfile(
         name : String,
         photo: String,
-        context: Context,
-        coroutineScope: CoroutineScope
+        context: Context
     ) {
         val user = auth.currentUser!!
 
@@ -131,6 +136,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                                 val userData = UserData(
                                     uid = uid,
                                     email = email,
+                                    password = password,
                                     name = firebaseUser.displayName ?: "",
                                     phoneNumber = phoneNumber,
                                     area = area,
@@ -200,6 +206,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                             val userDataToSave = UserData(
                                 uid = uid,
                                 email = email,
+                                password = password,
                                 name = name,
                                 phoneNumber = phoneNumber,
                                 area = area,
@@ -281,7 +288,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
                                                 val userData = UserData(
                                                     uid = uid,
-                                                    email = user.email ?: "",
+                                                    email = "",
+                                                    password = "",
                                                     name = firebaseUser.displayName ?: "",
                                                     phoneNumber = phoneNumber,
                                                     area = area,
@@ -292,8 +300,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                                                 coroutineScope.launch {
                                                     val localStorage = UserLocalStorage(context)
                                                     localStorage.saveUser(userData)
-                                                    _authState.value = AuthState.Authenticated
                                                 }
+                                                _authState.value = AuthState.Authenticated
                                             }
                                             .addOnFailureListener {
                                                 _authState.value = AuthState.Error("Failed to load user data")
@@ -353,6 +361,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 val userDataToSave = UserData(
                     uid = uid,
                     email = user.email ?: "",
+                    password = "",
                     name = user.displayName ?: "",
                     phoneNumber = phoneNumber,
                     area = area,
@@ -365,7 +374,6 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                     localStorage.saveUser(userDataToSave)
                     _authState.value = AuthState.Authenticated
                 }
-
                 _authState.value = AuthState.Authenticated
             }
             .addOnFailureListener { e ->
@@ -391,28 +399,31 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun signout(context: Context, coroutineScope: CoroutineScope) {
+        _authState.value = AuthState.Unauthenticated
+
         auth.signOut()
+
         coroutineScope.launch {
             val localStorage = UserLocalStorage(context)
             localStorage.clearUserData()
         }
-        _authState.value = AuthState.Unauthenticated
     }
 
     fun deleteAccount(
+        email : String,
+        password: String,
         context: Context,
-        coroutineScope: CoroutineScope,
-        email : String? = "denisshulika31@gmail.com",
-        password: String? = "111111"
+        coroutineScope: CoroutineScope
     ) {
         val user = auth.currentUser
+
         user?.let { firebaseUser ->
             val uid = firebaseUser.uid
 
             val credential = if (isUserLoggedInWithGoogle()) {
                 GoogleAuthProvider.getCredential(user.getIdToken(true).toString(), null)
             } else if(isUserLoggedInWithEmailPassword()) {
-                EmailAuthProvider.getCredential(email ?: "", password ?: "")
+                EmailAuthProvider.getCredential(email, password)
             } else {
                 null
             }
@@ -470,11 +481,65 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 .addOnCompleteListener { task ->
                     if (task.isSuccessful) {
                         _resetPasswordState.value = ResetPasswordState.Success
+                        _authState.value = AuthState.Unauthenticated
                         Toast.makeText(context, "Password reset email sent. Please check your inbox.", Toast.LENGTH_LONG).show()
                     } else {
                         _resetPasswordState.value = ResetPasswordState.Error(task.exception?.message?:"Failed to send reset email")
                     }
                 }
+        }
+    }
+
+    fun resetEmail(
+        newEmailAddress: String?,
+        email : String,
+        password: String,
+        context: Context
+    ) {
+        _resetEmailState.value = ResetEmailState.Loading
+
+        if (newEmailAddress == null) {
+            showToast(context = context, message = "No email address found")
+        } else if (newEmailAddress.isEmpty()) {
+            showToast(context = context, message = "Email can't be empty")
+        } else {
+            val user = auth.currentUser
+
+            user?.let {
+                val credential = if (isUserLoggedInWithGoogle()) {
+                    GoogleAuthProvider.getCredential(user.getIdToken(true).toString(), null)
+                } else if(isUserLoggedInWithEmailPassword()) {
+                    EmailAuthProvider.getCredential(email, password)
+                } else {
+                    null
+                }
+
+                if(credential != null) {
+                    user.reauthenticate(credential)
+                        .addOnCompleteListener {}
+                } else {
+                    Toast.makeText(
+                        context,
+                        "Failed to Re-auth. Try to delete later",
+                        Toast.LENGTH_LONG
+                    ).show()
+                    return
+                }
+            }
+            if (user != null) {
+                user.verifyBeforeUpdateEmail(newEmailAddress)
+                    .addOnCompleteListener { task ->
+                        if (task.isSuccessful) {
+                            _resetEmailState.value = ResetEmailState.Success
+                            _authState.value = AuthState.Unauthenticated
+                            Toast.makeText(context, "Email reset email sent. Please check your inbox.", Toast.LENGTH_LONG).show()
+                        } else {
+                            _resetEmailState.value = ResetEmailState.Error(task.exception?.message ?: "Failed to send reset email")
+                        }
+                    }
+            } else {
+                showToast(context = context, message = "No user is signed in")
+            }
         }
     }
 }
@@ -520,6 +585,13 @@ sealed class ResetPasswordState {
     data object Loading : ResetPasswordState()
     data object Null : ResetPasswordState()
     data class Error(val message: String) : ResetPasswordState()
+}
+
+sealed class ResetEmailState {
+    data object Success : ResetEmailState()
+    data object Loading : ResetEmailState()
+    data object Null : ResetEmailState()
+    data class Error(val message: String) : ResetEmailState()
 }
 
 //TODO() Expand exceptions that may occur
