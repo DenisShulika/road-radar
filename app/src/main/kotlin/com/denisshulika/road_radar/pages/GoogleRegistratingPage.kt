@@ -1,5 +1,6 @@
 package com.denisshulika.road_radar.pages
 
+import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -61,6 +62,9 @@ import com.denisshulika.road_radar.Routes
 import com.denisshulika.road_radar.isValidPhoneNumber
 import com.denisshulika.road_radar.ui.components.StyledBasicTextField
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import com.google.common.reflect.TypeToken
+import com.google.gson.Gson
+import java.io.InputStreamReader
 
 @Composable
 fun GoogleRegistratingPage(
@@ -84,35 +88,7 @@ fun GoogleRegistratingPage(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
-    @Suppress("SpellCheckingInspection") val regionsByArea = mapOf(
-        "Avtonomna Respublika Krym" to listOf("Bakhchysaraiskyi", "Bilogirskyi", "Dzhankoyskyi", "Yevpatoriiskyi", "Kerchenskyi", "Kurmanskyi", "Perekopskyi", "Simferopolskyi", "Feodosiiskyi", "Yaltynskyi"),
-        "Vinnytska" to listOf("Vinnytskyi", "Haisynskyi", "Zhmerynskyi", "Mohyliv-Podilskyi", "Tulchynskyi", "Khmilnytskyi"),
-        "Volynska" to listOf("Volodymyr-Volynskyi", "Kamin-Kashyrskyi", "Kovelskyi", "Lutskyi"),
-        "Dnipropetrovska" to listOf("Dniprovskiyi", "Kamianchskyi", "Kryvorizkyi", "Nikopolskyi", "Novomoskovskyi", "Pavlohradskiyi", "Synelnykivskyi"),
-        "Donetska" to listOf("Bakhmutskyi", "Volnovaskyi", "Horlivskyi", "Donetskyi", "Kalmiuskyi", "Kramatorskyi", "Mariupolskyi", "Pokrovskyi"),
-        "Zhytomyrska" to listOf("Berdychivskyi", "Zhytomyrskyi", "Korostenskyi", "Novograd-Volynskyi"),
-        "Zakarpatska" to listOf("Beregivskyi", "Mukachivskyi", "Rakhivskyi", "Tyachivskyi", "Uzhhorodskyi", "Khustskyi"),
-        "Zaporizka" to listOf("Berdyanskyi", "Vasylivskyi", "Zaporizkyi", "Melitopolskyi", "Polohivskyi"),
-        "Ivano-Frankivska" to listOf("Verkhovynskyi", "Ivano-Frankivskyi", "Kalushskyi", "Kolomyiskyi", "Kosivskyi", "Nadvirnianskyi"),
-        "Kyivska" to listOf("Bilotserkivskyi", "Boryspilskyi", "Brovarskyi", "Buchanskyi", "Vyshhorodskyi", "Obukhivskyi", "Fastivskyi"),
-        "Kirovohradska" to listOf("Holovanyivskyi", "Kropyvnytskyi", "Novoukrainskyi", "Oleksandriiskyi"),
-        "Luhanska" to listOf("Alchevskyi", "Dovzhanskyi", "Luhanskyi", "Rovenkivskyi", "Svatovskyi", "Severodonetskyi", "Starobilskyi", "Shchastynskyi"),
-        "Lvivska" to listOf("Drohobychskyi", "Zolochivskyi", "Lvivskyi", "Sambirskyi", "Striiskyi", "Chervonogradskyi", "Yavorivskyi"),
-        "Mykolaivska" to listOf("Bashtanskyi", "Voznesenskyi", "Mykolaivskyi", "Pervomaiskyi"),
-        "Odeska" to listOf("Berezivskyi", "Bilhorod-Dnistrovskyi", "Bolhradskyi", "Izmailskyi", "Odeskyi", "Podilskyi", "Rozdilnianskyi"),
-        "Poltavska" to listOf("Kremenchutskyi", "Lubenskyi", "Myrohorodskyi", "Poltavskyi"),
-        "Rivnenska" to listOf("Varashskyi", "Dubenskyi", "Rivnenskyi", "Sarnenskyi"),
-        "Sumska" to listOf("Konotopskyi", "Okhtyrskyi", "Romenskyi", "Sumskyi", "Shostkynskyi"),
-        "Ternopilska" to listOf("Kremenetskyi", "Ternopilskyi", "Chortkivskyi"),
-        "Kharkivska" to listOf("Bohodukhivskyi", "Iziumskyi", "Krasnohradskyi", "Kupyanskyi", "Lozivskyi", "Kharkivskyi", "Chuhuivskyi"),
-        "Khersonska" to listOf("Beryslavskyi", "Henicheskyi", "Kakhovsky", "Skadovsky", "Khersonskiy"),
-        "Khmelnytska" to listOf("Kamianets-Podilskyi", "Khmelnytskyi", "Shepetivskyi"),
-        "Cherkaska" to listOf("Zvenyhorodskyi", "Zolotoniskyi", "Umanskyi", "Cherkaskyi"),
-        "Chernivetska" to listOf("Vyzhnytskyi", "Dnistrovskyi", "Chernivetskyi"),
-        "Chernihivska" to listOf("Koriukivskyi", "Nizhynskyi", "Novhorod-Siverskyi", "Prilutskyi", "Chernihivskyi"),
-        "Misto Kyiv" to listOf("Holosiivskyi", "Darnytskyi", "Desnianskyi", "Dniprovskiyi", "Obolonskyi", "Pecherskyi", "Podilskyi", "Sviatoshynskyi", "Solomianskyi", "Shevchenkivskyi"),
-        "Misto Simferopol" to listOf("Leninskyi", "Balaklavskyi", "Haharinskyi", "Nakhimovskyi")
-    )
+    val regionsByArea = loadRegionsFromJson(context)
     val areas = regionsByArea.keys.toList()
 
     var phoneNumber by remember { mutableStateOf("") }
@@ -501,4 +477,10 @@ fun GoogleRegistratingPage(
             }
         }
     }
+}
+
+fun loadRegionsFromJson(context: Context): Map<String, List<String>> {
+    val inputStream = context.assets.open("regions.json")
+    val reader = InputStreamReader(inputStream)
+    return Gson().fromJson(reader, object : TypeToken<Map<String, List<String>>>() {}.type)
 }
