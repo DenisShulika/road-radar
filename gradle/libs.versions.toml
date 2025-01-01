@@ -32,6 +32,7 @@ materialIconsExtended = "1.7.6"
 mockitoCore = "4.8.0"
 navigationCompose = "2.5.3"
 playServicesAuth = "21.3.0"
+playServicesLocation = "21.0.1"
 retrofit = "2.9.0"
 roomRuntime = "2.5.0"
 runtime = "1.x.x"
@@ -99,6 +100,7 @@ libphonenumber = { module = "com.googlecode.libphonenumber:libphonenumber", vers
 material3 = { module = "androidx.compose.material3:material3", version.ref = "material3" }
 mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockitoCore" }
 play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "playServicesAuth" }
+play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "playServicesLocation" }
 postgrest-kt = { module = "io.github.jan-tennert.supabase:postgrest-kt" }
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }

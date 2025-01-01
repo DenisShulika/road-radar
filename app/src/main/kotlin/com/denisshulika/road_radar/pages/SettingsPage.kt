@@ -18,6 +18,8 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Menu
@@ -227,6 +229,7 @@ fun SettingsPage(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
+                    .verticalScroll(rememberScrollState())
             ) {
                 Column(
                     modifier = Modifier
@@ -234,7 +237,7 @@ fun SettingsPage(
                 ) {
                     Column(
                         modifier = Modifier
-                            .background(Color(0xFFE3E3E3))
+                            .background(Color(0x10000000))
                             .fillMaxWidth()
                     ) {
                         Column(
@@ -344,7 +347,7 @@ fun SettingsPage(
                 ) {
                     Column(
                         modifier = Modifier
-                            .background(Color(0xFFE3E3E3))
+                            .background(Color(0x10000000))
                             .fillMaxWidth()
                     ) {
                         Column(
@@ -425,7 +428,7 @@ fun SettingsPage(
                 ) {
                     Column(
                         modifier = Modifier
-                            .background(Color(0xFFE3E3E3))
+                            .background(Color(0x10000000))
                             .fillMaxWidth()
                     ) {
                         Column(

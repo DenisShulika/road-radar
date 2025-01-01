@@ -60,7 +60,7 @@ fun RoadRadarNavigation(
                 IncidentsPage(modifier, navController, authViewModel)
             }
             composable(Routes.ADD_NEW_INCIDENT) {
-                AddNewIncidentPage(modifier, navController, authViewModel)
+                AddNewIncidentPage(modifier, navController)
             }
             composable(Routes.MAP_RADAR) {
                 MapRadarPage(modifier, navController, authViewModel)
