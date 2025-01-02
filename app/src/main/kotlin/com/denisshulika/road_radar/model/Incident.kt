@@ -9,8 +9,8 @@ data class Incident(
     val createdBy: String,
     val photos: List<String>,
     val gps: GPS,
-    val area: String,
     val region: String,
+    val district: String,
     val incidentType: IncidentType
 )
 

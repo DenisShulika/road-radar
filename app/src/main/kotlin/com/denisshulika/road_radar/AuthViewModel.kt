@@ -129,8 +129,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                         firestore.collection("users").document(uid).get()
                             .addOnSuccessListener { document ->
                                 val phoneNumber = document.getString("phoneNumber") ?: ""
-                                val area = document.getString("area") ?: ""
                                 val region = document.getString("region") ?: ""
+                                val district = document.getString("district") ?: ""
                                 val photoUrl = firebaseUser.photoUrl?.toString()
 
                                 val userData = UserData(
@@ -139,8 +139,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                                     password = password,
                                     name = firebaseUser.displayName ?: "",
                                     phoneNumber = phoneNumber,
-                                    area = area,
                                     region = region,
+                                    district = district,
                                     photoUrl = photoUrl
                                 )
 
@@ -167,8 +167,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         password: String,
         name: String,
         phoneNumber: String,
-        area: String,
         region: String,
+        district: String,
         photo: Uri,
         context: Context,
         coroutineScope: CoroutineScope
@@ -195,8 +195,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                         }
 
                     val userData = hashMapOf(
+                        "district" to district,
                         "phoneNumber" to phoneNumber,
-                        "area" to area,
                         "region" to region
                     )
                     firestore.collection("users")
@@ -209,8 +209,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                                 password = password,
                                 name = name,
                                 phoneNumber = phoneNumber,
-                                area = area,
                                 region = region,
+                                district = district,
                                 photoUrl = photo.toString()
                             )
 
@@ -282,8 +282,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                                         firestore.collection("users").document(uid).get()
                                             .addOnSuccessListener { document ->
                                                 val phoneNumber = document.getString("phoneNumber") ?: ""
-                                                val area = document.getString("area") ?: ""
                                                 val region = document.getString("region") ?: ""
+                                                val district = document.getString("district") ?: ""
                                                 val photoUrl = firebaseUser.photoUrl?.toString()
 
                                                 val userData = UserData(
@@ -292,8 +292,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                                                     password = "",
                                                     name = firebaseUser.displayName ?: "",
                                                     phoneNumber = phoneNumber,
-                                                    area = area,
                                                     region = region,
+                                                    district = district,
                                                     photoUrl = photoUrl
                                                 )
 
@@ -335,8 +335,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     fun completeRegistrationViaGoogle(
         phoneNumber: String,
-        area: String,
         region: String,
+        district: String,
         context: Context,
         coroutineScope: CoroutineScope
     ) {
@@ -348,8 +348,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
         val firestore = FirebaseFirestore.getInstance()
         val userData = hashMapOf(
+            "district" to district,
             "phoneNumber" to (phoneNumber),
-            "area" to area,
             "region" to region
         )
 
@@ -364,8 +364,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                     password = "",
                     name = user.displayName ?: "",
                     phoneNumber = phoneNumber,
-                    area = area,
                     region = region,
+                    district = district,
                     photoUrl = user.photoUrl?.toString() ?: ""
                 )
 
@@ -390,9 +390,9 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
         return try {
             val document = userRef.get().await()
-            val area = document.getString("area")
             val region = document.getString("region")
-            !area.isNullOrEmpty() && !region.isNullOrEmpty()
+            val district = document.getString("district")
+            !region.isNullOrEmpty() && !district.isNullOrEmpty()
         } catch (e: Exception) {
             false
         }

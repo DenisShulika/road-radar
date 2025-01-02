@@ -17,8 +17,8 @@ class UserLocalStorage(private val context: Context) {
         val PASSWORD_KEY = stringPreferencesKey("password")
         val NAME_KEY = stringPreferencesKey("name")
         val PHONE_KEY = stringPreferencesKey("phoneNumber")
-        val AREA_KEY = stringPreferencesKey("area")
         val REGION_KEY = stringPreferencesKey("region")
+        val DISTRICT_KEY = stringPreferencesKey("district")
         val PHOTO_URL_KEY = stringPreferencesKey("photoUrl")
     }
 
@@ -29,8 +29,8 @@ class UserLocalStorage(private val context: Context) {
             prefs[PASSWORD_KEY] = user.password
             prefs[NAME_KEY] = user.name
             prefs[PHONE_KEY] = user.phoneNumber
-            prefs[AREA_KEY] = user.area
             prefs[REGION_KEY] = user.region
+            prefs[DISTRICT_KEY] = user.district
             user.photoUrl?.let { prefs[PHOTO_URL_KEY] = it }
         }
     }
@@ -59,15 +59,15 @@ class UserLocalStorage(private val context: Context) {
         }.firstOrNull()
     }
 
-    suspend fun getUserArea() : String? {
-        return context.dataStore.data.map { prefs ->
-            prefs[AREA_KEY]
-        }.firstOrNull()
-    }
-
     suspend fun getUserRegion() : String? {
         return context.dataStore.data.map { prefs ->
             prefs[REGION_KEY]
+        }.firstOrNull()
+    }
+
+    suspend fun getUserDistrict() : String? {
+        return context.dataStore.data.map { prefs ->
+            prefs[DISTRICT_KEY]
         }.firstOrNull()
     }
 

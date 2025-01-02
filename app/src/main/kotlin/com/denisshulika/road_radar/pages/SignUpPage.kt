@@ -104,8 +104,8 @@ fun SignUpPage(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
-    val regionsByArea = loadRegionsFromJson(context)
-    val areas = regionsByArea.keys.toList()
+    val districtsByRegion = loadDistrictsFromJson(context)
+    val regions = districtsByRegion.keys.toList()
 
 
     var name by remember { mutableStateOf("") }
@@ -119,13 +119,13 @@ fun SignUpPage(
     var phoneNumberError by remember { mutableStateOf(false) }
     var isPhoneNumberEmpty by remember { mutableStateOf(false) }
 
-    var selectedArea by remember { mutableStateOf<String?>(null) }
-    val isAreaDropdownExpanded = remember { mutableStateOf(false) }
-    val areaItemPosition = remember { mutableIntStateOf(0) }
-
     var selectedRegion by remember { mutableStateOf<String?>(null) }
     val isRegionDropdownExpanded = remember { mutableStateOf(false) }
     val regionItemPosition = remember { mutableIntStateOf(0) }
+
+    var selectedDistrict by remember { mutableStateOf<String?>(null) }
+    val isDistrictDropdownExpanded = remember { mutableStateOf(false) }
+    val districtItemPosition = remember { mutableIntStateOf(0) }
 
     var password by remember { mutableStateOf("") }
     var passwordError by remember { mutableStateOf(false) }
@@ -310,7 +310,7 @@ fun SignUpPage(
                             verticalArrangement = Arrangement.spacedBy(20.dp)
                         ) {
                             Text(
-                                text = "Your area",
+                                text = "Your region",
                                 fontSize = 24.sp,
                                 fontFamily = RubikFont,
                                 fontWeight = FontWeight.Normal
@@ -339,14 +339,14 @@ fun SignUpPage(
                                         verticalAlignment = Alignment.CenterVertically,
                                         modifier = Modifier
                                             .clickable {
-                                                isAreaDropdownExpanded.value = true
+                                                isRegionDropdownExpanded.value = true
                                             }
                                             .fillMaxWidth()
                                     ) {
                                         Text(
-                                            text = selectedArea?.takeIf { it.isNotBlank() } ?: "Choose your area",
+                                            text = selectedRegion?.takeIf { it.isNotBlank() } ?: "Choose your region",
                                             style = TextStyle(
-                                                color = if (selectedArea != null) Color(0xFF000000) else Color(0xFFADADAD),
+                                                color = if (selectedRegion != null) Color(0xFF000000) else Color(0xFFADADAD),
                                                 fontSize = 20.sp,
                                                 lineHeight = 20.sp
                                             ),
@@ -361,14 +361,14 @@ fun SignUpPage(
                                     DropdownMenu(
                                         modifier = Modifier
                                             .background(Color(0xFF474EFF)),
-                                        expanded = isAreaDropdownExpanded.value,
+                                        expanded = isRegionDropdownExpanded.value,
                                         onDismissRequest = {
-                                            isAreaDropdownExpanded.value = false
+                                            isRegionDropdownExpanded.value = false
                                         }) {
-                                        areas.forEachIndexed { index, area ->
+                                        regions.forEachIndexed { index, region ->
                                             DropdownMenuItem(text = {
                                                 Text(
-                                                    text = area,
+                                                    text = region,
                                                     style = TextStyle(
                                                         color = Color(0xFFFFFFFF),
                                                         fontSize = 20.sp,
@@ -379,10 +379,10 @@ fun SignUpPage(
                                                 )
                                             },
                                                 onClick = {
-                                                    isAreaDropdownExpanded.value = false
-                                                    areaItemPosition.intValue = index
-                                                    selectedArea = area
-                                                    selectedRegion = null
+                                                    isRegionDropdownExpanded.value = false
+                                                    regionItemPosition.intValue = index
+                                                    selectedRegion = region
+                                                    selectedDistrict = null
                                                 })
                                         }
                                     }
@@ -391,12 +391,12 @@ fun SignUpPage(
                             }
                         }
                         Spacer(modifier = Modifier.size(32.dp))
-                        if (selectedArea != null) {
+                        if (selectedRegion != null) {
                             Column(
                                 verticalArrangement = Arrangement.spacedBy(20.dp)
                             ) {
                                 Text(
-                                    text = "Your region",
+                                    text = "Your district",
                                     fontSize = 24.sp,
                                     fontFamily = RubikFont,
                                     fontWeight = FontWeight.Normal
@@ -425,14 +425,14 @@ fun SignUpPage(
                                             verticalAlignment = Alignment.CenterVertically,
                                             modifier = Modifier
                                                 .clickable {
-                                                    isRegionDropdownExpanded.value = true
+                                                    isDistrictDropdownExpanded.value = true
                                                 }
                                                 .fillMaxWidth()
                                         ) {
                                             Text(
-                                                text = selectedRegion?.takeIf { it.isNotBlank() } ?: "Choose your region",
+                                                text = selectedDistrict?.takeIf { it.isNotBlank() } ?: "Choose your district",
                                                 style = TextStyle(
-                                                    color = if (selectedRegion != null) Color(0xFF000000) else Color(0xFFADADAD),
+                                                    color = if (selectedDistrict != null) Color(0xFF000000) else Color(0xFFADADAD),
                                                     fontSize = 20.sp,
                                                     lineHeight = 20.sp
                                                 ),
@@ -447,15 +447,15 @@ fun SignUpPage(
                                         DropdownMenu(
                                             modifier = Modifier
                                                 .background(Color(0xFF474EFF)),
-                                            expanded = isRegionDropdownExpanded.value,
+                                            expanded = isDistrictDropdownExpanded.value,
                                             onDismissRequest = {
-                                                isRegionDropdownExpanded.value = false
+                                                isDistrictDropdownExpanded.value = false
                                             }) {
-                                            regionsByArea[selectedArea]?.forEachIndexed { index, region ->
+                                            districtsByRegion[selectedRegion]?.forEachIndexed { index, district ->
                                                 DropdownMenuItem(
                                                     text = {
                                                         Text(
-                                                            text = region,
+                                                            text = district,
                                                             style = TextStyle(
                                                                 color = Color(0xFFFFFFFF),
                                                                 fontSize = 20.sp,
@@ -466,9 +466,9 @@ fun SignUpPage(
                                                         )
                                                     },
                                                     onClick = {
-                                                        isRegionDropdownExpanded.value = false
-                                                        regionItemPosition.intValue = index
-                                                        selectedRegion = region
+                                                        isDistrictDropdownExpanded.value = false
+                                                        districtItemPosition.intValue = index
+                                                        selectedDistrict = district
                                                     })
                                             }
                                         }
@@ -626,12 +626,12 @@ fun SignUpPage(
                                     Toast.makeText(context, "Please, enter correct phone number", Toast.LENGTH_LONG).show()
                                     return@Button
                                 }
-                                if(selectedArea == null) {
-                                    Toast.makeText(context, "Please, select your area", Toast.LENGTH_LONG).show()
-                                    return@Button
-                                }
                                 if(selectedRegion == null) {
                                     Toast.makeText(context, "Please, select your region", Toast.LENGTH_LONG).show()
+                                    return@Button
+                                }
+                                if(selectedDistrict == null) {
+                                    Toast.makeText(context, "Please, select your district", Toast.LENGTH_LONG).show()
                                     return@Button
                                 }
                                 isPasswordEmpty = password.isEmpty()
@@ -667,8 +667,8 @@ fun SignUpPage(
                                         password = password,
                                         name = name,
                                         phoneNumber = phoneNumber.replace(" ", ""),
-                                        area = selectedArea!!,
                                         region = selectedRegion!!,
+                                        district = selectedDistrict!!,
                                         photo = croppedImageUri!!,
                                         context,
                                         coroutineScope
