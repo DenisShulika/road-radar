@@ -1,9 +1,7 @@
 package com.denisshulika.road_radar.pages
 
-import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -19,14 +18,9 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -34,7 +28,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -42,14 +35,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.paint
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -60,17 +50,18 @@ import com.denisshulika.road_radar.AuthViewModel
 import com.denisshulika.road_radar.R
 import com.denisshulika.road_radar.Routes
 import com.denisshulika.road_radar.isValidPhoneNumber
+import com.denisshulika.road_radar.ui.components.AutocompleteTextFieldForDistrict
+import com.denisshulika.road_radar.ui.components.AutocompleteTextFieldForRegion
 import com.denisshulika.road_radar.ui.components.StyledBasicTextField
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.google.common.reflect.TypeToken
-import com.google.gson.Gson
-import java.io.InputStreamReader
+import com.google.android.libraries.places.api.net.PlacesClient
 
 @Composable
 fun GoogleRegistratingPage(
     @Suppress("UNUSED_PARAMETER") modifier: Modifier = Modifier,
     navController: NavController,
-    authViewModel: AuthViewModel
+    authViewModel: AuthViewModel,
+    placesClient: PlacesClient
 ) {
     val systemUiController = rememberSystemUiController()
 
@@ -88,20 +79,17 @@ fun GoogleRegistratingPage(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
-    val districtsByRegion = loadDistrictsFromJson(context)
-    val regions = districtsByRegion.keys.toList()
-
     var phoneNumber by remember { mutableStateOf("") }
     var phoneNumberError by remember { mutableStateOf(false) }
     var isPhoneNumberEmpty by remember { mutableStateOf(false) }
 
-    var selectedRegion by remember { mutableStateOf<String?>(null) }
-    val isRegionDropdownExpanded = remember { mutableStateOf(false) }
-    val regionItemPosition = remember { mutableIntStateOf(0) }
+    var selectedRegion by remember { mutableStateOf("") }
+    var isRegionSelected by remember { mutableStateOf(false) }
+    var isSelectedRegionEmpty by remember { mutableStateOf(false) }
 
-    var selectedDistrict by remember { mutableStateOf<String?>(null) }
-    val isDistrictDropdownExpanded = remember { mutableStateOf(false) }
-    val districtItemPosition = remember { mutableIntStateOf(0) }
+    var selectedDistrict by remember { mutableStateOf("") }
+    var isDistrictSelected by remember { mutableStateOf(false) }
+    var isDistrictSelectedEmpty by remember { mutableStateOf(false) }
 
     LaunchedEffect(authState.value) {
         authViewModel.checkAuthStatus()
@@ -136,14 +124,14 @@ fun GoogleRegistratingPage(
             ) {
                 Text(
                     text = "Sign in",
-                    fontSize = 64.sp,
+                    fontSize = 52.sp,
                     color = Color.White,
                     fontFamily = RubikFont,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
                     text = "with Google",
-                    fontSize = 64.sp,
+                    fontSize = 52.sp,
                     color = Color.White,
                     fontFamily = RubikFont,
                     fontWeight = FontWeight.SemiBold
@@ -151,7 +139,7 @@ fun GoogleRegistratingPage(
             }
             Box (
                 modifier = Modifier
-                    .weight(1f)
+                    .weight(2f)
                     .fillMaxSize()
             ) {
                 Column(
@@ -181,6 +169,99 @@ fun GoogleRegistratingPage(
                             )
                         }
                         Spacer(modifier = Modifier.size(20.dp))
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(20.dp)
+                        ) {
+                            Text(
+                                text = "Your region",
+                                fontSize = 24.sp,
+                                fontFamily = RubikFont,
+                                fontWeight = FontWeight.Normal
+                            )
+                            AutocompleteTextFieldForRegion(
+                                modifier = Modifier.heightIn(min = 0.dp, max = 300.dp),
+                                value = selectedRegion,
+                                placesClient = placesClient,
+                                onPlaceSelected = { value ->
+                                    selectedRegion = value
+                                    isRegionSelected = true
+                                },
+                                onValueChange = { value ->
+                                    selectedRegion = value
+                                    isRegionSelected = false
+                                    isSelectedRegionEmpty = selectedRegion.isEmpty()
+
+                                    selectedDistrict = ""
+                                    isDistrictSelected = false
+                                    isDistrictSelectedEmpty = false
+                                },
+                                placeholder = "Enter your region"
+                            )
+                        }
+                        if (isSelectedRegionEmpty) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                "Region cant be empty",
+                                color = Color(0xFFB71C1C),
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                        Spacer(modifier = Modifier.size(32.dp))
+                        if (isRegionSelected) {
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(20.dp)
+                            ) {
+                                Text(
+                                    text = "District",
+                                    fontSize = 24.sp,
+                                    fontFamily = RubikFont,
+                                    fontWeight = FontWeight.Normal
+                                )
+                                AutocompleteTextFieldForDistrict(
+                                    modifier = Modifier.heightIn(min = 0.dp, max = 300.dp),
+                                    value = selectedDistrict,
+                                    placesClient = placesClient,
+                                    onPlaceSelected = { value ->
+                                        selectedDistrict = value
+                                        isDistrictSelected = true
+                                    },
+                                    onValueChange = { value ->
+                                        selectedDistrict = value
+                                        isDistrictSelected = false
+                                        isDistrictSelectedEmpty = selectedDistrict.isEmpty()
+                                    },
+                                    placeholder = "Enter your district",
+                                    region = selectedRegion
+                                )
+                            }
+                            if (isDistrictSelectedEmpty) {
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    "District cant be empty",
+                                    color = Color(0xFFB71C1C),
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                        } else {
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Text(
+                                    text = "District",
+                                    fontSize = 24.sp,
+                                    fontFamily = RubikFont,
+                                    fontWeight = FontWeight.Normal
+                                )
+                                Text(
+                                    text = "Enter a region firstly",
+                                    fontSize = 20.sp,
+                                    fontFamily = RubikFont,
+                                    fontWeight = FontWeight.Normal,
+                                    color = Color(0xFFD3D3D3)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.size(32.dp))
                         Column (
                             verticalArrangement = Arrangement.spacedBy(20.dp)
                         ) {
@@ -216,180 +297,6 @@ fun GoogleRegistratingPage(
                             )
                         }
                         Spacer(modifier = Modifier.size(32.dp))
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(20.dp)
-                        ) {
-                            Text(
-                                text = "Your region",
-                                fontSize = 24.sp,
-                                fontFamily = RubikFont,
-                                fontWeight = FontWeight.Normal
-                            )
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .drawBehind {
-                                        val strokeWidth = 1.dp.toPx()
-                                        val y = size.height - strokeWidth / 2
-                                        drawLine(
-                                            color = Color(0xFFD3D3D3),
-                                            start = Offset(0f, 0.75f * y),
-                                            end = Offset(size.width, 0.75f * y),
-                                            strokeWidth = strokeWidth
-                                        )
-                                    },
-                                verticalArrangement = Arrangement.Center
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .height(36.dp)
-                                        .fillMaxWidth()
-                                ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        modifier = Modifier
-                                            .clickable {
-                                                isRegionDropdownExpanded.value = true
-                                            }
-                                            .fillMaxWidth()
-                                    ) {
-                                        Text(
-                                            text = selectedRegion?.takeIf { it.isNotBlank() } ?: "Choose your region",
-                                            style = TextStyle(
-                                                color = if (selectedRegion != null) Color(0xFF000000) else Color(0xFFADADAD),
-                                                fontSize = 20.sp,
-                                                lineHeight = 20.sp
-                                            ),
-                                            fontFamily = RubikFont,
-                                            fontWeight = FontWeight.Normal
-                                        )
-                                        Icon(
-                                            imageVector = Icons.Default.ArrowDropDown,
-                                            contentDescription = ""
-                                        )
-                                    }
-                                    DropdownMenu(
-                                        modifier = Modifier
-                                            .background(Color(0xFF474EFF)),
-                                        expanded = isRegionDropdownExpanded.value,
-                                        onDismissRequest = {
-                                            isRegionDropdownExpanded.value = false
-                                        }) {
-                                        regions.forEachIndexed { index, region ->
-                                            DropdownMenuItem(text = {
-                                                Text(
-                                                    text = region,
-                                                    style = TextStyle(
-                                                        color = Color(0xFFFFFFFF),
-                                                        fontSize = 20.sp,
-                                                        lineHeight = 20.sp
-                                                    ),
-                                                    fontFamily = RubikFont,
-                                                    fontWeight = FontWeight.Normal
-                                                )
-                                            },
-                                                onClick = {
-                                                    isRegionDropdownExpanded.value = false
-                                                    regionItemPosition.intValue = index
-                                                    selectedRegion = region
-                                                    selectedDistrict = null
-                                                })
-                                        }
-                                    }
-                                }
-
-                            }
-                        }
-
-                        if (selectedRegion != null) {
-                            Spacer(modifier = Modifier.size(32.dp))
-                            Column (
-                                verticalArrangement = Arrangement.spacedBy(20.dp)
-                            ) {
-                                Text(
-                                    text = "Your district",
-                                    fontSize = 24.sp,
-                                    fontFamily = RubikFont,
-                                    fontWeight = FontWeight.Normal
-                                )
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .drawBehind {
-                                            val strokeWidth = 1.dp.toPx()
-                                            val y = size.height - strokeWidth / 2
-                                            drawLine(
-                                                color = Color(0xFFD3D3D3),
-                                                start = Offset(0f, 0.75f * y),
-                                                end = Offset(size.width, 0.75f * y),
-                                                strokeWidth = strokeWidth
-                                            )
-                                        },
-                                    verticalArrangement = Arrangement.Center
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .height(36.dp)
-                                            .fillMaxWidth()
-                                    ) {
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            modifier = Modifier
-                                                .clickable {
-                                                    isDistrictDropdownExpanded.value = true
-                                                }
-                                                .fillMaxWidth()
-                                        ) {
-                                            Text(
-                                                text = selectedDistrict?.takeIf { it.isNotBlank() } ?: "Choose your district",
-                                                style = TextStyle(
-                                                    color = if (selectedDistrict != null) Color(0xFF000000) else Color(0xFFADADAD),
-                                                    fontSize = 20.sp,
-                                                    lineHeight = 20.sp
-                                                ),
-                                                fontFamily = RubikFont,
-                                                fontWeight = FontWeight.Normal
-                                            )
-                                            Icon(
-                                                imageVector = Icons.Default.ArrowDropDown,
-                                                contentDescription = ""
-                                            )
-                                        }
-                                        DropdownMenu(
-                                            modifier = Modifier
-                                                .background(Color(0xFF474EFF)),
-                                            expanded = isDistrictDropdownExpanded.value,
-                                            onDismissRequest = {
-                                                isDistrictDropdownExpanded.value = false
-                                            }) {
-                                            districtsByRegion[selectedRegion]?.forEachIndexed { index, district ->
-                                                DropdownMenuItem(
-                                                    text = {
-                                                        Text(
-                                                            text = district,
-                                                            style = TextStyle(
-                                                                color = Color(0xFFFFFFFF),
-                                                                fontSize = 20.sp,
-                                                                lineHeight = 20.sp
-                                                            ),
-                                                            fontFamily = RubikFont,
-                                                            fontWeight = FontWeight.Normal
-                                                        )
-                                                    },
-                                                    onClick = {
-                                                        isDistrictDropdownExpanded.value = false
-                                                        districtItemPosition.intValue = index
-                                                        selectedDistrict = district
-                                                    })
-                                            }
-                                        }
-                                    }
-
-                                }
-                            }
-
-                        }
-                        Spacer(modifier = Modifier.size(24.dp))
                         Button(
                             onClick = {
                                 isPhoneNumberEmpty = phoneNumber.isEmpty()
@@ -402,21 +309,31 @@ fun GoogleRegistratingPage(
                                     Toast.makeText(context, "Please, enter correct phone number", Toast.LENGTH_LONG).show()
                                     return@Button
                                 }
-                                if(selectedRegion == null) {
+                                isSelectedRegionEmpty = selectedRegion.isEmpty()
+                                if(isSelectedRegionEmpty) {
+                                    Toast.makeText(context, "Please, enter your region", Toast.LENGTH_LONG).show()
+                                    return@Button
+                                }
+                                if(!isRegionSelected) {
                                     Toast.makeText(context, "Please, select your region", Toast.LENGTH_LONG).show()
                                     return@Button
-                                } else if(selectedDistrict == null) {
+                                }
+                                isDistrictSelectedEmpty = selectedDistrict.isEmpty()
+                                if(isDistrictSelectedEmpty) {
+                                    Toast.makeText(context, "Please, enter your district", Toast.LENGTH_LONG).show()
+                                    return@Button
+                                }
+                                if(!isDistrictSelected) {
                                     Toast.makeText(context, "Please, select your district", Toast.LENGTH_LONG).show()
                                     return@Button
-                                } else {
-                                    authViewModel.completeRegistrationViaGoogle(
-                                        phoneNumber,
-                                        selectedRegion!!,
-                                        selectedDistrict!!,
-                                        context,
-                                        coroutineScope
-                                    )
                                 }
+                                authViewModel.completeRegistrationViaGoogle(
+                                    phoneNumber,
+                                    selectedRegion,
+                                    selectedDistrict,
+                                    context,
+                                    coroutineScope
+                                )
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -477,10 +394,4 @@ fun GoogleRegistratingPage(
             }
         }
     }
-}
-
-fun loadDistrictsFromJson(context: Context): Map<String, List<String>> {
-    val inputStream = context.assets.open("districts.json")
-    val reader = InputStreamReader(inputStream)
-    return Gson().fromJson(reader, object : TypeToken<Map<String, List<String>>>() {}.type)
 }

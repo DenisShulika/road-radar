@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.google.gms.google-services")
     alias(libs.plugins.android.application)
@@ -5,6 +7,11 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     kotlin("plugin.serialization") version "2.1.0"
 }
+
+val apiKey: String = project.rootProject.file("local.properties")
+    .takeIf { it.exists() }
+    ?.let { Properties().apply { load(it.inputStream()) } }
+    ?.getProperty("PLACES_API_KEY") ?: ""
 
 android {
     namespace = "com.denisshulika.road_radar"
@@ -21,12 +28,11 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField("String", "PLACES_API_KEY", "\"$apiKey\"")
+        }
         release {
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+            buildConfigField("String", "PLACES_API_KEY", "\"$apiKey\"")
         }
     }
 
@@ -41,6 +47,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -64,6 +71,7 @@ dependencies {
     implementation(libs.androidx.espresso.core)
     implementation(libs.firebase.firestore.ktx)
     implementation(libs.androidx.animation.core.android)
+    implementation(libs.places)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

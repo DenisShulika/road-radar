@@ -10,8 +10,10 @@ credentials = "1.5.0-beta01"
 credentialsVersion = "1.3.0-alpha01"
 datastorePreferences = "1.0.0"
 firebaseBom = "33.7.0"
+geometry = "2.2.0"
 glide = "4.14.2"
 googleidVersion = "1.1.0"
+googleMapsServices = "0.20.0"
 gson = "2.8.9"
 hiltAndroid = "2.42"
 hiltLifecycleViewmodel = "1.0.0"
@@ -50,6 +52,7 @@ runtimeLivedata = "1.7.6"
 googleid = "1.1.1"
 firebaseFirestoreKtx = "25.1.1"
 animationCoreAndroid = "1.6.6"
+places = "4.1.0"
 
 [libraries]
 accompanist-navigation-material = { module = "com.google.accompanist:accompanist-navigation-material", version.ref = "accompanistSystemuicontroller" }
@@ -76,7 +79,9 @@ coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose"
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterGson" }
 firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
+geometry = { module = "com.google.maps.android:geometry", version.ref = "geometry" }
 glide = { module = "com.github.bumptech.glide:glide", version.ref = "glide" }
+google-maps-services = { module = "com.google.maps:google-maps-services", version = "2.2.0" }
 googleid-v110 = { module = "com.google.android.libraries.identity.googleid:googleid", version.ref = "googleidVersion" }
 gotrukt = { module = "io.github.jan-tennert.supabase:gotrukt" }
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
@@ -114,6 +119,7 @@ androidx-runtime-livedata = { group = "androidx.compose.runtime", name = "runtim
 googleid = { group = "com.google.android.libraries.identity.googleid", name = "googleid", version.ref = "googleid" }
 firebase-firestore-ktx = { group = "com.google.firebase", name = "firebase-firestore-ktx", version.ref = "firebaseFirestoreKtx" }
 androidx-animation-core-android = { group = "androidx.compose.animation", name = "animation-core-android", version.ref = "animationCoreAndroid" }
+places = { group = "com.google.android.libraries.places", name = "places", version.ref = "places" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

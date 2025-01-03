@@ -130,7 +130,7 @@ fun LoginPage(
             ) {
                 Text(
                     text = "Login",
-                    fontSize = 64.sp,
+                    fontSize = 60.sp,
                     color = Color.White,
                     fontFamily = RubikFont,
                     fontWeight = FontWeight.SemiBold
@@ -149,7 +149,7 @@ fun LoginPage(
                 ) {
                     Spacer(modifier = Modifier.size(16.dp))
                     Column(
-                        verticalArrangement = Arrangement.spacedBy(20.dp)
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         Text(
                             text = "Email",
@@ -165,7 +165,7 @@ fun LoginPage(
                                 isEmailEmpty = email.isEmpty()
                             },
                             placeholder = "Enter your email",
-                            KeyboardOptions.Default.copy(keyboardType = KeyboardType.Email)
+                            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Email)
                         )
                     }
                     if (isEmailEmpty) {
@@ -185,7 +185,7 @@ fun LoginPage(
                     }
                     Spacer(modifier = Modifier.size(32.dp))
                     Column(
-                        verticalArrangement = Arrangement.spacedBy(20.dp)
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         Row(
                             modifier = Modifier

@@ -16,9 +16,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -28,13 +30,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -47,22 +46,18 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
@@ -80,10 +75,13 @@ import com.denisshulika.road_radar.model.NavigationItem
 import com.denisshulika.road_radar.model.UserData
 import com.denisshulika.road_radar.model.isOpened
 import com.denisshulika.road_radar.model.opposite
+import com.denisshulika.road_radar.ui.components.AutocompleteTextFieldForDistrict
+import com.denisshulika.road_radar.ui.components.AutocompleteTextFieldForRegion
 import com.denisshulika.road_radar.ui.components.CustomDrawer
 import com.denisshulika.road_radar.ui.components.StyledBasicTextField
 import com.denisshulika.road_radar.util.coloredShadow
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import com.google.android.libraries.places.api.net.PlacesClient
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -95,7 +93,8 @@ import kotlin.math.roundToInt
 fun ProfilePage(
     @Suppress("UNUSED_PARAMETER") modifier: Modifier = Modifier,
     navController: NavController,
-    authViewModel: AuthViewModel
+    authViewModel: AuthViewModel,
+    placesClient: PlacesClient
 ) {
     val context = LocalContext.current
 
@@ -110,7 +109,7 @@ fun ProfilePage(
     }
 
     var drawerState by remember { mutableStateOf(CustomDrawerState.Closed) }
-    var selectedNavigationItem by remember { mutableStateOf(NavigationItem.Profile) } //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    var selectedNavigationItem by remember { mutableStateOf(NavigationItem.Profile) }
 
     val configuration = LocalConfiguration.current
     val destiny = LocalDensity.current.density
@@ -160,16 +159,13 @@ fun ProfilePage(
     var isPhoneNumberEmpty by remember { mutableStateOf(false) }
 
 
-    var userRegion by remember { mutableStateOf("") }
-    val isRegionDropdownExpanded = remember { mutableStateOf(false) }
-    val regionItemPosition = remember { mutableIntStateOf(0) }
+    var selectedRegion by remember { mutableStateOf("") }
+    var isRegionSelected by remember { mutableStateOf(true) }
+    var isSelectedRegionEmpty by remember { mutableStateOf(false) }
 
-    var userDistrict by remember { mutableStateOf<String?>("") }
-    val isDistrictDropdownExpanded = remember { mutableStateOf(false) }
-    val districtItemPosition = remember { mutableIntStateOf(0) }
-
-    val districtsByRegion = loadDistrictsFromJson(context)
-    val regions = districtsByRegion.keys.toList()
+    var selectedDistrict by remember { mutableStateOf("") }
+    var isDistrictSelected by remember { mutableStateOf(true) }
+    var isDistrictSelectedEmpty by remember { mutableStateOf(false) }
 
     var userPhoto by remember { mutableStateOf("") }
 
@@ -179,8 +175,8 @@ fun ProfilePage(
         userName = userLocalStorage.getUserName().toString()
         userEmail = userLocalStorage.getUserEmail().toString()
         userPhoneNumber = userLocalStorage.getUserPhoneNumber().toString()
-        userRegion = userLocalStorage.getUserRegion().toString()
-        userDistrict = userLocalStorage.getUserDistrict().toString()
+        selectedRegion = userLocalStorage.getUserRegion().toString()
+        selectedDistrict = userLocalStorage.getUserDistrict().toString()
         userPhoto = userLocalStorage.getUserPhotoUrl().toString()
     }
 
@@ -235,7 +231,7 @@ fun ProfilePage(
                     modifier = Modifier,
                     title = {
                         Text(
-                            text = selectedNavigationItem.title,
+                            text = if (isEditingState) "Edit profile" else selectedNavigationItem.title,
                             textAlign = TextAlign.Center,
                             fontFamily = RubikFont
                         )
@@ -255,13 +251,13 @@ fun ProfilePage(
                 )
             }
         ) { innerPadding ->
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
-                        .padding(start = 20.dp, end = 20.dp, bottom = 20.dp)
-                        .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.SpaceBetween
+            Column(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .padding(innerPadding)
+                    .padding(start = 20.dp, end = 20.dp, bottom = 20.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.SpaceBetween
             ) {
                 if (!isEditingState) {
                     Column {
@@ -271,13 +267,6 @@ fun ProfilePage(
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Spacer(modifier = Modifier.size(4.dp))
-                            Text(
-                                text = "Your profile information",
-                                fontSize = 26.sp,
-                                fontFamily = RubikFont,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                            Spacer(modifier = Modifier.size(32.dp))
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth(),
@@ -287,7 +276,10 @@ fun ProfilePage(
                                     modifier = Modifier
                                         .size(100.dp)
                                         .clip(RoundedCornerShape(10.dp))
-                                        .background(Color(0xFFEFF1F3)),
+                                        .background(Color(0xFFEFF1F3))
+                                        .clickable {
+                                            getContent.launch("image/*")
+                                        },
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                     verticalArrangement = Arrangement.Center
                                 ) {
@@ -306,7 +298,7 @@ fun ProfilePage(
                             verticalArrangement = Arrangement.spacedBy(30.dp)
                         ) {
                             Column(
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
                                 Text(
                                     text = "Name",
@@ -322,9 +314,43 @@ fun ProfilePage(
                                     fontWeight = FontWeight.Normal
                                 )
                             }
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                Text(
+                                    text = "Region",
+                                    fontSize = 24.sp,
+                                    fontFamily = RubikFont,
+                                    fontWeight = FontWeight.Normal,
+                                    color = Color(0xFF808080)
+                                )
+                                Text(
+                                    text = selectedRegion,
+                                    fontSize = 22.sp,
+                                    fontFamily = RubikFont,
+                                    fontWeight = FontWeight.Normal
+                                )
+                            }
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                Text(
+                                    text = "District",
+                                    fontSize = 24.sp,
+                                    fontFamily = RubikFont,
+                                    fontWeight = FontWeight.Normal,
+                                    color = Color(0xFF808080)
+                                )
+                                Text(
+                                    text = selectedDistrict,
+                                    fontSize = 22.sp,
+                                    fontFamily = RubikFont,
+                                    fontWeight = FontWeight.Normal
+                                )
+                            }
                             if (authViewModel.isUserLoggedInWithEmailPassword()) {
                                 Column(
-                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                    verticalArrangement = Arrangement.spacedBy(16.dp)
                                 ) {
                                     Text(
                                         text = "Email",
@@ -342,7 +368,7 @@ fun ProfilePage(
                                 }
                             }
                             Column(
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
                                 Text(
                                     text = "Phone Number",
@@ -353,40 +379,6 @@ fun ProfilePage(
                                 )
                                 Text(
                                     text = userPhoneNumber,
-                                    fontSize = 22.sp,
-                                    fontFamily = RubikFont,
-                                    fontWeight = FontWeight.Normal
-                                )
-                            }
-                            Column(
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Text(
-                                    text = "Region",
-                                    fontSize = 24.sp,
-                                    fontFamily = RubikFont,
-                                    fontWeight = FontWeight.Normal,
-                                    color = Color(0xFF808080)
-                                )
-                                Text(
-                                    text = userRegion,
-                                    fontSize = 22.sp,
-                                    fontFamily = RubikFont,
-                                    fontWeight = FontWeight.Normal
-                                )
-                            }
-                            Column(
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Text(
-                                    text = "District",
-                                    fontSize = 24.sp,
-                                    fontFamily = RubikFont,
-                                    fontWeight = FontWeight.Normal,
-                                    color = Color(0xFF808080)
-                                )
-                                Text(
-                                    text = userDistrict.toString(),
                                     fontSize = 22.sp,
                                     fontFamily = RubikFont,
                                     fontWeight = FontWeight.Normal
@@ -428,14 +420,7 @@ fun ProfilePage(
                                 .fillMaxWidth(),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Spacer(modifier = Modifier.size(4.dp))
-                            Text(
-                                text = "Edit your profile",
-                                fontSize = 26.sp,
-                                fontFamily = RubikFont,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                            Spacer(modifier = Modifier.size(32.dp))
+                            Spacer(modifier = Modifier.size(16.dp))
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth(),
@@ -468,7 +453,7 @@ fun ProfilePage(
                         ) {
                             Column {
                                 Column(
-                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                    verticalArrangement = Arrangement.spacedBy(16.dp)
                                 ) {
                                     Text(
                                         text = "Name",
@@ -483,8 +468,7 @@ fun ProfilePage(
                                             userName = it
                                             isNameEmpty = userName.isEmpty()
                                         },
-                                        placeholder = "Your Name, e.g: John Doe",
-                                        fontSize = 22.sp
+                                        placeholder = "Your Name, e.g: John Doe"
                                     )
                                 }
                                 if (isNameEmpty) {
@@ -496,28 +480,107 @@ fun ProfilePage(
                                     )
                                 }
                             }
-                            if (authViewModel.isUserLoggedInWithEmailPassword()) {
+                            Column {
                                 Column(
-                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                    verticalArrangement = Arrangement.spacedBy(16.dp)
                                 ) {
                                     Text(
-                                        text = "Email",
+                                        text = "Region",
+                                        fontSize = 24.sp,
+                                        fontFamily = RubikFont,
+                                        fontWeight = FontWeight.Normal,
+                                        color = Color(0xFF808080)
+                                    )
+                                    AutocompleteTextFieldForRegion(
+                                        modifier = Modifier.heightIn(min = 0.dp, max = 300.dp),
+                                        value = selectedRegion,
+                                        placesClient = placesClient,
+                                        onPlaceSelected = { value ->
+                                            selectedRegion = value
+                                            isRegionSelected = true
+                                        },
+                                        onValueChange = { value ->
+                                            selectedRegion = value
+                                            isRegionSelected = false
+                                            isSelectedRegionEmpty = selectedRegion.isEmpty()
+
+                                            selectedDistrict = ""
+                                            isDistrictSelected = false
+                                            isDistrictSelectedEmpty = false
+                                        },
+                                        placeholder = "Enter your region"
+                                    )
+                                }
+                                if (isSelectedRegionEmpty) {
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        "Region cant be empty",
+                                        color = Color(0xFFB71C1C),
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+                            }
+                            if (isRegionSelected) {
+                                Column {
+                                    Column(
+                                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                                    ) {
+                                        Text(
+                                            text = "District",
+                                            fontSize = 24.sp,
+                                            fontFamily = RubikFont,
+                                            fontWeight = FontWeight.Normal,
+                                            color = Color(0xFF808080)
+                                        )
+                                        AutocompleteTextFieldForDistrict(
+                                            modifier = Modifier.heightIn(min = 0.dp, max = 300.dp),
+                                            value = selectedDistrict,
+                                            placesClient = placesClient,
+                                            onPlaceSelected = { value ->
+                                                selectedDistrict = value
+                                                isDistrictSelected = true
+                                            },
+                                            onValueChange = { value ->
+                                                selectedDistrict = value
+                                                isDistrictSelected = false
+                                                isDistrictSelectedEmpty = selectedDistrict.isEmpty()
+                                            },
+                                            placeholder = "Enter your district",
+                                            region = selectedRegion
+                                        )
+                                    }
+                                    if (isDistrictSelectedEmpty) {
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Text(
+                                            "District cant be empty",
+                                            color = Color(0xFFB71C1C),
+                                            style = MaterialTheme.typography.bodySmall
+                                        )
+                                    }
+                                }
+                            } else {
+                                Column(
+                                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                                ) {
+                                    Text(
+                                        text = "District",
                                         fontSize = 24.sp,
                                         fontFamily = RubikFont,
                                         fontWeight = FontWeight.Normal,
                                         color = Color(0xFF808080)
                                     )
                                     Text(
-                                        text = userEmail,
-                                        fontSize = 22.sp,
+                                        text = "Enter a region firstly",
+                                        fontSize = 20.sp,
                                         fontFamily = RubikFont,
-                                        fontWeight = FontWeight.Normal
+                                        fontWeight = FontWeight.Normal,
+                                        color = Color(0xFFD3D3D3)
                                     )
                                 }
                             }
                             Column {
                                 Column(
-                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                    verticalArrangement = Arrangement.spacedBy(16.dp)
                                 ) {
                                     Text(
                                         text = "Phone Number",
@@ -533,8 +596,7 @@ fun ProfilePage(
                                             isPhoneNumberEmpty = userPhoneNumber.isEmpty()
                                             phoneNumberError = !isValidPhoneNumber(it)
                                         },
-                                        placeholder = "Your phone, e.g: +380.. or 0..",
-                                        fontSize = 22.sp
+                                        placeholder = "Your phone, e.g: +380.. or 0.."
                                     )
                                 }
                                 if (isPhoneNumberEmpty) {
@@ -553,181 +615,30 @@ fun ProfilePage(
                                     )
                                 }
                             }
-                            Column(
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Text(
-                                    text = "Region",
-                                    fontSize = 24.sp,
-                                    fontFamily = RubikFont,
-                                    fontWeight = FontWeight.Normal,
-                                    color = Color(0xFF808080)
-                                )
+                            if (authViewModel.isUserLoggedInWithEmailPassword()) {
                                 Column(
-                                    modifier = Modifier
-                                        .drawBehind {
-                                            val strokeWidth = 1.dp.toPx()
-                                            val y = size.height - strokeWidth / 2
-                                            drawLine(
-                                                color = Color(0xFFD3D3D3),
-                                                start = Offset(0f, 0.75f * y),
-                                                end = Offset(size.width, 0.75f * y),
-                                                strokeWidth = strokeWidth
-                                            )
-                                        },
-                                    verticalArrangement = Arrangement.Center
+                                    verticalArrangement = Arrangement.spacedBy(16.dp)
                                 ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .height(36.dp)
-                                            .fillMaxWidth()
-                                    ) {
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            modifier = Modifier
-                                                .clickable {
-                                                    isRegionDropdownExpanded.value = true
-                                                }
-                                                .fillMaxWidth()
-                                        ) {
-                                            Text(
-                                                text = userRegion,
-                                                style = TextStyle(
-                                                    fontSize = 22.sp,
-                                                    lineHeight = 22.sp
-                                                ),
-                                                fontFamily = RubikFont,
-                                                fontWeight = FontWeight.Normal
-                                            )
-                                            Icon(
-                                                imageVector = Icons.Default.ArrowDropDown,
-                                                contentDescription = ""
-                                            )
-                                        }
-                                        DropdownMenu(
-                                            modifier = Modifier
-                                                .background(Color(0xFF474EFF)),
-                                            expanded = isRegionDropdownExpanded.value,
-                                            onDismissRequest = {
-                                                isRegionDropdownExpanded.value = false
-                                            }) {
-                                            regions.forEachIndexed { index, region ->
-                                                DropdownMenuItem(
-                                                    text = {
-                                                        Text(
-                                                            text = region,
-                                                            style = TextStyle(
-                                                                color = Color(0xFFFFFFFF),
-                                                                fontSize = 22.sp,
-                                                                lineHeight = 22.sp
-                                                            ),
-                                                            fontFamily = RubikFont,
-                                                            fontWeight = FontWeight.Normal
-                                                        )
-                                                    },
-                                                    onClick = {
-                                                        isRegionDropdownExpanded.value = false
-                                                        regionItemPosition.intValue = index
-                                                        userRegion = region
-                                                        userDistrict = null
-                                                    }
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            Column(
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Text(
-                                    text = "District",
-                                    fontSize = 24.sp,
-                                    fontFamily = RubikFont,
-                                    fontWeight = FontWeight.Normal,
-                                    color = Color(0xFF808080)
-                                )
-                                Column(
-                                    modifier = Modifier
-                                        .drawBehind {
-                                            val strokeWidth = 1.dp.toPx()
-                                            val y = size.height - strokeWidth / 2
-                                            drawLine(
-                                                color = Color(0xFFD3D3D3),
-                                                start = Offset(0f, 0.75f * y),
-                                                end = Offset(size.width, 0.75f * y),
-                                                strokeWidth = strokeWidth
-                                            )
-                                        },
-                                    verticalArrangement = Arrangement.Center
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .height(36.dp)
-                                            .fillMaxWidth()
-                                    ) {
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            modifier = Modifier
-                                                .clickable {
-                                                    isDistrictDropdownExpanded.value = true
-                                                }
-                                                .fillMaxWidth()
-                                        ) {
-                                            Text(
-                                                text = userDistrict?.takeIf { it.isNotBlank() }
-                                                    ?: "Choose your district",
-                                                style = TextStyle(
-                                                    color = if (userDistrict != null) Color(0xFF000000) else Color(
-                                                        0xFFADADAD
-                                                    ),
-                                                    fontSize = 22.sp,
-                                                    lineHeight = 22.sp
-                                                ),
-                                                fontFamily = RubikFont,
-                                                fontWeight = FontWeight.Normal
-                                            )
-                                            Icon(
-                                                imageVector = Icons.Default.ArrowDropDown,
-                                                contentDescription = ""
-                                            )
-                                        }
-                                        DropdownMenu(
-                                            modifier = Modifier
-                                                .background(Color(0xFF474EFF)),
-                                            expanded = isDistrictDropdownExpanded.value,
-                                            onDismissRequest = {
-                                                isDistrictDropdownExpanded.value = false
-                                            }) {
-                                            districtsByRegion[userRegion]?.forEachIndexed { index, district ->
-                                                DropdownMenuItem(
-                                                    text = {
-                                                        Text(
-                                                            text = district,
-                                                            style = TextStyle(
-                                                                color = Color(0xFFFFFFFF),
-                                                                fontSize = 22.sp,
-                                                                lineHeight = 22.sp
-                                                            ),
-                                                            fontFamily = RubikFont,
-                                                            fontWeight = FontWeight.Normal
-                                                        )
-                                                    },
-                                                    onClick = {
-                                                        isDistrictDropdownExpanded.value = false
-                                                        districtItemPosition.intValue = index
-                                                        userDistrict = district
-                                                    }
-                                                )
-                                            }
-                                        }
-                                    }
+                                    Text(
+                                        text = "Email",
+                                        fontSize = 24.sp,
+                                        fontFamily = RubikFont,
+                                        fontWeight = FontWeight.Normal,
+                                        color = Color(0xFF808080)
+                                    )
+                                    Text(
+                                        text = userEmail,
+                                        fontSize = 20.sp,
+                                        fontFamily = RubikFont,
+                                        fontWeight = FontWeight.Normal
+                                    )
                                 }
                             }
                         }
                     }
-                    Column {
+                    Column(
+                        modifier = Modifier.padding(top = 32.dp)
+                    ) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth(),
@@ -741,8 +652,8 @@ fun ProfilePage(
                                         userName = userLocalStorage.getUserName().toString()
                                         userEmail = userLocalStorage.getUserEmail().toString()
                                         userPhoneNumber = userLocalStorage.getUserPhoneNumber().toString()
-                                        userRegion = userLocalStorage.getUserRegion().toString()
-                                        userDistrict = userLocalStorage.getUserDistrict().toString()
+                                        selectedRegion = userLocalStorage.getUserRegion().toString()
+                                        selectedDistrict = userLocalStorage.getUserDistrict().toString()
                                         userPhoto = userLocalStorage.getUserPhotoUrl().toString()
                                     }
                                     isEditingState = !isEditingState
@@ -774,15 +685,29 @@ fun ProfilePage(
                                         Toast.makeText(context, "Please, enter correct phone number", Toast.LENGTH_LONG).show()
                                         return@Button
                                     }
-                                    if(userDistrict == null) {
+                                    isSelectedRegionEmpty = selectedRegion.isEmpty()
+                                    if(isSelectedRegionEmpty) {
+                                        Toast.makeText(context, "Please, enter your region", Toast.LENGTH_LONG).show()
+                                        return@Button
+                                    }
+                                    if(!isRegionSelected) {
+                                        Toast.makeText(context, "Please, select your region", Toast.LENGTH_LONG).show()
+                                        return@Button
+                                    }
+                                    isDistrictSelectedEmpty = selectedDistrict.isEmpty()
+                                    if(isDistrictSelectedEmpty) {
+                                        Toast.makeText(context, "Please, enter your district", Toast.LENGTH_LONG).show()
+                                        return@Button
+                                    }
+                                    if(!isDistrictSelected) {
                                         Toast.makeText(context, "Please, select your district", Toast.LENGTH_LONG).show()
                                         return@Button
                                     }
 
                                     val userData = hashMapOf(
-                                        "district" to userDistrict,
+                                        "district" to selectedDistrict,
                                         "phoneNumber" to userPhoneNumber,
-                                        "region" to userRegion
+                                        "region" to selectedRegion
                                     )
 
                                     val uid = currentUser!!.uid
@@ -806,8 +731,8 @@ fun ProfilePage(
                                                 password = userPassword,
                                                 name = userName,
                                                 phoneNumber = userPhoneNumber,
-                                                region = userRegion,
-                                                district = userDistrict!!,
+                                                region = selectedRegion,
+                                                district = selectedDistrict,
                                                 photoUrl = userPhoto
                                             )
                                             CoroutineScope(Dispatchers.Main).launch {

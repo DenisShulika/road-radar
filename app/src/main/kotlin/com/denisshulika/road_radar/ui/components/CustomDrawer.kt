@@ -39,7 +39,6 @@ import com.denisshulika.road_radar.local.UserLocalStorage
 import com.denisshulika.road_radar.model.NavigationItem
 import com.denisshulika.road_radar.pages.RubikFont
 
-
 @Composable
 fun CustomDrawer (
     selectedNavigationItem : NavigationItem,
@@ -123,8 +122,6 @@ fun CustomDrawer (
                     lineHeight = 20.sp,
                     textAlign = TextAlign.Center
                 )
-
-                //TODO() small profile info
             }
         }
         Spacer(modifier = Modifier.size(40.dp))

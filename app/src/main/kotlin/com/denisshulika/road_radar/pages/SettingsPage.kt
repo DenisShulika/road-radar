@@ -276,7 +276,7 @@ fun SettingsPage(
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = "System",
-                                fontSize = 22.sp,
+                                fontSize = 20.sp,
                                 fontFamily = RubikFont,
                                 fontWeight = FontWeight.Normal
                             )
@@ -305,7 +305,7 @@ fun SettingsPage(
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = "Light",
-                                fontSize = 22.sp,
+                                fontSize = 20.sp,
                                 fontFamily = RubikFont,
                                 fontWeight = FontWeight.Normal
                             )
@@ -334,7 +334,7 @@ fun SettingsPage(
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = "Dark",
-                                fontSize = 22.sp,
+                                fontSize = 20.sp,
                                 fontFamily = RubikFont,
                                 fontWeight = FontWeight.Normal
                             )
@@ -386,7 +386,7 @@ fun SettingsPage(
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = "Ukrainian",
-                                fontSize = 22.sp,
+                                fontSize = 20.sp,
                                 fontFamily = RubikFont,
                                 fontWeight = FontWeight.Normal
                             )
@@ -415,7 +415,7 @@ fun SettingsPage(
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = "English",
-                                fontSize = 22.sp,
+                                fontSize = 20.sp,
                                 fontFamily = RubikFont,
                                 fontWeight = FontWeight.Normal
                             )
@@ -466,7 +466,7 @@ fun SettingsPage(
                                 ) {
                                     Text(
                                         text = "Change email",
-                                        fontSize = 22.sp,
+                                        fontSize = 20.sp,
                                         fontFamily = RubikFont,
                                         fontWeight = FontWeight.Normal
                                     )
@@ -504,7 +504,7 @@ fun SettingsPage(
                                 ) {
                                     Text(
                                         text = "Change password",
-                                        fontSize = 22.sp,
+                                        fontSize = 20.sp,
                                         fontFamily = RubikFont,
                                         fontWeight = FontWeight.Normal
                                     )
@@ -543,7 +543,7 @@ fun SettingsPage(
                             ) {
                                 Text(
                                     text = "Delete account",
-                                    fontSize = 22.sp,
+                                    fontSize = 20.sp,
                                     fontFamily = RubikFont,
                                     fontWeight = FontWeight.Normal
                                 )
@@ -586,7 +586,7 @@ fun SettingsPage(
                             ) {
                                 Text(
                                     text = "Sign out",
-                                    fontSize = 22.sp,
+                                    fontSize = 20.sp,
                                     fontFamily = RubikFont,
                                     fontWeight = FontWeight.Normal
                                 )

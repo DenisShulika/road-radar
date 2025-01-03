@@ -20,19 +20,18 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.denisshulika.road_radar.pages.RubikFont
 
 @Composable
 fun StyledBasicTextField(
+    modifier: Modifier = Modifier,
     value: String,
     onValueChange: (String) -> Unit,
     placeholder: String,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     isVisible: Boolean = true,
-    fontSize: TextUnit = 20.sp,
     singleLine: Boolean = true
 ) {
     val textLayoutResult = remember { mutableStateOf<TextLayoutResult?>(null) }
@@ -47,7 +46,7 @@ fun StyledBasicTextField(
     )
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .drawBehind {
                 val strokeWidth = 1.dp.toPx()
@@ -65,10 +64,10 @@ fun StyledBasicTextField(
             onValueChange = onValueChange,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(animatedHeight.value), // Використовуємо анімовану висоту
+                .height(animatedHeight.value),
             textStyle = TextStyle(
                 color = Color.Black,
-                fontSize = fontSize,
+                fontSize = 22.sp,
                 fontFamily = RubikFont,
                 fontWeight = FontWeight.Normal
             ),
@@ -78,8 +77,8 @@ fun StyledBasicTextField(
                         text = placeholder,
                         style = TextStyle(
                             color = Color(0xFFADADAD),
-                            fontSize = fontSize,
-                            lineHeight = fontSize
+                            fontSize = 22.sp,
+                            lineHeight = 24.sp
                         ),
                         fontFamily = RubikFont,
                         fontWeight = FontWeight.Normal
@@ -91,8 +90,8 @@ fun StyledBasicTextField(
             keyboardOptions = keyboardOptions,
             visualTransformation = if (isVisible) VisualTransformation.None else PasswordVisualTransformation(),
             onTextLayout = { layoutResult ->
-                textLayoutResult.value = layoutResult // Оновлюємо стейт з новим макетом
-            }
+                textLayoutResult.value = layoutResult
+            },
         )
     }
 }

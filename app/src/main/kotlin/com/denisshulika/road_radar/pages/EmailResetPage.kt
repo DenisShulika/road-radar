@@ -151,7 +151,7 @@ fun EmailResetPage(
                 ) {
                     Spacer(modifier = Modifier.size(20.dp))
                     Column(
-                        verticalArrangement = Arrangement.spacedBy(20.dp)
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         Text(
                             text = "New Email",

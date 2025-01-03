@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import com.google.android.libraries.places.api.Places
+import java.util.Locale
 
 @ExperimentalMaterial3Api
 class MainActivity : ComponentActivity() {
@@ -21,6 +23,12 @@ class MainActivity : ComponentActivity() {
 
         val authViewModel : AuthViewModel by viewModels()
 
+        if (!Places.isInitialized()) {
+            Places.initialize(applicationContext, BuildConfig.PLACES_API_KEY, Locale("uk"))
+        }
+
+        val placesClient = Places.createClient(this)
+
         setContent {
             Surface(
                 modifier = Modifier
@@ -28,7 +36,8 @@ class MainActivity : ComponentActivity() {
             ) {
                 RoadRadarNavigation(
                     modifier = Modifier,
-                    authViewModel = authViewModel
+                    authViewModel = authViewModel,
+                    placesClient = placesClient
                 )
             }
         }

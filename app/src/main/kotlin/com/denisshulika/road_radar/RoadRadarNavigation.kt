@@ -18,12 +18,14 @@ import com.denisshulika.road_radar.pages.PasswordResetPage
 import com.denisshulika.road_radar.pages.ProfilePage
 import com.denisshulika.road_radar.pages.SettingsPage
 import com.denisshulika.road_radar.pages.SignUpPage
+import com.google.android.libraries.places.api.net.PlacesClient
 
 @ExperimentalMaterial3Api
 @Composable
 fun RoadRadarNavigation(
     modifier: Modifier = Modifier,
-    authViewModel: AuthViewModel
+    authViewModel: AuthViewModel,
+    placesClient: PlacesClient
 ) {
     val navController = rememberNavController()
 
@@ -45,7 +47,7 @@ fun RoadRadarNavigation(
                 LoginPage(modifier, navController, authViewModel)
             }
             composable(Routes.SIGNUP) {
-                SignUpPage(modifier, navController, authViewModel)
+                SignUpPage(modifier, navController, authViewModel, placesClient)
             }
             composable(Routes.PASSWORD_RESET) {
                 PasswordResetPage(modifier, navController, authViewModel)
@@ -54,19 +56,19 @@ fun RoadRadarNavigation(
                 EmailResetPage(modifier, navController, authViewModel)
             }
             composable(Routes.GOOGLE_REGISTRATING) {
-                GoogleRegistratingPage(modifier, navController, authViewModel)
+                GoogleRegistratingPage(modifier, navController, authViewModel, placesClient)
             }
             composable(Routes.INCIDENTS) {
                 IncidentsPage(modifier, navController, authViewModel)
             }
             composable(Routes.ADD_NEW_INCIDENT) {
-                AddNewIncidentPage(modifier, navController)
+                AddNewIncidentPage(modifier, navController, authViewModel)
             }
             composable(Routes.MAP_RADAR) {
                 MapRadarPage(modifier, navController, authViewModel)
             }
             composable(Routes.PROFILE) {
-                ProfilePage(modifier, navController, authViewModel)
+                ProfilePage(modifier, navController, authViewModel, placesClient)
             }
             composable(Routes.SETTINGS) {
                 SettingsPage(modifier, navController, authViewModel)
