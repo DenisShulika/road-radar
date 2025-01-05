@@ -149,7 +149,7 @@ fun LoginPage(
                 ) {
                     Spacer(modifier = Modifier.size(16.dp))
                     Column(
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Text(
                             text = "Email",
@@ -185,7 +185,7 @@ fun LoginPage(
                     }
                     Spacer(modifier = Modifier.size(32.dp))
                     Column(
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Row(
                             modifier = Modifier

@@ -37,7 +37,7 @@ fun StyledBasicTextField(
     val textLayoutResult = remember { mutableStateOf<TextLayoutResult?>(null) }
 
     val lineCount = textLayoutResult.value?.lineCount ?: 1
-    val targetHeight = if (singleLine) 28.dp else (lineCount * 24).dp
+    val targetHeight = if (singleLine) 26.dp else (lineCount * 26).dp
 
     val animatedHeight = animateDpAsState(
         targetValue = targetHeight,

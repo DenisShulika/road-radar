@@ -142,7 +142,7 @@ fun PasswordResetPage(
                 ) {
                     Spacer(modifier = Modifier.size(20.dp))
                     Column(
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Text(
                             text = "Email",

@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -20,9 +19,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.denisshulika.road_radar.pages.RubikFont
 import com.google.android.libraries.places.api.model.AutocompleteSessionToken
-import com.google.android.libraries.places.api.model.PlaceTypes
 import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRequest
 import com.google.android.libraries.places.api.net.PlacesClient
 import kotlinx.coroutines.CoroutineScope
@@ -98,92 +95,6 @@ fun AutocompleteTextFieldForRegion(
                             }
                             .padding(8.dp)
                     )
-                    HorizontalDivider()
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun AutocompleteTextFieldForDistrict(
-    value: String,
-    placesClient: PlacesClient,
-    modifier: Modifier = Modifier,
-    onValueChange: (String) -> Unit,
-    onPlaceSelected: (String) -> Unit,
-    placeholder: String,
-    region: String
-) {
-    var suggestions by remember { mutableStateOf(listOf<String>()) }
-    var debounceJob by remember { mutableStateOf<Job?>(null) }
-
-    val sevastopolDistricts = listOf(
-        "Балаклавський район",
-        "Гагарінський район",
-        "Ленінський район",
-        "Нахімовський район"
-    )
-
-    Column(modifier = modifier) {
-        StyledBasicTextField(
-            value = value,
-            onValueChange = { newValue ->
-                onValueChange(newValue)
-                debounceJob?.cancel()
-                if (newValue.trim().length > 2) {
-                    debounceJob = CoroutineScope(Dispatchers.Main).launch {
-                        delay(300)
-
-                        if (region.contains("Севастополь", ignoreCase = true) && !newValue.startsWith("рай", ignoreCase = true)) {
-                            suggestions = sevastopolDistricts.filter { it.contains(newValue, ignoreCase = true) }
-                        } else {
-                            val token = AutocompleteSessionToken.newInstance()
-                            val request = FindAutocompletePredictionsRequest.builder()
-                                .setQuery("$region $newValue")
-                                .setCountries(listOf("UA"))
-                                .setSessionToken(token)
-                                .build()
-
-                            placesClient.findAutocompletePredictions(request)
-                                .addOnSuccessListener { response ->
-                                    suggestions = response.autocompletePredictions
-                                        .map { it.getPrimaryText(null).toString() }
-                                        .filter { suggestion -> suggestion.endsWith("район", ignoreCase = true) }
-                                }
-                                .addOnFailureListener {
-                                    suggestions = emptyList()
-                                }
-                        }
-                    }
-                } else {
-                    suggestions = emptyList()
-                }
-            },
-            placeholder = placeholder
-        )
-        AnimatedVisibility(
-            suggestions.isNotEmpty(),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp)
-        ) {
-            LazyColumn(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                items(suggestions) { suggestion ->
-                    Text(
-                        text = suggestion,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                onPlaceSelected(suggestion)
-                                suggestions = emptyList()
-                            }
-                            .padding(8.dp),
-                        fontFamily = RubikFont,
-                        style = MaterialTheme.typography.bodySmall
-                    )
                     HorizontalDivider(
                         thickness = 1.dp,
                         color = Color(0xFFADADAD)
@@ -202,7 +113,7 @@ fun AutocompleteTextFieldForAddress(
     onValueChange: (String) -> Unit,
     onPlaceSelected: (String, Double, Double) -> Unit,
     placeholder: String,
-    district: String,
+    region: String,
     context: Context
 ) {
     var suggestions by remember { mutableStateOf(listOf<String>()) }
@@ -220,16 +131,26 @@ fun AutocompleteTextFieldForAddress(
 
                         val token = AutocompleteSessionToken.newInstance()
                         val request = FindAutocompletePredictionsRequest.builder()
-                            .setQuery("$district $newValue")
-                            .setCountries(listOf("UA"))
+                            .setQuery("$region $newValue")
                             .setSessionToken(token)
-                            .setTypesFilter(listOf(PlaceTypes.ADDRESS))
+                            .setCountries(listOf("UA", "RU"))
+                            .setTypesFilter(listOf("address"))
                             .build()
 
                         placesClient.findAutocompletePredictions(request)
                             .addOnSuccessListener { response ->
                                 suggestions = response.autocompletePredictions
                                     .map { it.getFullText(null).toString() }
+
+                                suggestions = suggestions.filter { suggestion ->
+                                    if (region == "місто Севастополь" || region == "Автономна Республіка Крим") {
+                                        !suggestion.contains(Regex("[ыЫЁё]")) && // Російські символи
+                                                !suggestion.contains(Regex("\\b(улица|ул\\.|дом|пл\\.|кв\\.|город)\\b", RegexOption.IGNORE_CASE)) &&
+                                                (suggestion.endsWith("Севастополь") || suggestion.endsWith("Автономна Республіка Крим"))
+                                    } else {
+                                        true
+                                    }
+                                }
                             }
                             .addOnFailureListener {
                                 suggestions = emptyList()

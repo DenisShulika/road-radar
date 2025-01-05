@@ -1,8 +1,5 @@
 package com.denisshulika.road_radar.pages
 
-import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -69,15 +66,10 @@ import com.denisshulika.road_radar.R
 import com.denisshulika.road_radar.Routes
 import com.denisshulika.road_radar.isValidEmail
 import com.denisshulika.road_radar.isValidPhoneNumber
-import com.denisshulika.road_radar.ui.components.AutocompleteTextFieldForDistrict
 import com.denisshulika.road_radar.ui.components.AutocompleteTextFieldForRegion
 import com.denisshulika.road_radar.ui.components.StyledBasicTextField
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.android.libraries.places.api.net.PlacesClient
-import java.io.File
-import java.io.FileOutputStream
-import java.io.IOException
-import java.io.InputStream
 
 @Composable
 fun SignUpPage(
@@ -117,10 +109,6 @@ fun SignUpPage(
     var isRegionSelected by remember { mutableStateOf(false) }
     var isSelectedRegionEmpty by remember { mutableStateOf(false) }
 
-    var selectedDistrict by remember { mutableStateOf("") }
-    var isDistrictSelected by remember { mutableStateOf(false) }
-    var isDistrictSelectedEmpty by remember { mutableStateOf(false) }
-
     var password by remember { mutableStateOf("") }
     var passwordError by remember { mutableStateOf(false) }
     var isPasswordEmpty by remember { mutableStateOf(false) }
@@ -131,16 +119,12 @@ fun SignUpPage(
     var isConfirmPasswordEmpty by remember { mutableStateOf(false) }
     var isConfirmPasswordVisible by remember { mutableStateOf(false) }
 
-    var croppedImageUri by remember { mutableStateOf<Uri?>(null) }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var isImageSelected by remember { mutableStateOf(false) }
     val getContent = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let {
             selectedImageUri = it
             isImageSelected = true
-
-            val croppedBitmap = cropImageToSquare(it, context.contentResolver)
-            croppedImageUri = if (croppedBitmap != null) bitmapToUri(context, croppedBitmap) else null
         }
     }
 
@@ -203,7 +187,7 @@ fun SignUpPage(
                             .verticalScroll(rememberScrollState())
                     ) {
                         Column(
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             Text(
                                 text = "Name",
@@ -230,7 +214,7 @@ fun SignUpPage(
                         }
                         Spacer(modifier = Modifier.size(32.dp))
                         Column(
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             Text(
                                 text = "Email",
@@ -265,101 +249,44 @@ fun SignUpPage(
                             )
                         }
                         Spacer(modifier = Modifier.size(32.dp))
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
-                            Text(
-                                text = "Your region",
-                                fontSize = 24.sp,
-                                fontFamily = RubikFont,
-                                fontWeight = FontWeight.Normal
-                            )
-                            AutocompleteTextFieldForRegion(
-                                modifier = Modifier.heightIn(min = 0.dp, max = 300.dp),
-                                value = selectedRegion,
-                                placesClient = placesClient,
-                                onPlaceSelected = { value ->
-                                    selectedRegion = value
-                                    isRegionSelected = true
-                                },
-                                onValueChange = { value ->
-                                    selectedRegion = value
-                                    isRegionSelected = false
-                                    isSelectedRegionEmpty = selectedRegion.isEmpty()
-
-                                    selectedDistrict = ""
-                                    isDistrictSelected = false
-                                    isDistrictSelectedEmpty = false
-                                },
-                                placeholder = "Enter your region"
-                            )
-                        }
-                        if (isSelectedRegionEmpty) {
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                "Region cant be empty",
-                                color = Color(0xFFB71C1C),
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                        }
-                        Spacer(modifier = Modifier.size(32.dp))
-                        if (isRegionSelected) {
+                        Column {
                             Column(
-                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
                                 Text(
-                                    text = "District",
+                                    text = "Region",
                                     fontSize = 24.sp,
                                     fontFamily = RubikFont,
                                     fontWeight = FontWeight.Normal
                                 )
-                                AutocompleteTextFieldForDistrict(
+                                AutocompleteTextFieldForRegion(
                                     modifier = Modifier.heightIn(min = 0.dp, max = 300.dp),
-                                    value = selectedDistrict,
+                                    value = selectedRegion,
                                     placesClient = placesClient,
                                     onPlaceSelected = { value ->
-                                        selectedDistrict = value
-                                        isDistrictSelected = true
+                                        selectedRegion = value
+                                        isRegionSelected = true
                                     },
                                     onValueChange = { value ->
-                                        selectedDistrict = value
-                                        isDistrictSelected = false
-                                        isDistrictSelectedEmpty = selectedDistrict.isEmpty()
+                                        selectedRegion = value
+                                        isRegionSelected = false
+                                        isSelectedRegionEmpty = selectedRegion.isEmpty()
                                     },
-                                    placeholder = "Enter your district",
-                                    region = selectedRegion
+                                    placeholder = "Enter your region"
                                 )
                             }
-                            if (isDistrictSelectedEmpty) {
+                            if (isSelectedRegionEmpty) {
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    "District cant be empty",
+                                    "Region cant be empty",
                                     color = Color(0xFFB71C1C),
                                     style = MaterialTheme.typography.bodySmall
                                 )
                             }
-                        } else {
-                            Column(
-                                verticalArrangement = Arrangement.spacedBy(16.dp)
-                            ) {
-                                Text(
-                                    text = "District",
-                                    fontSize = 24.sp,
-                                    fontFamily = RubikFont,
-                                    fontWeight = FontWeight.Normal
-                                )
-                                Text(
-                                    text = "Enter a region firstly",
-                                    fontSize = 20.sp,
-                                    fontFamily = RubikFont,
-                                    fontWeight = FontWeight.Normal,
-                                    color = Color(0xFFD3D3D3)
-                                )
-                            }
                         }
                         Spacer(modifier = Modifier.size(32.dp))
                         Column(
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             Text(
                                 text = "Phone Number",
@@ -394,7 +321,7 @@ fun SignUpPage(
                         }
                         Spacer(modifier = Modifier.size(32.dp))
                         Column(
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             Row(
                                 modifier = Modifier
@@ -455,7 +382,7 @@ fun SignUpPage(
                         }
                         Spacer(modifier = Modifier.size(32.dp))
                         Column(
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             Row(
                                 modifier = Modifier
@@ -550,15 +477,6 @@ fun SignUpPage(
                                     Toast.makeText(context, "Please, select your region", Toast.LENGTH_LONG).show()
                                     return@Button
                                 }
-                                isDistrictSelectedEmpty = selectedDistrict.isEmpty()
-                                if(isDistrictSelectedEmpty) {
-                                    Toast.makeText(context, "Please, enter your district", Toast.LENGTH_LONG).show()
-                                    return@Button
-                                }
-                                if(!isDistrictSelected) {
-                                    Toast.makeText(context, "Please, select your district", Toast.LENGTH_LONG).show()
-                                    return@Button
-                                }
                                 isPasswordEmpty = password.isEmpty()
                                 if(isPasswordEmpty) {
                                     Toast.makeText(context, "Please, enter a password", Toast.LENGTH_LONG).show()
@@ -583,7 +501,7 @@ fun SignUpPage(
                                     Toast.makeText(context, "Please, add your avatar", Toast.LENGTH_LONG).show()
                                     return@Button
                                 }
-                                if(croppedImageUri == null) {
+                                if(selectedImageUri == null) {
                                     Toast.makeText(context, "Please, re-add your avatar", Toast.LENGTH_LONG).show()
                                     return@Button
                                 } else {
@@ -593,8 +511,7 @@ fun SignUpPage(
                                         name = name,
                                         phoneNumber = phoneNumber.replace(" ", ""),
                                         region = selectedRegion,
-                                        district = selectedDistrict,
-                                        photo = croppedImageUri!!,
+                                        photo = selectedImageUri!!,
                                         context,
                                         coroutineScope
                                     )
@@ -662,9 +579,9 @@ fun SignUpPage(
                         },
                     contentAlignment = Alignment.Center
                 ) {
-                    if (croppedImageUri != null) {
+                    if (isImageSelected) {
                         Image(
-                            painter = rememberAsyncImagePainter(croppedImageUri),
+                            painter = rememberAsyncImagePainter(selectedImageUri),
                             contentDescription = "Cropped Image",
                             modifier = Modifier.size(100.dp)
                         )
@@ -679,35 +596,5 @@ fun SignUpPage(
                 }
             }
         }
-    }
-}
-
-fun cropImageToSquare(uri: Uri, contentResolver: android.content.ContentResolver): Bitmap? {
-    val inputStream: InputStream? = contentResolver.openInputStream(uri)
-    val originalBitmap = BitmapFactory.decodeStream(inputStream)
-
-    return originalBitmap?.let {
-        val width = it.width
-        val height = it.height
-
-        val size = if (width > height) height else width
-
-        Bitmap.createBitmap(it, 0, 0, size, size)
-    }
-}
-
-fun bitmapToUri(context: Context, bitmap: Bitmap): Uri? {
-    val file = File(context.cacheDir, "profile_photo_${System.currentTimeMillis()}.jpg")
-
-    try {
-        val fileOutputStream = FileOutputStream(file)
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fileOutputStream)
-        fileOutputStream.flush()
-        fileOutputStream.close()
-
-        return Uri.fromFile(file)
-    } catch (e: IOException) {
-        e.printStackTrace()
-        return null
     }
 }

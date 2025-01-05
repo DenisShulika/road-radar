@@ -53,6 +53,8 @@ googleid = "1.1.1"
 firebaseFirestoreKtx = "25.1.1"
 animationCoreAndroid = "1.6.6"
 places = "4.1.0"
+firebaseStorageKtx = "21.0.1"
+firebaseStorage = "21.0.1"
 
 [libraries]
 accompanist-navigation-material = { module = "com.google.accompanist:accompanist-navigation-material", version.ref = "accompanistSystemuicontroller" }
@@ -120,6 +122,8 @@ googleid = { group = "com.google.android.libraries.identity.googleid", name = "g
 firebase-firestore-ktx = { group = "com.google.firebase", name = "firebase-firestore-ktx", version.ref = "firebaseFirestoreKtx" }
 androidx-animation-core-android = { group = "androidx.compose.animation", name = "animation-core-android", version.ref = "animationCoreAndroid" }
 places = { group = "com.google.android.libraries.places", name = "places", version.ref = "places" }
+firebase-storage-ktx = { group = "com.google.firebase", name = "firebase-storage-ktx", version.ref = "firebaseStorageKtx" }
+firebase-storage = { group = "com.google.firebase", name = "firebase-storage", version.ref = "firebaseStorage" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

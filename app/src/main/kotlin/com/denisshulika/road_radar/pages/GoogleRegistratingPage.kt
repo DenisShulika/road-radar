@@ -50,7 +50,6 @@ import com.denisshulika.road_radar.AuthViewModel
 import com.denisshulika.road_radar.R
 import com.denisshulika.road_radar.Routes
 import com.denisshulika.road_radar.isValidPhoneNumber
-import com.denisshulika.road_radar.ui.components.AutocompleteTextFieldForDistrict
 import com.denisshulika.road_radar.ui.components.AutocompleteTextFieldForRegion
 import com.denisshulika.road_radar.ui.components.StyledBasicTextField
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
@@ -86,10 +85,6 @@ fun GoogleRegistratingPage(
     var selectedRegion by remember { mutableStateOf("") }
     var isRegionSelected by remember { mutableStateOf(false) }
     var isSelectedRegionEmpty by remember { mutableStateOf(false) }
-
-    var selectedDistrict by remember { mutableStateOf("") }
-    var isDistrictSelected by remember { mutableStateOf(false) }
-    var isDistrictSelectedEmpty by remember { mutableStateOf(false) }
 
     LaunchedEffect(authState.value) {
         authViewModel.checkAuthStatus()
@@ -169,101 +164,44 @@ fun GoogleRegistratingPage(
                             )
                         }
                         Spacer(modifier = Modifier.size(20.dp))
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(20.dp)
-                        ) {
-                            Text(
-                                text = "Your region",
-                                fontSize = 24.sp,
-                                fontFamily = RubikFont,
-                                fontWeight = FontWeight.Normal
-                            )
-                            AutocompleteTextFieldForRegion(
-                                modifier = Modifier.heightIn(min = 0.dp, max = 300.dp),
-                                value = selectedRegion,
-                                placesClient = placesClient,
-                                onPlaceSelected = { value ->
-                                    selectedRegion = value
-                                    isRegionSelected = true
-                                },
-                                onValueChange = { value ->
-                                    selectedRegion = value
-                                    isRegionSelected = false
-                                    isSelectedRegionEmpty = selectedRegion.isEmpty()
-
-                                    selectedDistrict = ""
-                                    isDistrictSelected = false
-                                    isDistrictSelectedEmpty = false
-                                },
-                                placeholder = "Enter your region"
-                            )
-                        }
-                        if (isSelectedRegionEmpty) {
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                "Region cant be empty",
-                                color = Color(0xFFB71C1C),
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                        }
-                        Spacer(modifier = Modifier.size(32.dp))
-                        if (isRegionSelected) {
+                        Column {
                             Column(
-                                verticalArrangement = Arrangement.spacedBy(20.dp)
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
                                 Text(
-                                    text = "District",
+                                    text = "Region",
                                     fontSize = 24.sp,
                                     fontFamily = RubikFont,
                                     fontWeight = FontWeight.Normal
                                 )
-                                AutocompleteTextFieldForDistrict(
+                                AutocompleteTextFieldForRegion(
                                     modifier = Modifier.heightIn(min = 0.dp, max = 300.dp),
-                                    value = selectedDistrict,
+                                    value = selectedRegion,
                                     placesClient = placesClient,
                                     onPlaceSelected = { value ->
-                                        selectedDistrict = value
-                                        isDistrictSelected = true
+                                        selectedRegion = value
+                                        isRegionSelected = true
                                     },
                                     onValueChange = { value ->
-                                        selectedDistrict = value
-                                        isDistrictSelected = false
-                                        isDistrictSelectedEmpty = selectedDistrict.isEmpty()
+                                        selectedRegion = value
+                                        isRegionSelected = false
+                                        isSelectedRegionEmpty = selectedRegion.isEmpty()
                                     },
-                                    placeholder = "Enter your district",
-                                    region = selectedRegion
+                                    placeholder = "Enter your region"
                                 )
                             }
-                            if (isDistrictSelectedEmpty) {
+                            if (isSelectedRegionEmpty) {
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    "District cant be empty",
+                                    "Region cant be empty",
                                     color = Color(0xFFB71C1C),
                                     style = MaterialTheme.typography.bodySmall
-                                )
-                            }
-                        } else {
-                            Column(
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Text(
-                                    text = "District",
-                                    fontSize = 24.sp,
-                                    fontFamily = RubikFont,
-                                    fontWeight = FontWeight.Normal
-                                )
-                                Text(
-                                    text = "Enter a region firstly",
-                                    fontSize = 20.sp,
-                                    fontFamily = RubikFont,
-                                    fontWeight = FontWeight.Normal,
-                                    color = Color(0xFFD3D3D3)
                                 )
                             }
                         }
                         Spacer(modifier = Modifier.size(32.dp))
                         Column (
-                            verticalArrangement = Arrangement.spacedBy(20.dp)
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             Text(
                                 text = "Phone Number",
@@ -318,19 +256,9 @@ fun GoogleRegistratingPage(
                                     Toast.makeText(context, "Please, select your region", Toast.LENGTH_LONG).show()
                                     return@Button
                                 }
-                                isDistrictSelectedEmpty = selectedDistrict.isEmpty()
-                                if(isDistrictSelectedEmpty) {
-                                    Toast.makeText(context, "Please, enter your district", Toast.LENGTH_LONG).show()
-                                    return@Button
-                                }
-                                if(!isDistrictSelected) {
-                                    Toast.makeText(context, "Please, select your district", Toast.LENGTH_LONG).show()
-                                    return@Button
-                                }
                                 authViewModel.completeRegistrationViaGoogle(
                                     phoneNumber,
                                     selectedRegion,
-                                    selectedDistrict,
                                     context,
                                     coroutineScope
                                 )
