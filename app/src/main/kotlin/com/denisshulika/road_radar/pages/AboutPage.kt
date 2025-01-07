@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.denisshulika.road_radar.AuthState
 import com.denisshulika.road_radar.AuthViewModel
+import com.denisshulika.road_radar.IncidentManager
 import com.denisshulika.road_radar.Routes
 import com.denisshulika.road_radar.model.CustomDrawerState
 import com.denisshulika.road_radar.model.NavigationItem
@@ -55,7 +56,8 @@ import kotlin.math.roundToInt
 fun AboutPage(
     @Suppress("UNUSED_PARAMETER") modifier: Modifier = Modifier,
     navController: NavController,
-    authViewModel: AuthViewModel
+    authViewModel: AuthViewModel,
+    incidentManager: IncidentManager
 ) {
     val authState = authViewModel.authState.observeAsState()
 
@@ -121,7 +123,8 @@ fun AboutPage(
             },
             onCloseClick = { drawerState = CustomDrawerState.Closed },
             authViewModel = authViewModel,
-            navController = navController
+            navController = navController,
+            incidentManager = incidentManager
         )
 
         Scaffold(

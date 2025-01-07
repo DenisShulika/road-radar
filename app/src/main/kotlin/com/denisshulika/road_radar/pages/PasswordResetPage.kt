@@ -30,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.denisshulika.road_radar.AuthViewModel
+import com.denisshulika.road_radar.IncidentManager
 import com.denisshulika.road_radar.R
 import com.denisshulika.road_radar.ResetPasswordState
 import com.denisshulika.road_radar.Routes
@@ -55,7 +57,8 @@ import com.google.accompanist.systemuicontroller.rememberSystemUiController
 fun PasswordResetPage(
     @Suppress("UNUSED_PARAMETER") modifier: Modifier = Modifier,
     navController: NavController,
-    authViewModel: AuthViewModel
+    authViewModel: AuthViewModel,
+    incidentManager: IncidentManager
 ) {
     val systemUiController = rememberSystemUiController()
 
@@ -69,7 +72,7 @@ fun PasswordResetPage(
     )
 
     val context = LocalContext.current
-
+    val coroutineScope = rememberCoroutineScope()
 
     val resetPasswordState = authViewModel.resetPasswordState.observeAsState()
 
@@ -77,13 +80,10 @@ fun PasswordResetPage(
         when (resetPasswordState.value) {
             is ResetPasswordState.Success -> {
                 navController.navigate(Routes.LOGIN)
-                authViewModel.resetPasswordState.value = ResetPasswordState.Null
+                authViewModel.setResetPasswordState(ResetPasswordState.Null)
             }
             is ResetPasswordState.Error -> {
-                Toast.makeText(
-                    context,
-                    (resetPasswordState.value as ResetPasswordState.Error).message,
-                    Toast.LENGTH_LONG).show()
+                Toast.makeText(context, (resetPasswordState.value as ResetPasswordState.Error).message, Toast.LENGTH_LONG).show()
                 authViewModel.setResetPasswordState(ResetPasswordState.Null)
             }
             else -> Unit
@@ -194,7 +194,9 @@ fun PasswordResetPage(
                             }
                             authViewModel.resetPassword(
                                 emailAddress = email,
-                                context = context
+                                context = context,
+                                coroutineScope = coroutineScope,
+                                incidentManager = incidentManager
                             )
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF474EFF)),
@@ -228,7 +230,7 @@ fun PasswordResetPage(
                     ) {
                         TextButton(
                             onClick = {
-                                navController.navigate(Routes.LOGIN)
+                                navController.popBackStack()
                             },
                             enabled = resetPasswordState.value != ResetPasswordState.Loading
                         ) {

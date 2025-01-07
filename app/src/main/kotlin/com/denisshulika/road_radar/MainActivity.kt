@@ -22,6 +22,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         val authViewModel : AuthViewModel by viewModels()
+        val incidentManager : IncidentManager by viewModels()
+
+        incidentManager.deleteOldIncidents()
 
         if (!Places.isInitialized()) {
             Places.initialize(applicationContext, BuildConfig.PLACES_API_KEY, Locale("uk"))
@@ -37,6 +40,7 @@ class MainActivity : ComponentActivity() {
                 RoadRadarNavigation(
                     modifier = Modifier,
                     authViewModel = authViewModel,
+                    incidentManager = incidentManager,
                     placesClient = placesClient
                 )
             }

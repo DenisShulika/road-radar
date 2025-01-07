@@ -30,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.denisshulika.road_radar.AuthViewModel
+import com.denisshulika.road_radar.IncidentManager
 import com.denisshulika.road_radar.R
 import com.denisshulika.road_radar.ResetEmailState
 import com.denisshulika.road_radar.Routes
@@ -56,7 +58,8 @@ import com.google.accompanist.systemuicontroller.rememberSystemUiController
 fun EmailResetPage(
     @Suppress("UNUSED_PARAMETER") modifier: Modifier = Modifier,
     navController: NavController,
-    authViewModel: AuthViewModel
+    authViewModel: AuthViewModel,
+    incidentManager: IncidentManager
 ) {
     val systemUiController = rememberSystemUiController()
 
@@ -70,6 +73,7 @@ fun EmailResetPage(
     )
 
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
     val resetEmailState = authViewModel.resetEmailState.observeAsState()
 
@@ -205,7 +209,9 @@ fun EmailResetPage(
                                 newEmailAddress = newEmail,
                                 email = email,
                                 password = password,
-                                context = context
+                                context = context,
+                                coroutineScope = coroutineScope,
+                                incidentManager = incidentManager
                             )
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF474EFF)),
@@ -239,7 +245,7 @@ fun EmailResetPage(
                     ) {
                         TextButton(
                             onClick = {
-                                navController.navigate(Routes.LOGIN)
+                                navController.popBackStack()
                             },
                             enabled = resetEmailState.value != ResetEmailState.Loading
                         ) {

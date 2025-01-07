@@ -59,6 +59,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.denisshulika.road_radar.AuthState
 import com.denisshulika.road_radar.AuthViewModel
+import com.denisshulika.road_radar.IncidentManager
 import com.denisshulika.road_radar.Routes
 import com.denisshulika.road_radar.local.SettingsLocalStorage
 import com.denisshulika.road_radar.local.UserLocalStorage
@@ -81,7 +82,8 @@ import kotlin.math.roundToInt
 fun SettingsPage(
     @Suppress("UNUSED_PARAMETER") modifier: Modifier = Modifier,
     navController: NavController,
-    authViewModel: AuthViewModel
+    authViewModel: AuthViewModel,
+    incidentManager: IncidentManager
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -158,7 +160,8 @@ fun SettingsPage(
             email = email,
             password = password,
             context = context,
-            coroutineScope = coroutineScope
+            coroutineScope = coroutineScope,
+            incidentManager = incidentManager
         )
         isDialogVisible = false
     }
@@ -186,7 +189,8 @@ fun SettingsPage(
             },
             onCloseClick = { drawerState = CustomDrawerState.Closed },
             authViewModel = authViewModel,
-            navController = navController
+            navController = navController,
+            incidentManager = incidentManager
         )
         Scaffold(
             modifier = Modifier
@@ -592,7 +596,11 @@ fun SettingsPage(
                                 )
                                 IconButton(
                                     onClick = {
-                                        authViewModel.signout(context, coroutineScope)
+                                        authViewModel.signout(
+                                            context = context,
+                                            coroutineScope = coroutineScope,
+                                            incidentManager = incidentManager
+                                        )
                                     }
                                 ) {
                                     Icon(

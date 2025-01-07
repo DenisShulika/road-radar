@@ -15,15 +15,24 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RichTooltip
+import androidx.compose.material3.RichTooltipColors
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -37,9 +46,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.paint
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -47,6 +58,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.denisshulika.road_radar.AuthState
 import com.denisshulika.road_radar.AuthViewModel
+import com.denisshulika.road_radar.IncidentManager
 import com.denisshulika.road_radar.R
 import com.denisshulika.road_radar.Routes
 import com.denisshulika.road_radar.isValidPhoneNumber
@@ -54,13 +66,16 @@ import com.denisshulika.road_radar.ui.components.AutocompleteTextFieldForRegion
 import com.denisshulika.road_radar.ui.components.StyledBasicTextField
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.android.libraries.places.api.net.PlacesClient
+import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GoogleRegistratingPage(
     @Suppress("UNUSED_PARAMETER") modifier: Modifier = Modifier,
     navController: NavController,
     authViewModel: AuthViewModel,
-    placesClient: PlacesClient
+    placesClient: PlacesClient,
+    incidentManager: IncidentManager
 ) {
     val systemUiController = rememberSystemUiController()
 
@@ -98,6 +113,9 @@ fun GoogleRegistratingPage(
             else -> Unit
         }
     }
+
+    val tooltipState = rememberTooltipState()
+    val scope = rememberCoroutineScope()
 
     Box(
         modifier = Modifier
@@ -168,12 +186,61 @@ fun GoogleRegistratingPage(
                             Column(
                                 verticalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
-                                Text(
-                                    text = "Region",
-                                    fontSize = 24.sp,
-                                    fontFamily = RubikFont,
-                                    fontWeight = FontWeight.Normal
-                                )
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "Region",
+                                        fontSize = 24.sp,
+                                        fontFamily = RubikFont,
+                                        fontWeight = FontWeight.Normal
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+
+                                    TooltipBox(
+                                        positionProvider = TooltipDefaults.rememberRichTooltipPositionProvider(),
+                                        tooltip = {
+                                            RichTooltip(
+                                                modifier = Modifier.padding(20.dp),
+                                                title = {
+                                                    Text(
+                                                        text = "Region",
+                                                        fontSize = 20.sp,
+                                                        fontFamily = RubikFont,
+                                                        fontWeight = FontWeight.SemiBold
+                                                    )
+                                                },
+                                                text = {
+                                                    Text(
+                                                        text = "Incidents are filtered by region, so enter the one you live in",
+                                                        fontSize = 16.sp,
+                                                        fontFamily = RubikFont,
+                                                        fontWeight = FontWeight.Normal
+                                                    )
+                                                },
+                                                colors = RichTooltipColors(
+                                                    containerColor = Color(0xFF474EFF),
+                                                    contentColor = Color(0xFFFFFFFF),
+                                                    titleContentColor = Color(0xFFFFFFFF),
+                                                    actionContentColor = Color(0xFFFFFFFF)
+                                                )
+                                            )
+                                        },
+                                        state = tooltipState
+                                    ) {
+                                        IconButton(
+                                            onClick = { scope.launch { tooltipState.show() } },
+                                            modifier = Modifier
+                                                .size(20.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = ImageVector.vectorResource(R.drawable.info),
+                                                contentDescription = "",
+                                                tint = Color(0xFFADADAD)
+                                            )
+                                        }
+                                    }
+                                }
                                 AutocompleteTextFieldForRegion(
                                     modifier = Modifier.heightIn(min = 0.dp, max = 300.dp),
                                     value = selectedRegion,
@@ -301,7 +368,8 @@ fun GoogleRegistratingPage(
                                         email = "",
                                         password = "",
                                         context = context,
-                                        coroutineScope = coroutineScope
+                                        coroutineScope = coroutineScope,
+                                        incidentManager = incidentManager
                                     )
                                 }
                             ) {

@@ -387,8 +387,14 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun signout(context: Context, coroutineScope: CoroutineScope) {
+    fun signout(
+        context: Context,
+        coroutineScope: CoroutineScope,
+        incidentManager: IncidentManager
+    ) {
         _authState.value = AuthState.Unauthenticated
+
+        incidentManager.resetDocumentList()
 
         auth.signOut()
 
@@ -402,7 +408,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         email : String,
         password: String,
         context: Context,
-        coroutineScope: CoroutineScope
+        coroutineScope: CoroutineScope,
+        incidentManager: IncidentManager
     ) {
         val user = auth.currentUser
 
@@ -435,7 +442,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                         firebaseUser.delete()
                             .addOnCompleteListener { deleteTask ->
                                 if (deleteTask.isSuccessful) {
-                                    signout(context, coroutineScope)
+                                    signout(context, coroutineScope, incidentManager)
                                 } else {
                                     Toast.makeText(
                                         context,
@@ -457,7 +464,9 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     fun resetPassword(
         emailAddress: String?,
-        context: Context
+        context: Context,
+        coroutineScope: CoroutineScope,
+        incidentManager: IncidentManager
     ) {
         _resetPasswordState.value = ResetPasswordState.Loading
 
@@ -470,7 +479,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 .addOnCompleteListener { task ->
                     if (task.isSuccessful) {
                         _resetPasswordState.value = ResetPasswordState.Success
-                        _authState.value = AuthState.Unauthenticated
+                        signout(context, coroutineScope, incidentManager)
                         Toast.makeText(context, "Password reset email sent. Please check your inbox.", Toast.LENGTH_LONG).show()
                     } else {
                         _resetPasswordState.value = ResetPasswordState.Error(task.exception?.message?:"Failed to send reset email")
@@ -483,7 +492,9 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         newEmailAddress: String?,
         email : String,
         password: String,
-        context: Context
+        context: Context,
+        coroutineScope: CoroutineScope,
+        incidentManager: IncidentManager
     ) {
         _resetEmailState.value = ResetEmailState.Loading
 
@@ -520,7 +531,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                     .addOnCompleteListener { task ->
                         if (task.isSuccessful) {
                             _resetEmailState.value = ResetEmailState.Success
-                            _authState.value = AuthState.Unauthenticated
+                            signout(context, coroutineScope, incidentManager)
                             Toast.makeText(context, "Email reset email sent. Please check your inbox.", Toast.LENGTH_LONG).show()
                         } else {
                             _resetEmailState.value = ResetEmailState.Error(task.exception?.message ?: "Failed to send reset email")

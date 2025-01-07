@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -32,6 +33,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -43,7 +45,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -60,21 +64,14 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.denisshulika.road_radar.AuthViewModel
+import com.denisshulika.road_radar.IncidentCreationState
+import com.denisshulika.road_radar.IncidentManager
 import com.denisshulika.road_radar.Routes
+import com.denisshulika.road_radar.model.IncidentType
 import com.denisshulika.road_radar.ui.components.AutocompleteTextFieldForAddress
 import com.denisshulika.road_radar.ui.components.AutocompleteTextFieldForRegion
 import com.denisshulika.road_radar.ui.components.StyledBasicTextField
-import com.google.android.gms.tasks.Task
-import com.google.android.gms.tasks.Tasks
 import com.google.android.libraries.places.api.net.PlacesClient
-import com.google.firebase.Timestamp
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.storage.FirebaseStorage
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
-import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -82,11 +79,30 @@ fun AddNewIncidentPage(
     @Suppress("UNUSED_PARAMETER") modifier: Modifier = Modifier,
     navController: NavController,
     authViewModel: AuthViewModel,
+    incidentManager: IncidentManager,
     placesClient: PlacesClient
 ) {
-    val incidentTypes = listOf("Car accident", "Roadblock", "Weather conditions", "Traffic jam", "Other")
+    val context = LocalContext.current
 
-    var selectedIncidentType by remember { mutableStateOf<String?>(null) }
+    val incidentTypesEn = listOf("Car accident", "Roadblock", "Weather conditions", "Traffic jam", "Other")
+
+    val incidentCreationState = incidentManager.incidentCreationState.observeAsState()
+
+    LaunchedEffect(incidentCreationState.value) {
+        when(incidentCreationState.value) {
+            is IncidentCreationState.Success -> {
+                navController.navigate(Routes.INCIDENTS)
+                incidentManager.setIncidentCreationState(IncidentCreationState.Null)
+            }
+            is IncidentCreationState.Error -> {
+                Toast.makeText(context, (incidentCreationState.value as IncidentCreationState.Error).message, Toast.LENGTH_LONG).show()
+                incidentManager.setIncidentCreationState(IncidentCreationState.Null)
+            }
+            else -> Unit
+        }
+    }
+
+    var selectedIncidentType by remember { mutableStateOf<IncidentType?>(null) }
     var isIncidentTypeDropdownExpanded by remember { mutableStateOf(false) }
 
     var incidentDescription by remember { mutableStateOf("") }
@@ -105,13 +121,22 @@ fun AddNewIncidentPage(
     var latitude by remember { mutableStateOf("") }
     var longitude by remember { mutableStateOf("") }
 
-    val context = LocalContext.current
-
     val getContent = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickMultipleVisualMedia(),
+        contract = ActivityResultContracts.PickMultipleVisualMedia(
+            maxItems = 3
+        ),
         onResult = { uriList ->
-            if (uriList.size + incidentPhotos.size <= 3) {
-                incidentPhotos = incidentPhotos + uriList
+            val imageUris = uriList.filter { uri ->
+                val mimeType = context.contentResolver.getType(uri)
+                if (mimeType?.startsWith("image/") == false) {
+                    Toast.makeText(context, "You cannot select videos", Toast.LENGTH_SHORT).show()
+                }
+                mimeType?.startsWith("image/") == true
+
+            }
+
+            if (imageUris.size + incidentPhotos.size <= 3) {
+                incidentPhotos = incidentPhotos + imageUris
             } else {
                 Toast.makeText(context, "You can select up to 3 photos", Toast.LENGTH_SHORT).show()
             }
@@ -136,7 +161,7 @@ fun AddNewIncidentPage(
                         )
                     },
                     navigationIcon = {
-                        IconButton(onClick = { navController.navigate(Routes.INCIDENTS) }) {
+                        IconButton(onClick = { navController.popBackStack() }) {
                             Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "")
                         }
                     }
@@ -154,6 +179,7 @@ fun AddNewIncidentPage(
                         .padding(start = 20.dp, end = 20.dp, bottom = 20.dp)
                         .verticalScroll(rememberScrollState())
                 ) {
+                    Spacer(modifier = Modifier.height(12.dp))
                     Column(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
@@ -186,7 +212,14 @@ fun AddNewIncidentPage(
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
                                     Text(
-                                        text = selectedIncidentType ?: "Choose incident type",
+                                        text = when(selectedIncidentType) {
+                                            null -> "Select incident type"
+                                            IncidentType.CAR_ACCIDENT -> "Car accident"
+                                            IncidentType.ROADBLOCK -> "Roadblock"
+                                            IncidentType.WEATHER_CONDITIONS -> "Weather conditions"
+                                            IncidentType.TRAFFIC_JAM -> "Traffic jam"
+                                            IncidentType.OTHER -> "Other"
+                                        },
                                         color = if (selectedIncidentType != null) Color(0xFF000000) else Color(0xFFADADAD),
                                         fontSize = 22.sp,
                                         fontFamily = RubikFont
@@ -198,7 +231,7 @@ fun AddNewIncidentPage(
                                     expanded = isIncidentTypeDropdownExpanded,
                                     onDismissRequest = { isIncidentTypeDropdownExpanded = false }
                                 ) {
-                                    incidentTypes.forEach { type ->
+                                    incidentTypesEn.forEach { type ->
                                         DropdownMenuItem(
                                             text = {
                                                 Text(
@@ -209,7 +242,14 @@ fun AddNewIncidentPage(
                                                 )
                                             },
                                             onClick = {
-                                                selectedIncidentType = type
+                                                selectedIncidentType = when(type) {
+                                                    "Car accident" -> IncidentType.CAR_ACCIDENT
+                                                    "Roadblock" -> IncidentType.ROADBLOCK
+                                                    "Weather conditions" -> IncidentType.WEATHER_CONDITIONS
+                                                    "Traffic jam" -> IncidentType.TRAFFIC_JAM
+                                                    "Other" -> IncidentType.OTHER
+                                                    else -> IncidentType.OTHER
+                                                }
                                                 isIncidentTypeDropdownExpanded = false
                                             }
                                         )
@@ -366,7 +406,7 @@ fun AddNewIncidentPage(
                                 val fileName = getFileNameFromUri(
                                     uri = uri ?: Uri.EMPTY,
                                     context = context
-                                    )
+                                )
                                 Column {
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
@@ -427,7 +467,8 @@ fun AddNewIncidentPage(
                                     getContent.launch(
                                         PickVisualMediaRequest()
                                     )
-                                }
+                                },
+                                enabled = incidentCreationState.value != IncidentCreationState.Loading
                             ) {
                                 Text(
                                     text = "Add photos (up to 3)",
@@ -480,90 +521,85 @@ fun AddNewIncidentPage(
                                 return@Button
                             }
 
-                            CoroutineScope(Dispatchers.Main).launch {
-                                val creatorName = authViewModel.getCurrentUser()?.displayName ?: "Unknown User"
-                                val currentTime = Timestamp.now()
-
-                                val incidentID = UUID.randomUUID().toString()
-                                val photos: MutableList<String> = mutableListOf()
-
-                                val storage = FirebaseStorage.getInstance()
-                                val storageReference = storage.reference.child("incidents_photos/${"incident_$incidentID"}")
-
-                                val uploadTasks = mutableListOf<Task<Uri>>()
-
-                                if (incidentPhotos.isNotEmpty()) {
-                                    incidentPhotos.forEachIndexed { index, uri ->
-                                        uri?.let {
-                                            val photoRef = storageReference.child("photo_${index}")
-                                            val uploadTask = photoRef.putFile(it)
-                                                .continueWithTask { task ->
-                                                    if (!task.isSuccessful) {
-                                                        throw task.exception ?: Exception("Unknown error")
-                                                    }
-                                                    photoRef.downloadUrl
-                                                }
-                                            uploadTasks.add(uploadTask)
-                                        }
-                                    }
-                                }
-
-                                try {
-                                    val downloadUrls = Tasks.whenAllSuccess<Uri>(uploadTasks).await()
-
-                                    downloadUrls.forEach { uri ->
-                                        photos.add(uri.toString())
-                                    }
-
-                                    val deletionTime = currentTime.toDate().time + 3 * 60 * 60 * 1000
-                                    val data = hashMapOf(
-                                        "address" to selectedAddress,
-                                        "createdBy" to creatorName,
-                                        "creationDate" to currentTime,
-                                        "description" to incidentDescription,
-                                        "latitude" to latitude,
-                                        "longitude" to longitude,
-                                        "photos" to photos,
-                                        "region" to selectedRegion,
-                                        "type" to selectedIncidentType
+                            incidentManager.addNewIncident(
+                                authViewModel = authViewModel,
+                                context = context,
+                                photoUris = incidentPhotos,
+                                type = selectedIncidentType!!,
+                                description = incidentDescription,
+                                region = selectedRegion,
+                                address = selectedAddress,
+                                latitude = latitude,
+                                longitude = longitude,
+                            )
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF474EFF)),
+                        enabled = incidentCreationState.value != IncidentCreationState.Loading && incidentCreationState.value != IncidentCreationState.UploadingPhotos && incidentCreationState.value != IncidentCreationState.CreatingIncident
+                    ) {
+                        when (incidentCreationState.value) {
+                            is IncidentCreationState.Loading -> {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxSize(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    Text(
+                                        text = "Loading...",
+                                        fontSize = 24.sp,
+                                        fontFamily = RubikFont
                                     )
-
-                                    FirebaseFirestore.getInstance()
-                                        .collection("incidents")
-                                        .document(incidentID)
-                                        .set(data)
-                                        .addOnSuccessListener {
-                                            Toast.makeText(context, "Incident added successfully!", Toast.LENGTH_SHORT).show()
-                                            navController.navigate(Routes.INCIDENTS)
-                                        }
-                                        .addOnFailureListener { e ->
-                                            Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
-                                        }
-                                } catch (e: Exception) {
-                                    Toast.makeText(context, "Error uploading photos: ${e.message}", Toast.LENGTH_SHORT).show()
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    CircularProgressIndicator(
+                                        color = Color(0xFF474EFF)
+                                    )
                                 }
                             }
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF474EFF))
-                    ) {
-                        Text(
-                            text = "Publish the incident",
-                            fontSize = 24.sp,
-                            fontFamily = RubikFont
-                        )
+                            is IncidentCreationState.UploadingPhotos -> {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxSize(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    Text(
+                                        text = "Uploading photos...",
+                                        fontSize = 24.sp,
+                                        fontFamily = RubikFont
+                                    )
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    CircularProgressIndicator(
+                                        color = Color(0xFF474EFF)
+                                    )
+                                }
+                            }
+                            is IncidentCreationState.CreatingIncident -> {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxSize(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    Text(
+                                        text = "Creating incident...",
+                                        fontSize = 24.sp,
+                                        fontFamily = RubikFont
+                                    )
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    CircularProgressIndicator(
+                                        color = Color(0xFF474EFF)
+                                    )
+                                }
+                            }
+                            else -> {
+                                Text(
+                                    text = "Publish the incident",
+                                    fontSize = 24.sp,
+                                    fontFamily = RubikFont
+                                )
+                            }
+                        }
                     }
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = latitude,
-                        color = Color(0xFFB71C1C),
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = longitude,
-                        color = Color(0xFFB71C1C),
-                        style = MaterialTheme.typography.bodySmall
-                    )
                 }
             }
         }

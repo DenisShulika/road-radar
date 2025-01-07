@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.denisshulika.road_radar.AuthViewModel
+import com.denisshulika.road_radar.IncidentManager
 import com.denisshulika.road_radar.R
 import com.denisshulika.road_radar.Routes
 import com.denisshulika.road_radar.local.UserLocalStorage
@@ -45,7 +46,8 @@ fun CustomDrawer (
     onNavigationItemClick : (NavigationItem) -> Unit,
     onCloseClick : () -> Unit,
     navController: NavController,
-    authViewModel : AuthViewModel
+    authViewModel : AuthViewModel,
+    incidentManager: IncidentManager
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -175,7 +177,7 @@ fun CustomDrawer (
                             }
                         }
                         NavigationItem.Signout -> {
-                            authViewModel.signout(context, coroutineScope)
+                            authViewModel.signout(context, coroutineScope, incidentManager)
                         }
                         else -> {}
                     }

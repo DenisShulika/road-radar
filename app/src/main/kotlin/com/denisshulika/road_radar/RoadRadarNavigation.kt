@@ -11,6 +11,7 @@ import com.denisshulika.road_radar.pages.AboutPage
 import com.denisshulika.road_radar.pages.AddNewIncidentPage
 import com.denisshulika.road_radar.pages.EmailResetPage
 import com.denisshulika.road_radar.pages.GoogleRegistratingPage
+import com.denisshulika.road_radar.pages.IncidentPage
 import com.denisshulika.road_radar.pages.IncidentsPage
 import com.denisshulika.road_radar.pages.LoginPage
 import com.denisshulika.road_radar.pages.MapRadarPage
@@ -25,6 +26,7 @@ import com.google.android.libraries.places.api.net.PlacesClient
 fun RoadRadarNavigation(
     modifier: Modifier = Modifier,
     authViewModel: AuthViewModel,
+    incidentManager: IncidentManager,
     placesClient: PlacesClient
 ) {
     val navController = rememberNavController()
@@ -50,31 +52,34 @@ fun RoadRadarNavigation(
                 SignUpPage(modifier, navController, authViewModel, placesClient)
             }
             composable(Routes.PASSWORD_RESET) {
-                PasswordResetPage(modifier, navController, authViewModel)
+                PasswordResetPage(modifier, navController, authViewModel, incidentManager)
             }
             composable(Routes.EMAIL_RESET) {
-                EmailResetPage(modifier, navController, authViewModel)
+                EmailResetPage(modifier, navController, authViewModel, incidentManager)
             }
             composable(Routes.GOOGLE_REGISTRATING) {
-                GoogleRegistratingPage(modifier, navController, authViewModel, placesClient)
+                GoogleRegistratingPage(modifier, navController, authViewModel, placesClient, incidentManager)
             }
             composable(Routes.INCIDENTS) {
-                IncidentsPage(modifier, navController, authViewModel)
+                IncidentsPage(modifier, navController, authViewModel, incidentManager)
+            }
+            composable(Routes.INCIDENT) {
+                IncidentPage(modifier, navController, incidentManager)
             }
             composable(Routes.ADD_NEW_INCIDENT) {
-                AddNewIncidentPage(modifier, navController, authViewModel, placesClient)
+                AddNewIncidentPage(modifier, navController, authViewModel, incidentManager, placesClient)
             }
             composable(Routes.MAP_RADAR) {
-                MapRadarPage(modifier, navController, authViewModel)
+                MapRadarPage(modifier, navController, authViewModel, incidentManager)
             }
             composable(Routes.PROFILE) {
-                ProfilePage(modifier, navController, authViewModel, placesClient)
+                ProfilePage(modifier, navController, authViewModel, placesClient, incidentManager)
             }
             composable(Routes.SETTINGS) {
-                SettingsPage(modifier, navController, authViewModel)
+                SettingsPage(modifier, navController, authViewModel, incidentManager)
             }
             composable(Routes.ABOUT) {
-                AboutPage(modifier, navController, authViewModel)
+                AboutPage(modifier, navController, authViewModel, incidentManager)
             }
         }
     )
@@ -87,6 +92,7 @@ object Routes {
     const val EMAIL_RESET = "email_reset"
     const val GOOGLE_REGISTRATING = "google_registrating"
     const val INCIDENTS = "incidents"
+    const val INCIDENT = "incident"
     const val ADD_NEW_INCIDENT = "add_new_incident"
     const val MAP_RADAR = "map_radar"
     const val PROFILE = "profile"

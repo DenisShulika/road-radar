@@ -1,5 +1,9 @@
 package com.denisshulika.road_radar.pages
 
+import android.content.ContentResolver
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -21,6 +25,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -31,11 +36,17 @@ import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RichTooltip
+import androidx.compose.material3.RichTooltipColors
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -70,7 +81,13 @@ import com.denisshulika.road_radar.ui.components.AutocompleteTextFieldForRegion
 import com.denisshulika.road_radar.ui.components.StyledBasicTextField
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.android.libraries.places.api.net.PlacesClient
+import kotlinx.coroutines.launch
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import java.io.InputStream
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SignUpPage(
     @Suppress("UNUSED_PARAMETER") modifier: Modifier = Modifier,
@@ -119,12 +136,16 @@ fun SignUpPage(
     var isConfirmPasswordEmpty by remember { mutableStateOf(false) }
     var isConfirmPasswordVisible by remember { mutableStateOf(false) }
 
+    var croppedImageUri by remember { mutableStateOf<Uri?>(null) }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var isImageSelected by remember { mutableStateOf(false) }
     val getContent = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let {
             selectedImageUri = it
             isImageSelected = true
+
+            val croppedBitmap = cropImageToSquare(it, context.contentResolver)
+            croppedImageUri = if (croppedBitmap != null) bitmapToUri(context, croppedBitmap) else null
         }
     }
 
@@ -138,6 +159,10 @@ fun SignUpPage(
         }
     }
 
+
+    val tooltipState = rememberTooltipState()
+    val scope = rememberCoroutineScope()
+    
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -253,12 +278,65 @@ fun SignUpPage(
                             Column(
                                 verticalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
-                                Text(
-                                    text = "Region",
-                                    fontSize = 24.sp,
-                                    fontFamily = RubikFont,
-                                    fontWeight = FontWeight.Normal
-                                )
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "Region",
+                                        fontSize = 24.sp,
+                                        fontFamily = RubikFont,
+                                        fontWeight = FontWeight.Normal
+                                    )
+                                    Spacer(modifier = Modifier.width(12.dp))
+
+                                    TooltipBox(
+                                        positionProvider = TooltipDefaults.rememberRichTooltipPositionProvider(),
+                                        tooltip = {
+                                            RichTooltip(
+                                                modifier = Modifier.padding(20.dp),
+                                                title = {
+                                                    Text(
+                                                        text = "Region",
+                                                        fontSize = 20.sp,
+                                                        fontFamily = RubikFont,
+                                                        fontWeight = FontWeight.SemiBold
+                                                    )
+                                                },
+                                                text = {
+                                                    Text(
+                                                        text = "Incidents are filtered by region, so enter the one you live in",
+                                                        fontSize = 16.sp,
+                                                        fontFamily = RubikFont,
+                                                        fontWeight = FontWeight.Normal
+                                                    )
+                                                },
+                                                colors = RichTooltipColors(
+                                                    containerColor = Color(0xFF474EFF),
+                                                    contentColor = Color(0xFFFFFFFF),
+                                                    titleContentColor = Color(0xFFFFFFFF),
+                                                    actionContentColor = Color(0xFFFFFFFF)
+                                                )
+                                            )
+                                        },
+                                        state = tooltipState
+                                    ) {
+                                        IconButton(
+                                            onClick = {
+                                                scope.launch {
+                                                    tooltipState.show()
+                                                }
+                                            },
+                                            modifier = Modifier
+                                                .size(20.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = ImageVector.vectorResource(R.drawable.info),
+                                                contentDescription = "",
+                                                tint = Color(0xFFADADAD)
+                                            )
+                                        }
+                                    }
+                                }
                                 AutocompleteTextFieldForRegion(
                                     modifier = Modifier.heightIn(min = 0.dp, max = 300.dp),
                                     value = selectedRegion,
@@ -596,5 +674,35 @@ fun SignUpPage(
                 }
             }
         }
+    }
+}
+
+fun cropImageToSquare(uri: Uri, contentResolver: ContentResolver): Bitmap? {
+    val inputStream: InputStream? = contentResolver.openInputStream(uri)
+    val originalBitmap = BitmapFactory.decodeStream(inputStream)
+
+    return originalBitmap?.let {
+        val width = it.width
+        val height = it.height
+
+        val size = if (width > height) height else width
+
+        Bitmap.createBitmap(it, 0, 0, size, size)
+    }
+}
+
+fun bitmapToUri(context: Context, bitmap: Bitmap): Uri? {
+    val file = File(context.cacheDir, "profile_photo_${System.currentTimeMillis()}.jpg")
+
+    try {
+        val fileOutputStream = FileOutputStream(file)
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fileOutputStream)
+        fileOutputStream.flush()
+        fileOutputStream.close()
+
+        return Uri.fromFile(file)
+    } catch (e: IOException) {
+        e.printStackTrace()
+        return null
     }
 }
