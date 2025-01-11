@@ -287,16 +287,13 @@ fun ProfilePage(
                                     modifier = Modifier
                                         .size(100.dp)
                                         .clip(RoundedCornerShape(10.dp))
-                                        .background(Color(0xFFEFF1F3))
-                                        .clickable {
-                                            getContent.launch("image/*")
-                                        },
+                                        .background(Color(0xFFEFF1F3)),
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                     verticalArrangement = Arrangement.Center
                                 ) {
                                     Image(
                                         painter = rememberAsyncImagePainter(userPhoto),
-                                        contentDescription = "Cropped Image",
+                                        contentDescription = "",
                                         modifier = Modifier.size(100.dp)
                                     )
                                 }
