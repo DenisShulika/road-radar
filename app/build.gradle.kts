@@ -6,9 +6,10 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     kotlin("plugin.serialization") version "2.1.0"
+    id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
 }
 
-val apiKey: String = project.rootProject.file("local.properties")
+val placesApiKey: String = project.rootProject.file("local.properties")
     .takeIf { it.exists() }
     ?.let { Properties().apply { load(it.inputStream()) } }
     ?.getProperty("PLACES_API_KEY") ?: ""
@@ -29,10 +30,10 @@ android {
 
     buildTypes {
         debug {
-            buildConfigField("String", "PLACES_API_KEY", "\"$apiKey\"")
+            buildConfigField("String", "PLACES_API_KEY", "\"$placesApiKey\"")
         }
         release {
-            buildConfigField("String", "PLACES_API_KEY", "\"$apiKey\"")
+            buildConfigField("String", "PLACES_API_KEY", "\"$placesApiKey\"")
         }
     }
 
@@ -48,6 +49,11 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+
+    secrets {
+        propertiesFileName = "secrets.properties"
+        defaultPropertiesFileName = "local.defaults.properties"
     }
 }
 
@@ -71,13 +77,10 @@ dependencies {
     implementation(libs.places)
     implementation(libs.androidx.appcompat)
     implementation(libs.firebase.firestore.ktx)
-    implementation(libs.firebase.firestore.ktx)
-    implementation(libs.firebase.firestore)
     implementation(libs.play.services.auth)
     implementation(libs.firebase.auth.ktx)
-    implementation(libs.firebase.auth)
     implementation(libs.firebase.storage.ktx)
-    implementation(libs.firebase.storage)
+    implementation(libs.gson)
     implementation(libs.googleid)
     implementation(libs.androidx.activity.compose)
     implementation(libs.accompanist.navigation.material)

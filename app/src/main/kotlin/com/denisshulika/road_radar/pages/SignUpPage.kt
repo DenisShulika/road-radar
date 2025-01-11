@@ -136,6 +136,7 @@ fun SignUpPage(
     var isConfirmPasswordEmpty by remember { mutableStateOf(false) }
     var isConfirmPasswordVisible by remember { mutableStateOf(false) }
 
+    var userPhoto by remember { mutableStateOf("") }
     var croppedImageUri by remember { mutableStateOf<Uri?>(null) }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var isImageSelected by remember { mutableStateOf(false) }
@@ -146,6 +147,8 @@ fun SignUpPage(
 
             val croppedBitmap = cropImageToSquare(it, context.contentResolver)
             croppedImageUri = if (croppedBitmap != null) bitmapToUri(context, croppedBitmap) else null
+
+            userPhoto = croppedImageUri.toString()
         }
     }
 
@@ -579,7 +582,7 @@ fun SignUpPage(
                                     Toast.makeText(context, "Please, add your avatar", Toast.LENGTH_LONG).show()
                                     return@Button
                                 }
-                                if(selectedImageUri == null) {
+                                if(croppedImageUri == null) {
                                     Toast.makeText(context, "Please, re-add your avatar", Toast.LENGTH_LONG).show()
                                     return@Button
                                 } else {
@@ -589,7 +592,7 @@ fun SignUpPage(
                                         name = name,
                                         phoneNumber = phoneNumber.replace(" ", ""),
                                         region = selectedRegion,
-                                        photo = selectedImageUri!!,
+                                        photo = userPhoto,
                                         context,
                                         coroutineScope
                                     )
@@ -659,7 +662,7 @@ fun SignUpPage(
                 ) {
                     if (isImageSelected) {
                         Image(
-                            painter = rememberAsyncImagePainter(selectedImageUri),
+                            painter = rememberAsyncImagePainter(croppedImageUri),
                             contentDescription = "Cropped Image",
                             modifier = Modifier.size(100.dp)
                         )

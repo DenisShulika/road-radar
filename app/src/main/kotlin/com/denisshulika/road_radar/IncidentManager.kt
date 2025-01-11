@@ -41,6 +41,9 @@ class IncidentManager(application: Application) : AndroidViewModel(application) 
     private val _selectedDocumentInfo = MutableLiveData<IncidentInfo>()
     val selectedDocumentInfo: LiveData<IncidentInfo> = _selectedDocumentInfo
 
+    private val _userRegion = MutableLiveData("")
+    val userRegion: LiveData<String> = _userRegion
+
     fun setIncidentCreationState(state: IncidentCreationState){
         _incidentCreationState.value = state
     }
@@ -55,6 +58,10 @@ class IncidentManager(application: Application) : AndroidViewModel(application) 
 
     fun resetDocumentList() {
         _documentsList.value = emptyList()
+    }
+
+    fun setUserRegion(region: String) {
+        _userRegion.value = region
     }
 
     fun deleteOldIncidents() {
@@ -184,7 +191,6 @@ class IncidentManager(application: Application) : AndroidViewModel(application) 
 
     fun loadIncidentsByRegion(region: String) {
         _loadingDocumentsState.value = LoadingDocumentsState.Loading
-
         viewModelScope.launch(Dispatchers.IO) {
             val currentTime = System.currentTimeMillis()
             val threeHoursAgo = Timestamp(Date(currentTime - 3 * 60 * 60 * 1000))

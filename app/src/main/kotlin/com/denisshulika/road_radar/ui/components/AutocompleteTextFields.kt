@@ -63,6 +63,9 @@ fun AutocompleteTextFieldForRegion(
                             .addOnSuccessListener { response ->
                                 suggestions = response.autocompletePredictions
                                     .map { it.getPrimaryText(null).toString() }
+                                    .filter { suggestion ->
+                                        suggestion.none { it in 'a'..'z' || it in 'A'..'Z' }
+                                    }
                             }
                             .addOnFailureListener {
                                 suggestions = emptyList()
@@ -140,17 +143,24 @@ fun AutocompleteTextFieldForAddress(
                         placesClient.findAutocompletePredictions(request)
                             .addOnSuccessListener { response ->
                                 suggestions = response.autocompletePredictions
+                                    .asSequence()
                                     .map { it.getFullText(null).toString() }
-
-                                suggestions = suggestions.filter { suggestion ->
-                                    if (region == "місто Севастополь" || region == "Автономна Республіка Крим") {
-                                        !suggestion.contains(Regex("[ыЫЁё]")) && // Російські символи
-                                                !suggestion.contains(Regex("\\b(улица|ул\\.|дом|пл\\.|кв\\.|город)\\b", RegexOption.IGNORE_CASE)) &&
-                                                (suggestion.endsWith("Севастополь") || suggestion.endsWith("Автономна Республіка Крим"))
-                                    } else {
-                                        true
+                                    .map { suggestion ->
+                                        suggestion.replace(Regex(", Україна(, \\d{5})?$"), "")
                                     }
-                                }
+                                    .filter { suggestion ->
+                                        suggestion.none { it in 'a'..'z' || it in 'A'..'Z' }
+                                    }
+                                    .filter { suggestion ->
+                                        if (region == "місто Севастополь" || region == "Автономна Республіка Крим") {
+                                            !suggestion.contains(Regex("[ыЫЁё]")) &&
+                                                    !suggestion.contains(Regex("\\b(улица|ул\\.|дом|пл\\.|кв\\.|город)\\b", RegexOption.IGNORE_CASE)) &&
+                                                    (suggestion.endsWith("Севастополь") || suggestion.endsWith("Автономна Республіка Крим"))
+                                        } else {
+                                            true
+                                        }
+                                    }
+                                    .toList()
                             }
                             .addOnFailureListener {
                                 suggestions = emptyList()

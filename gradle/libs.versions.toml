@@ -1,15 +1,18 @@
 [versions]
 accompanistNavigationMaterial = "0.28.0"
+accompanistSvg = "<latest-version>"
 accompanistSystemuicontroller = "0.27.0"
 activityCompose = "1.9.3"
 agp = "8.7.3"
 appcompat = "1.7.0"
 coilCompose = "2.5.0"
+coilSvg = "2.2.2"
 datastorePreferences = "1.1.1"
 firebaseAuthKtx = "23.1.0"
 firebaseFirestoreKtx = "25.1.1"
 firebaseStorageKtx = "21.0.1"
 googleid = "1.1.1"
+gson = "2.10.1"
 kotlin = "2.0.0"
 coreKtx = "1.15.0"
 lifecycleRuntimeKtx = "2.8.7"
@@ -24,12 +27,15 @@ places = "4.1.0"
 playServicesIdentityVersion = "20.3.0"
 playServicesLocation = "21.3.0"
 playServicesMaps = "19.0.0"
+secretsGradlePlugin = "2.0.1"
 timber = "5.0.1"
 ui = "1.7.6"
 runtimeLivedata = "1.7.6"
 
 [libraries]
+accompanist-coil = { module = "com.google.accompanist:accompanist-coil", version = "0.15.0" }
 accompanist-navigation-material = { module = "com.google.accompanist:accompanist-navigation-material", version.ref = "accompanistNavigationMaterial" }
+accompanist-svg = { module = "com.google.accompanist:accompanist-svg" }
 accompanist-systemuicontroller = { module = "com.google.accompanist:accompanist-systemuicontroller", version.ref = "accompanistSystemuicontroller" }
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
@@ -43,6 +49,7 @@ androidx-navigation-compose = { module = "androidx.navigation:navigation-compose
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
+coil-svg = { module = "io.coil-kt:coil-svg", version.ref = "coilSvg" }
 firebase-auth = { module = "com.google.firebase:firebase-auth", version.ref = "firebaseAuthKtx" }
 firebase-auth-ktx = { module = "com.google.firebase:firebase-auth-ktx", version.ref = "firebaseAuthKtx" }
 firebase-firestore = { module = "com.google.firebase:firebase-firestore", version.ref = "firebaseFirestoreKtx" }
@@ -51,6 +58,7 @@ firebase-storage = { module = "com.google.firebase:firebase-storage", version.re
 firebase-storage-ktx = { module = "com.google.firebase:firebase-storage-ktx", version.ref = "firebaseStorageKtx" }
 gms-play-services-identity = { module = "com.google.android.gms:play-services-identity", version.ref = "playServicesIdentityVersion" }
 googleid = { module = "com.google.android.libraries.identity.googleid:googleid", version.ref = "googleid" }
+gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 maps-compose = { module = "com.google.maps.android:maps-compose", version.ref = "mapsCompose" }
 maps-ktx = { module = "com.google.maps.android:maps-ktx", version.ref = "mapsKtx" }
 maps-utils-ktx = { module = "com.google.maps.android:maps-utils-ktx", version.ref = "mapsUtilsKtx" }
@@ -60,6 +68,7 @@ play-services-auth = { module = "com.google.android.gms:play-services-auth", ver
 play-services-identity = { module = "com.google.android.gms:play-services-identity" }
 play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "playServicesLocation" }
 play-services-maps = { module = "com.google.android.gms:play-services-maps", version.ref = "playServicesMaps" }
+secrets-gradle-plugin = { module = "com.google.android.libraries.mapsplatform.secrets-gradle-plugin:secrets-gradle-plugin", version.ref = "secretsGradlePlugin" }
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 ui = { module = "androidx.compose.ui:ui", version.ref = "ui" }
 androidx-runtime-livedata = { group = "androidx.compose.runtime", name = "runtime-livedata", version.ref = "runtimeLivedata" }

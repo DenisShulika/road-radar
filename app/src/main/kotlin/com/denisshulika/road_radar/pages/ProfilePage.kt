@@ -194,6 +194,7 @@ fun ProfilePage(
 
             val croppedBitmap = cropImageToSquare(it, context.contentResolver)
             croppedImageUri = if (croppedBitmap != null) bitmapToUri(context, croppedBitmap) else null
+
             userPhoto = croppedImageUri.toString()
         }
     }
@@ -276,7 +277,7 @@ fun ProfilePage(
                                 .fillMaxWidth(),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Spacer(modifier = Modifier.size(4.dp))
+                            Spacer(modifier = Modifier.size(16.dp))
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth(),
@@ -484,7 +485,8 @@ fun ProfilePage(
                                             text = "Region",
                                             fontSize = 24.sp,
                                             fontFamily = RubikFont,
-                                            fontWeight = FontWeight.Normal
+                                            fontWeight = FontWeight.Normal,
+                                            color = Color(0xFF808080)
                                         )
                                         Spacer(modifier = Modifier.width(8.dp))
 
@@ -557,6 +559,25 @@ fun ProfilePage(
                                     )
                                 }
                             }
+                            if (authViewModel.isUserLoggedInWithEmailPassword()) {
+                                Column(
+                                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Text(
+                                        text = "Email",
+                                        fontSize = 24.sp,
+                                        fontFamily = RubikFont,
+                                        fontWeight = FontWeight.Normal,
+                                        color = Color(0xFF808080)
+                                    )
+                                    Text(
+                                        text = userEmail,
+                                        fontSize = 22.sp,
+                                        fontFamily = RubikFont,
+                                        fontWeight = FontWeight.Normal
+                                    )
+                                }
+                            }
                             Column {
                                 Column(
                                     verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -591,25 +612,6 @@ fun ProfilePage(
                                         "Invalid phone number",
                                         color = Color(0xFFB71C1C),
                                         style = MaterialTheme.typography.bodySmall
-                                    )
-                                }
-                            }
-                            if (authViewModel.isUserLoggedInWithEmailPassword()) {
-                                Column(
-                                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                                ) {
-                                    Text(
-                                        text = "Email",
-                                        fontSize = 24.sp,
-                                        fontFamily = RubikFont,
-                                        fontWeight = FontWeight.Normal,
-                                        color = Color(0xFF808080)
-                                    )
-                                    Text(
-                                        text = userEmail,
-                                        fontSize = 20.sp,
-                                        fontFamily = RubikFont,
-                                        fontWeight = FontWeight.Normal
                                     )
                                 }
                             }
@@ -703,6 +705,7 @@ fun ProfilePage(
                                                 photoUrl = userPhoto
                                             )
                                             CoroutineScope(Dispatchers.Main).launch {
+                                                incidentManager.setUserRegion(selectedRegion)
                                                 userLocalStorage.saveUser(userLocalData)
                                                 navController.navigate(Routes.PROFILE)
                                             }

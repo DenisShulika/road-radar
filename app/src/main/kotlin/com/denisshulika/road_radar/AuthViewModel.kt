@@ -166,7 +166,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         name: String,
         phoneNumber: String,
         region: String,
-        photo: Uri,
+        photo: String,
         context: Context,
         coroutineScope: CoroutineScope
     ) {
@@ -179,7 +179,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
                     val profileUpdates = userProfileChangeRequest {
                         displayName = name
-                        photoUri = photo
+                        photoUri = Uri.parse(photo)
                     }
 
                     user?.updateProfile(profileUpdates)
@@ -206,7 +206,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                                 name = name,
                                 phoneNumber = phoneNumber,
                                 region = region,
-                                photoUrl = photo.toString()
+                                photoUrl = photo
                             )
 
                             coroutineScope.launch {
