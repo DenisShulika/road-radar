@@ -1,0 +1,262 @@
+{
+  "drawer_incidents": "Incidents",
+  "drawer_map_radar": "Map Radar",
+  "drawer_profile": "Profile",
+  "drawer_settings": "Settings",
+  "drawer_about": "About",
+  "drawer_signout": "Sign Out",
+
+  "something_went_wrong": "Something went wrong",
+
+  "unknown_user": "Unknown user",
+  "unknown_error": "Unknown error",
+
+  "incident_adding_success": "Incident added successfully!",
+  "incident_adding_fail": "Failed to add an incident",
+  "photos_adding_fail": "Failed to upload photos",
+
+  "incidents_loading_fail": "Failed to load incidents",
+
+  "profile_updating_success": "Profile updated successfully",
+  "profile_updating_fail": "Failed to update profile",
+
+  "user_data_loading_fail": "Failed to load user data",
+  "user_data_saving_fail": "Failed to save user data",
+
+  "user_not_authenticated": "User is not authenticated",
+
+  "reauthenticate_fail": "Failed to re-authenticate. Try again later",
+
+  "account_deleting_fail": "Failed to delete account",
+  "firestore_deleting_fail": "Failed to delete Firestore data",
+
+  "password_reset_email_success": "Password reset email sent. Please check your inbox.",
+  "password_reset_email_fail": "Failed to send reset email",
+
+  "email_reset_email_success": "Email reset email sent. Please check your inbox.",
+  "email_reset_email_fail": "Failed to send reset email",
+
+  "user_name_fail": "Failed to get a name",
+
+  "app_title": "Road Radar",
+  "app_description_title": " — a mobile application for drivers and other users",
+  "app_description_text": "that provides information about current road conditions and possible hazards along your route. With it, you can receive and exchange up-to-date information about accidents, traffic jams, dangerous sections, and other situations that may affect your trip.",
+
+  "faq_title": "FAQs:",
+  "faq_register_question": "How do I register in the app?",
+  "faq_register_answer": "To register, you can use your email or sign in through Google. Afterward, you need to enter additional details to complete the registration.",
+  "faq_login_question": "How do I log into the app?",
+  "faq_login_answer": "You can log in using your email and password or through Google if you already have an account.",
+  "faq_help_question": "How does the app help me on the road?",
+  "faq_help_answer": "Road Radar allows you to exchange information about accidents, traffic jams, dangerous areas, and weather conditions that could impact your journey.",
+  "faq_view_incidents_question": "How can I view current incidents in my area?",
+  "faq_view_incidents_answer": "Incidents are displayed on the 'Incidents' page, sorted by date (from the newest) and filtered by your area as indicated in your profile.",
+  "faq_report_incident_question": "How do I report a new incident?",
+  "faq_report_incident_answer": "To report a new incident, click the appropriate button in the app and fill out the form with a detailed description of the situation.",
+  "faq_profile_question": "How do I view and edit my profile?",
+  "faq_profile_answer": "Profile information can be viewed on the 'Profile' page. There is also a button to edit your details.",
+  "faq_settings_question": "How do I change the app settings and manage my account?",
+  "faq_settings_answer": "You can change the app's theme and language in the settings, as well as manage your account settings.",
+  "faq_map_incidents_question": "How do I view incidents on the map?",
+  "faq_map_incidents_answer": "Incidents can be viewed on the map, where they are marked with pins. Clicking on a pin will show detailed information about the incident.",
+  "faq_data_storage_question": "How does the app store my data?",
+  "faq_data_storage_answer": "Some data is stored locally on the device for faster access and to minimize internet usage, while others are synced with the server to save progress and settings.",
+  "faq_technical_problems_question": "What should I do in case of technical problems?",
+  "faq_technical_problems_answer": "Try restarting the app or contact the developer through the contact details below.",
+  "developer_contact_title": "Developer Contact Information:",
+  "developer_name": "Denis Shulika Hennadiyovych",
+  "developer_email_title": "Email: ",
+  "developer_email": "Email: denisshulika31@gmail.com",
+  "developer_phone": "Phone: +380 67 880 50 16",
+  "developer_telegram_title": "Telegram: ",
+  "developer_telegram": "Telegram: t.me/denisshulika",
+  "developer_github_title": "GitHub: ",
+  "developer_github": "GitHub: github.com/DenisShulika",
+
+  "incident_type_car_accident": "Car accident",
+  "incident_type_roadblock": "Roadblock",
+  "incident_type_weather_conditions": "Weather conditions",
+  "incident_type_traffic_jam": "Traffic jam",
+  "incident_type_other": "Other",
+
+  "select_videos_error": "You can't select videos",
+  "photo_limit_error": "You can select up to 3 photos",
+
+  "add_new_incident_title": "Add new incident",
+
+  "incident_type_title": "Incident type",
+  "incident_type_placeholder": "Select incident type",
+
+  "description_title": "Description",
+  "description_placeholder": "Enter a description to an accident",
+  "description_empty_text": "Description can't be empty",
+
+  "region_title": "Region",
+  "region_placeholder": "Enter region",
+  "region_empty": "Region can't be empty",
+
+  "address_title": "Address",
+  "enter_region_firstly": "Enter a region firstly",
+  "address_placeholder": "Enter address",
+  "address_empty": "Address can't be empty",
+
+  "photos_title": "Photos",
+  "no_photos_selected": "No photos selected",
+  "add_photos_button": "Add photos (up to 3)",
+
+  "type_error": "Please, choose an incident type",
+
+  "description_error": "Please, enter a description",
+
+  "region_enter_error": "Please, enter region",
+  "region_select_error": "Please, select region",
+
+  "address_enter_error": "Please, enter address",
+  "address_select_error": "Please, select address",
+
+  "loading": "Loading...",
+  "uploading_photos": "Uploading photos...",
+  "creating_incident": "Creating incident...",
+  "loading_incidents": "Loading incidents...",
+
+  "publish_incident_button": "Publish the incident",
+
+  "unknown_file_name": "Unknown file name",
+
+  "reset_email_title_1": "Reset",
+  "reset_email_title_2": "Email",
+
+  "new_email_title": "New Email",
+  "new_email_placeholder": "Enter your new email",
+
+  "email_empty": "Email can't be empty",
+  "email_invalid": "Invalid email address",
+
+  "email_empty_error": "Please, enter your email",
+  "email_invalid_error": "Please, enter correct email address",
+
+  "reset_email_button": "Reset email",
+  "go_back_button": "Go back",
+
+  "google_sign_in_title_1": "Sign in",
+  "google_sign_in_title_2": "with Google",
+
+  "google_sign_in_info": "To complete Google sign in, please provide us with additional information",
+
+  "region_tip_title": "Region",
+  "region_tip_text": "Incidents are filtered by region, so enter the one you live in",
+
+  "phone_title": "Phone Number",
+  "phone_placeholder": "Your phone",
+  "phone_empty": "Phone number can't be empty",
+  "phone_invalid": "Invalid phone number",
+
+  "phone_empty_error": "Please, enter your phone",
+  "phone_invalid_error": "Please, enter correct phone number",
+
+  "complete_google_sign_in_button": "Complete Signing Up",
+  "terminate_google_sign_in_button": "Changed your mind about signing in with Google?",
+
+  "incident_info_title": "Incident Information",
+
+  "incident_type_subtext": "Type:",
+  "incident_date_subtext": "Date:",
+  "incident_address_subtext": "Address:",
+  "incident_description_subtext": "Description:",
+  "incident_created_by_subtext": "Created by:",
+
+  "no_incidents_in_region": "Great news!\nNo incidents in your region.",
+  "smile": ":)",
+
+  "incident_has_been_ended": "This incident has been ended",
+
+  "date_format_language": "en",
+  "date_format_country": "US",
+
+  "login_title": "Login",
+
+  "email_title": "Email",
+  "email_placeholder_login": "Enter your email",
+
+  "password_title": "Password",
+  "password_placeholder_login": "Enter your password",
+  "password_empty": "Password can't be empty",
+
+  "forgot_password_button": "Forgot password?",
+
+  "password_empty_error": "Please, enter a password",
+
+  "login_button": "Login",
+
+  "register_here_button": "Don't have an account yet? Register here",
+  "or_sign_in_with": "Or Sign In with",
+
+  "loading_map": "Loading map...",
+  "loading_map_error_text": "That's why failed to load map radar",
+
+  "password_reset_title_1": "Reset",
+  "password_reset_title_2": "Password",
+
+  "password_reset_button": "Reset password",
+
+  "edit_profile_title": "Edit profile",
+
+  "name_title": "Name",
+  "name_placeholder": "Your Name, e.g: John Doe",
+  "name_empty": "Name can't be empty",
+
+  "edit_profile_button": "Edit profile",
+
+  "discard_changes_button": "Discard changes",
+  "save_profile_button": "Save",
+
+  "name_empty_error": "Please, enter your name",
+
+  "theme_title": "Theme",
+
+  "theme_system": "System",
+  "theme_light": "Light",
+  "theme_dark": "Dark",
+
+  "language_title": "Language",
+
+  "language_uk": "Ukrainian",
+  "language_en": "English",
+
+  "account_actions_title": "Actions With Account",
+
+  "account_action_change_email": "Change email",
+  "account_action_change_password": "Change password",
+  "account_action_delete_account": "Delete account",
+  "account_action_sign_out": "Sign out",
+
+  "account_delete_title": "Confirmation",
+  "account_delete_info": "Are you sure you want to delete your account? This action cannot be undone.",
+  "account_delete_confirm": "Yes, delete",
+  "account_delete_cancel": "Cancel",
+
+  "sign_up_title": "Sign Up",
+
+  "email_placeholder_sign_up": "Your email, e.g: john@gmail.com",
+
+  "email_placeholder_password_reset": "Enter your email address",
+
+  "password_placeholder_sign_up": "Your password, at least 6 symbols",
+  "password_length": "Password must be at least 6 symbols",
+
+  "confirm_password_title": "Confirm Password",
+  "confirm_password_placeholder": "Re-type your password",
+
+  "confirm_password_empty": "Confirm password can't be empty",
+  "passwords_do_not_match": "Passwords don't match",
+
+  "password_length_error": "Password must be at least 6 symbols",
+  "confirm_password_empty_error": "Please, confirm your password",
+  "passwords_do_not_match_error": "Passwords don't match",
+  "no_avatar_error": "Please, add your avatar",
+  "re_add_avatar_error": "Please, re-add your avatar",
+
+  "sign_up_button": "Sign Up",
+
+  "login_here_button": "Already have an account? Login here"
+}

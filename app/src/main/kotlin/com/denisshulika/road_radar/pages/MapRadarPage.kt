@@ -61,6 +61,7 @@ import com.denisshulika.road_radar.IncidentManager
 import com.denisshulika.road_radar.LoadingDocumentsState
 import com.denisshulika.road_radar.R
 import com.denisshulika.road_radar.Routes
+import com.denisshulika.road_radar.SettingsViewModel
 import com.denisshulika.road_radar.model.CustomDrawerState
 import com.denisshulika.road_radar.model.IncidentInfo
 import com.denisshulika.road_radar.model.NavigationItem
@@ -84,8 +85,11 @@ fun MapRadarPage(
     @Suppress("UNUSED_PARAMETER") modifier: Modifier = Modifier,
     navController: NavController,
     authViewModel: AuthViewModel,
+    settingsViewModel: SettingsViewModel,
     incidentManager: IncidentManager
 ) {
+    val context = LocalContext.current
+
     val authState = authViewModel.authState.observeAsState()
 
     LaunchedEffect(authState.value) {
@@ -96,19 +100,19 @@ fun MapRadarPage(
         }
     }
 
+    val localization = settingsViewModel.localization.observeAsState().value!!
+
     val dateFormat = SimpleDateFormat(
         "EEEE, dd MMMM".trimIndent(),
-        Locale("en", "US")
+        Locale(localization["date_format_language"]!!, localization["date_format_country"]!!)
     )
     val timeFormat = SimpleDateFormat(
         "'at' HH:mm:ss".trimIndent(),
-        Locale("en", "US")
+        Locale(localization["date_format_language"]!!, localization["date_format_country"]!!)
     )
 
     var drawerState by remember { mutableStateOf(CustomDrawerState.Closed) }
-    var selectedNavigationItem by remember { mutableStateOf(NavigationItem.Map) }
-
-    val context = LocalContext.current
+    var selectedNavigationItem by remember { mutableStateOf(NavigationItem.MapRadar) }
 
     val configuration = LocalConfiguration.current
     val destiny = LocalDensity.current.density
@@ -153,17 +157,17 @@ fun MapRadarPage(
         if(incidents.value.isNotEmpty()) {
             val latestDoc1 = incidents.value.first()
             val oldestDoc1 = incidents.value.last()
-            val latestDoc2 = incidentManager.getLatestIncident(region!!)
-            val oldestDoc2 = incidentManager.getOldestIncident(region!!)
+            val latestDoc2 = incidentManager.getLatestIncident(region!!, localization)
+            val oldestDoc2 = incidentManager.getOldestIncident(region!!, localization)
 
             val needToUpdate = latestDoc1.id != latestDoc2!!.id || oldestDoc1.id != oldestDoc2!!.id || oldestDoc2.getTimestamp("creationDate")!!.toDate().time > 3 * 60 * 60 * 1000
             if (needToUpdate) {
-                incidentManager.loadIncidentsByRegion(region!!)
+                incidentManager.loadIncidentsByRegion(region!!, localization)
             } else {
                 incidentManager.setLoadingDocumentsState(LoadingDocumentsState.Success)
             }
         } else {
-            incidentManager.loadIncidentsByRegion(region!!)
+            incidentManager.loadIncidentsByRegion(region!!, localization)
         }
     }
 
@@ -200,6 +204,7 @@ fun MapRadarPage(
             },
             onCloseClick = { drawerState = CustomDrawerState.Closed },
             authViewModel = authViewModel,
+            settingsViewModel = settingsViewModel,
             navController = navController,
             incidentManager = incidentManager
         )
@@ -229,7 +234,7 @@ fun MapRadarPage(
                             horizontalArrangement = Arrangement.Center
                         ) {
                             Text(
-                                text = "Loading map...",
+                                text = localization["loading_map"]!!,
                                 fontSize = 20.sp,
                                 fontFamily = RubikFont
                             )
@@ -253,7 +258,7 @@ fun MapRadarPage(
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = "That\'s why failed to load map radar",
+                                text = localization["loading_map_error_text"]!!,
                                 fontSize = 16.sp,
                                 fontFamily = RubikFont,
                                 color = Color.Red
@@ -289,12 +294,12 @@ fun MapRadarPage(
 
                                 val incidentType = incident.getString("type")
                                 val type = when (incidentType) {
-                                    "CAR_ACCIDENT" -> "Car accident"
-                                    "ROADBLOCK" -> "Roadblock"
-                                    "WEATHER_CONDITIONS" -> "Weather conditions"
-                                    "TRAFFIC_JAM" -> "Traffic jam"
-                                    "OTHER" -> "Other"
-                                    else -> "Other"
+                                    "CAR_ACCIDENT" -> localization["incident_type_car_accident"]!!
+                                    "ROADBLOCK" -> localization["incident_type_roadblock"]!!
+                                    "WEATHER_CONDITIONS" -> localization["incident_type_weather_conditions"]!!
+                                    "TRAFFIC_JAM" -> localization["incident_type_traffic_jam"]!!
+                                    "OTHER" -> localization["incident_type_other"]!!
+                                    else -> localization["incident_type_other"]!!
                                 }
 
                                 val iconRes = when (incidentType) {
@@ -328,7 +333,7 @@ fun MapRadarPage(
                                         val creationTime = creationDate.time
                                         val timeDifference = currentTime - creationTime
                                         if (timeDifference > 3 * 60 * 60 * 1000) {
-                                            Toast.makeText(context, "This incident was ended", Toast.LENGTH_LONG).show()
+                                            Toast.makeText(context, localization["incident_has_been_ended"]!!, Toast.LENGTH_LONG).show()
                                             incidentLoadingTrigger = !incidentLoadingTrigger
                                             navController.navigate(Routes.MAP_RADAR)
                                         }

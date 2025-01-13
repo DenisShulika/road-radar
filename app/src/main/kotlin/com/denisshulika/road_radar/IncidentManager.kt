@@ -21,7 +21,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import timber.log.Timber
 import java.util.Date
 import java.util.UUID
 
@@ -84,29 +83,18 @@ class IncidentManager(application: Application) : AndroidViewModel(application) 
                                     .addOnSuccessListener { listResult ->
                                         listResult.items.forEach { file ->
                                             file.delete()
-                                                .addOnSuccessListener {
-                                                    Timber.tag("FirebaseStorage").e("File ${file.name} deleted successfully")
-                                                }
-                                                .addOnFailureListener { exception ->
-                                                    Timber.tag("FirebaseStorage").e("Failed to delete file ${file.name}: ${exception.message}")
-                                                }
                                         }
-                                    }
-                                    .addOnFailureListener { exception ->
-                                        Timber.tag("FirebaseStorage").e("Failed to list files: ${exception.message}")
                                     }
                             }
 
                     }
-                }
-                .addOnFailureListener { _ ->
-
                 }
         }
     }
 
     fun addNewIncident(
         authViewModel: AuthViewModel,
+        localization: Map<String, String>,
         context: Context,
         photoUris: List<Uri?>,
         type: IncidentType,
@@ -119,7 +107,7 @@ class IncidentManager(application: Application) : AndroidViewModel(application) 
         _incidentCreationState.value = IncidentCreationState.Loading
 
         CoroutineScope(Dispatchers.Main).launch {
-            val creatorName = authViewModel.getCurrentUser()?.displayName ?: "Unknown User"
+            val creatorName = authViewModel.getCurrentUser()?.displayName ?: localization["unknown_user"] ?: "Unknown user"
             val currentTime = Timestamp.now()
 
             val incidentID = UUID.randomUUID().toString()
@@ -137,7 +125,7 @@ class IncidentManager(application: Application) : AndroidViewModel(application) 
                         val uploadTask = photoRef.putFile(it)
                             .continueWithTask { task ->
                                 if (!task.isSuccessful) {
-                                    throw task.exception ?: Exception("Unknown error")
+                                    throw task.exception ?: Exception(localization["unknown_error"] ?: localization["something_went_wrong"] ?: "Something went wrong")
                                 }
                                 photoRef.downloadUrl
                             }
@@ -178,18 +166,21 @@ class IncidentManager(application: Application) : AndroidViewModel(application) 
                     .set(data)
                     .addOnSuccessListener {
                         _incidentCreationState.value = IncidentCreationState.Success
-                        Toast.makeText(context, "Incident added successfully!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, localization["incident_adding_success"] ?: localization["something_went_wrong"] ?: "Something went wrong", Toast.LENGTH_SHORT).show()
                     }
                     .addOnFailureListener { e ->
-                        _incidentCreationState.value = IncidentCreationState.Error(e.message ?: "Failed to add an incident")
+                        _incidentCreationState.value = IncidentCreationState.Error(e.message ?: localization["incident_adding_fail"] ?: localization["something_went_wrong"] ?: "Something went wrong")
                     }
             } catch (e: Exception) {
-                _incidentCreationState.value = IncidentCreationState.Error(e.message ?: "Failed to upload photos")
+                _incidentCreationState.value = IncidentCreationState.Error(e.message ?: localization["photos_adding_fail"] ?: localization["something_went_wrong"] ?: "Something went wrong")
             }
         }
     }
 
-    fun loadIncidentsByRegion(region: String) {
+    fun loadIncidentsByRegion(
+        region: String,
+        localization: Map<String, String>
+    ) {
         _loadingDocumentsState.value = LoadingDocumentsState.Loading
         viewModelScope.launch(Dispatchers.IO) {
             val currentTime = System.currentTimeMillis()
@@ -210,12 +201,15 @@ class IncidentManager(application: Application) : AndroidViewModel(application) 
                     }
                 }
                 .addOnFailureListener { e ->
-                    _loadingDocumentsState.value = LoadingDocumentsState.Error(e.message ?: "Failed to load incidents")
+                    _loadingDocumentsState.value = LoadingDocumentsState.Error(e.message ?: localization["incidents_loading_fail"] ?: localization["something_went_wrong"] ?: "Something went wrong")
                 }
         }
     }
 
-    suspend fun getLatestIncident(region: String): DocumentSnapshot? {
+    suspend fun getLatestIncident(
+        region: String,
+        localization: Map<String, String>
+    ): DocumentSnapshot? {
         return try {
             val querySnapshot = db.collection("incidents")
                 .whereEqualTo("region", region)
@@ -230,12 +224,15 @@ class IncidentManager(application: Application) : AndroidViewModel(application) 
                 null
             }
         } catch (e: Exception) {
-            _loadingDocumentsState.value = LoadingDocumentsState.Error(e.message ?: "Failed to load latest incident")
+            _loadingDocumentsState.value = LoadingDocumentsState.Error(e.message ?: localization["incidents_loading_fail"] ?: localization["something_went_wrong"] ?: "Something went wrong")
             null
         }
     }
 
-    suspend fun getOldestIncident(region: String): DocumentSnapshot? {
+    suspend fun getOldestIncident(
+        region: String,
+        localization: Map<String, String>
+    ): DocumentSnapshot? {
         return try {
             val querySnapshot = db.collection("incidents")
                 .whereEqualTo("region", region)
@@ -250,7 +247,7 @@ class IncidentManager(application: Application) : AndroidViewModel(application) 
                 null
             }
         } catch (e: Exception) {
-            _loadingDocumentsState.value = LoadingDocumentsState.Error(e.message ?: "Failed to load latest incident")
+            _loadingDocumentsState.value = LoadingDocumentsState.Error(e.message ?: localization["incidents_loading_fail"] ?: localization["something_went_wrong"] ?: "Something went wrong")
             null
         }
     }

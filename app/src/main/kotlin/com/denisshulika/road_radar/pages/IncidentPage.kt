@@ -1,5 +1,6 @@
 package com.denisshulika.road_radar.pages
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -28,25 +29,34 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.denisshulika.road_radar.IncidentManager
+import com.denisshulika.road_radar.SettingsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun IncidentPage(
     modifier: Modifier = Modifier,
     navController: NavController,
+    settingsViewModel: SettingsViewModel,
     incidentManager: IncidentManager
 ) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
     val incidentInfo by incidentManager.selectedDocumentInfo.observeAsState()
+
+    val localization = settingsViewModel.localization.observeAsState().value!!
 
     Box(
         modifier = Modifier
@@ -60,7 +70,7 @@ fun IncidentPage(
                 CenterAlignedTopAppBar(
                     title = {
                         Text(
-                            text = "Incident Details",
+                            text = localization["incident_info_title"]!!,
                             textAlign = TextAlign.Center,
                             style = MaterialTheme.typography.titleLarge,
                             fontFamily = RubikFont
@@ -92,7 +102,7 @@ fun IncidentPage(
                     ) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Type: ${info.type}",
+                            text = "${localization["incident_type_subtext"]!!} ${info.type}",
                             fontSize = 20.sp,
                             fontFamily = RubikFont
                         )
@@ -101,7 +111,7 @@ fun IncidentPage(
                             color = Color(0xFFADADAD)
                         )
                         Text(
-                            text = "Date: ${info.date}",
+                            text = "${localization["incident_date_subtext"]!!} ${info.date}",
                             fontSize = 20.sp,
                             fontFamily = RubikFont
                         )
@@ -110,7 +120,7 @@ fun IncidentPage(
                             color = Color(0xFFADADAD)
                         )
                         Text(
-                            text = "Address: ${info.address}",
+                            text = "${localization["incident_address_subtext"]!!} ${info.address}",
                             fontSize = 20.sp,
                             fontFamily = RubikFont
                         )
@@ -119,7 +129,7 @@ fun IncidentPage(
                             color = Color(0xFFADADAD)
                         )
                         Text(
-                            text = "Description: ${info.description}",
+                            text = "${localization["incident_description_subtext"]!!} ${info.description}",
                             fontSize = 20.sp,
                             fontFamily = RubikFont
                         )
@@ -132,7 +142,7 @@ fun IncidentPage(
                             info.photos.forEachIndexed { _, photoUrl ->
                                 Image(
                                     painter = rememberAsyncImagePainter(photoUrl),
-                                    contentDescription = "Incident photo",
+                                    contentDescription = "",
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .heightIn(0.dp, 800.dp)
@@ -146,7 +156,7 @@ fun IncidentPage(
                             )
                         }
                         Text(
-                            text = "Created by: ${info.createdBy}",
+                            text = "${localization["incident_created_by_subtext"]!!} ${info.createdBy}",
                             fontSize = 20.sp,
                             fontFamily = RubikFont
                         )

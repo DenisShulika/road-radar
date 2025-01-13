@@ -50,6 +50,7 @@ import com.denisshulika.road_radar.IncidentManager
 import com.denisshulika.road_radar.R
 import com.denisshulika.road_radar.ResetEmailState
 import com.denisshulika.road_radar.Routes
+import com.denisshulika.road_radar.SettingsViewModel
 import com.denisshulika.road_radar.local.UserLocalStorage
 import com.denisshulika.road_radar.ui.components.StyledBasicTextField
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
@@ -59,8 +60,12 @@ fun EmailResetPage(
     @Suppress("UNUSED_PARAMETER") modifier: Modifier = Modifier,
     navController: NavController,
     authViewModel: AuthViewModel,
+    settingsViewModel: SettingsViewModel,
     incidentManager: IncidentManager
 ) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
     val systemUiController = rememberSystemUiController()
 
     systemUiController.setStatusBarColor(
@@ -71,9 +76,6 @@ fun EmailResetPage(
         color = Color.Transparent,
         darkIcons = false
     )
-
-    val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
 
     val resetEmailState = authViewModel.resetEmailState.observeAsState()
 
@@ -93,6 +95,8 @@ fun EmailResetPage(
             else -> Unit
         }
     }
+
+    val localization = settingsViewModel.localization.observeAsState().value!!
 
     var newEmail by remember { mutableStateOf("") }
     var newEmailError by remember { mutableStateOf(false) }
@@ -126,14 +130,14 @@ fun EmailResetPage(
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "Reset",
+                    text = localization["reset_email_title_1"]!!,
                     fontSize = 64.sp,
                     color = Color.White,
                     fontFamily = RubikFont,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    text = "Email",
+                    text = localization["reset_email_title_2"]!!,
                     fontSize = 64.sp,
                     color = Color.White,
                     fontFamily = RubikFont,
@@ -158,7 +162,7 @@ fun EmailResetPage(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Text(
-                            text = "New Email",
+                            text = localization["new_email_title"]!!,
                             fontSize = 24.sp,
                             fontFamily = RubikFont,
                             fontWeight = FontWeight.Normal
@@ -170,21 +174,21 @@ fun EmailResetPage(
                                 newEmailError = !isValidEmail(it)
                                 isNewEmailEmpty = newEmail.isEmpty()
                             },
-                            placeholder = "Enter your new email",
+                            placeholder = localization["new_email_placeholder"]!!,
                             keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Email)
                         )
                     }
                     if (isNewEmailEmpty) {
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            "Email cant be empty",
+                            localization["email_empty"]!!,
                             color = Color(0xFFB71C1C),
                             style = MaterialTheme.typography.bodySmall
                         )
                     } else if (newEmailError) {
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            "Invalid email address",
+                            localization["email_invalid"]!!,
                             color = Color(0xFFB71C1C),
                             style = MaterialTheme.typography.bodySmall
                         )
@@ -197,12 +201,12 @@ fun EmailResetPage(
                         onClick = {
                             isNewEmailEmpty = newEmail.isEmpty()
                             if(isNewEmailEmpty) {
-                                Toast.makeText(context, "Please, enter your email", Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, localization["email_empty_error"]!!, Toast.LENGTH_LONG).show()
                                 return@Button
                             }
                             newEmailError = !isValidEmail(newEmail)
                             if(newEmailError) {
-                                Toast.makeText(context, "Please, enter correct email address", Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, localization["email_invalid_error"]!!, Toast.LENGTH_LONG).show()
                                 return@Button
                             }
                             authViewModel.resetEmail(
@@ -211,7 +215,8 @@ fun EmailResetPage(
                                 password = password,
                                 context = context,
                                 coroutineScope = coroutineScope,
-                                incidentManager = incidentManager
+                                incidentManager = incidentManager,
+                                localization = localization
                             )
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF474EFF)),
@@ -230,7 +235,7 @@ fun EmailResetPage(
                             }
                         } else {
                             Text(
-                                text = "Reset Email",
+                                text = localization["reset_email_button"]!!,
                                 fontSize = 24.sp,
                                 fontFamily = RubikFont,
                                 fontWeight = FontWeight.Normal
@@ -250,7 +255,7 @@ fun EmailResetPage(
                             enabled = resetEmailState.value != ResetEmailState.Loading
                         ) {
                             Text(
-                                text = "Go back",
+                                text = localization["go_back_button"]!!,
                                 fontSize = 16.sp,
                                 color = Color(0xFF6369FF),
                                 fontFamily = RubikFont,

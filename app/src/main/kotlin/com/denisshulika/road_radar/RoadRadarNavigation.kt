@@ -27,7 +27,8 @@ fun RoadRadarNavigation(
     modifier: Modifier = Modifier,
     authViewModel: AuthViewModel,
     incidentManager: IncidentManager,
-    placesClient: PlacesClient
+    placesClient: PlacesClient,
+    settingsViewModel: SettingsViewModel
 ) {
     val navController = rememberNavController()
 
@@ -46,40 +47,40 @@ fun RoadRadarNavigation(
         startDestination = Routes.LOGIN,
         builder = {
             composable(Routes.LOGIN) {
-                LoginPage(modifier, navController, authViewModel)
+                LoginPage(modifier, navController, authViewModel, settingsViewModel)
             }
             composable(Routes.SIGNUP) {
-                SignUpPage(modifier, navController, authViewModel, placesClient)
+                SignUpPage(modifier, navController, authViewModel, settingsViewModel, placesClient)
             }
             composable(Routes.PASSWORD_RESET) {
-                PasswordResetPage(modifier, navController, authViewModel, incidentManager)
+                PasswordResetPage(modifier, navController, authViewModel, settingsViewModel, incidentManager)
             }
             composable(Routes.EMAIL_RESET) {
-                EmailResetPage(modifier, navController, authViewModel, incidentManager)
+                EmailResetPage(modifier, navController, authViewModel, settingsViewModel, incidentManager)
             }
             composable(Routes.GOOGLE_REGISTRATING) {
-                GoogleRegistratingPage(modifier, navController, authViewModel, placesClient, incidentManager)
+                GoogleRegistratingPage(modifier, navController, authViewModel, settingsViewModel, placesClient, incidentManager)
             }
             composable(Routes.INCIDENTS) {
-                IncidentsPage(modifier, navController, authViewModel, incidentManager)
+                IncidentsPage(modifier, navController, authViewModel, settingsViewModel, incidentManager)
             }
             composable(Routes.INCIDENT) {
-                IncidentPage(modifier, navController, incidentManager)
+                IncidentPage(modifier, navController, settingsViewModel, incidentManager)
             }
             composable(Routes.ADD_NEW_INCIDENT) {
-                AddNewIncidentPage(modifier, navController, authViewModel, incidentManager, placesClient)
+                AddNewIncidentPage(modifier, navController, authViewModel, settingsViewModel, incidentManager, placesClient)
             }
             composable(Routes.MAP_RADAR) {
-                MapRadarPage(modifier, navController, authViewModel, incidentManager)
+                MapRadarPage(modifier, navController, authViewModel, settingsViewModel, incidentManager)
             }
             composable(Routes.PROFILE) {
-                ProfilePage(modifier, navController, authViewModel, placesClient, incidentManager)
+                ProfilePage(modifier, navController, authViewModel, settingsViewModel, placesClient, incidentManager)
             }
             composable(Routes.SETTINGS) {
-                SettingsPage(modifier, navController, authViewModel, incidentManager)
+                SettingsPage(modifier, navController, authViewModel, settingsViewModel, incidentManager)
             }
             composable(Routes.ABOUT) {
-                AboutPage(modifier, navController, authViewModel, incidentManager)
+                AboutPage(modifier, navController, authViewModel, settingsViewModel, incidentManager)
             }
         }
     )

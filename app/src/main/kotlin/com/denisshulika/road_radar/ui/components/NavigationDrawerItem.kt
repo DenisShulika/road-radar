@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -19,15 +20,19 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.denisshulika.road_radar.SettingsViewModel
 import com.denisshulika.road_radar.model.NavigationItem
 import com.denisshulika.road_radar.pages.RubikFont
 
 @Composable
 fun NavigationDrawerItem(
+    settingsViewModel : SettingsViewModel,
     navigationItem : NavigationItem,
     selected : Boolean,
     onClick : () -> Unit
 ) {
+    val localization = settingsViewModel.localization.observeAsState()
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -49,7 +54,7 @@ fun NavigationDrawerItem(
         )
         Spacer(modifier = Modifier.size(12.dp))
         Text(
-            text = navigationItem.title,
+            text = navigationItem.getTitle(localization.value!!),
             fontSize = 20.sp,
             color = Color.White,
             fontFamily = RubikFont,

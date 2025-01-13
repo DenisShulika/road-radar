@@ -75,6 +75,7 @@ import com.denisshulika.road_radar.AuthState
 import com.denisshulika.road_radar.AuthViewModel
 import com.denisshulika.road_radar.R
 import com.denisshulika.road_radar.Routes
+import com.denisshulika.road_radar.SettingsViewModel
 import com.denisshulika.road_radar.isValidEmail
 import com.denisshulika.road_radar.isValidPhoneNumber
 import com.denisshulika.road_radar.ui.components.AutocompleteTextFieldForRegion
@@ -93,8 +94,12 @@ fun SignUpPage(
     @Suppress("UNUSED_PARAMETER") modifier: Modifier = Modifier,
     navController: NavController,
     authViewModel: AuthViewModel,
+    settingsViewModel: SettingsViewModel,
     placesClient: PlacesClient
 ) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
     val systemUiController = rememberSystemUiController()
 
     systemUiController.setStatusBarColor(
@@ -106,10 +111,9 @@ fun SignUpPage(
         darkIcons = false
     )
 
-    val authState = authViewModel.authState.observeAsState()
+    val localization = settingsViewModel.localization.observeAsState().value!!
 
-    val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
+    val authState = authViewModel.authState.observeAsState()
 
     var name by remember { mutableStateOf("") }
     var isNameEmpty by remember { mutableStateOf(false) }
@@ -185,7 +189,7 @@ fun SignUpPage(
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "Sign Up",
+                    text = localization["sign_up_title"]!!,
                     fontSize = 52.sp,
                     color = Color.White,
                     fontFamily = RubikFont,
@@ -218,7 +222,7 @@ fun SignUpPage(
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             Text(
-                                text = "Name",
+                                text = localization["name_title"]!!,
                                 fontSize = 24.sp,
                                 fontFamily = RubikFont,
                                 fontWeight = FontWeight.Normal
@@ -229,13 +233,13 @@ fun SignUpPage(
                                     name = it
                                     isNameEmpty = name.isEmpty()
                                 },
-                                placeholder = "Your Name, e.g: John Doe"
+                                placeholder = localization["name_placeholder"]!!
                             )
                         }
                         if (isNameEmpty) {
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                "Name cant be empty",
+                                localization["name_empty"]!!,
                                 color = Color(0xFFB71C1C),
                                 style = MaterialTheme.typography.bodySmall
                             )
@@ -245,7 +249,7 @@ fun SignUpPage(
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             Text(
-                                text = "Email",
+                                text = localization["email_title"]!!,
                                 fontSize = 24.sp,
                                 fontFamily = RubikFont,
                                 fontWeight = FontWeight.Normal
@@ -257,21 +261,21 @@ fun SignUpPage(
                                     emailError = !isValidEmail(it)
                                     isEmailEmpty = email.isEmpty()
                                 },
-                                placeholder = "Your email, e.g: john@gmail.com",
+                                placeholder = localization["email_placeholder_sign_up"]!!,
                                 keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Email)
                             )
                         }
                         if (isEmailEmpty) {
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                "Email cant be empty",
+                                localization["email_empty"]!!,
                                 color = Color(0xFFB71C1C),
                                 style = MaterialTheme.typography.bodySmall
                             )
                         } else if (emailError) {
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                "Invalid email address",
+                                localization["email_invalid"]!!,
                                 color = Color(0xFFB71C1C),
                                 style = MaterialTheme.typography.bodySmall
                             )
@@ -285,7 +289,7 @@ fun SignUpPage(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text = "Region",
+                                        text = localization["region_title"]!!,
                                         fontSize = 24.sp,
                                         fontFamily = RubikFont,
                                         fontWeight = FontWeight.Normal
@@ -299,7 +303,7 @@ fun SignUpPage(
                                                 modifier = Modifier.padding(20.dp),
                                                 title = {
                                                     Text(
-                                                        text = "Region",
+                                                        text = localization["region_tip_title"]!!,
                                                         fontSize = 20.sp,
                                                         fontFamily = RubikFont,
                                                         fontWeight = FontWeight.SemiBold
@@ -307,7 +311,7 @@ fun SignUpPage(
                                                 },
                                                 text = {
                                                     Text(
-                                                        text = "Incidents are filtered by region, so enter the one you live in",
+                                                        text = localization["region_tip_text"]!!,
                                                         fontSize = 16.sp,
                                                         fontFamily = RubikFont,
                                                         fontWeight = FontWeight.Normal
@@ -353,13 +357,13 @@ fun SignUpPage(
                                         isRegionSelected = false
                                         isSelectedRegionEmpty = selectedRegion.isEmpty()
                                     },
-                                    placeholder = "Enter your region"
+                                    placeholder = localization["region_placeholder"]!!
                                 )
                             }
                             if (isSelectedRegionEmpty) {
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    "Region cant be empty",
+                                    localization["region_empty"]!!,
                                     color = Color(0xFFB71C1C),
                                     style = MaterialTheme.typography.bodySmall
                                 )
@@ -370,7 +374,7 @@ fun SignUpPage(
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             Text(
-                                text = "Phone Number",
+                                text = localization["phone_title"]!!,
                                 fontSize = 24.sp,
                                 fontFamily = RubikFont,
                                 fontWeight = FontWeight.Normal
@@ -382,20 +386,20 @@ fun SignUpPage(
                                     isPhoneNumberEmpty = phoneNumber.isEmpty()
                                     phoneNumberError = !isValidPhoneNumber(it)
                                 },
-                                placeholder = "Your phone, e.g: +380.. or 0.."
+                                placeholder = localization["phone_placeholder"]!!
                             )
                         }
                         if (isPhoneNumberEmpty) {
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                "Phone number cant be empty",
+                                localization["phone_empty"]!!,
                                 color = Color(0xFFB71C1C),
                                 style = MaterialTheme.typography.bodySmall
                             )
                         } else if (phoneNumberError) {
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                "Invalid phone number",
+                                localization["phone_invalid"]!!,
                                 color = Color(0xFFB71C1C),
                                 style = MaterialTheme.typography.bodySmall
                             )
@@ -411,7 +415,7 @@ fun SignUpPage(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(
-                                    text = "Password",
+                                    text = localization["password_title"]!!,
                                     fontSize = 24.sp,
                                     fontFamily = RubikFont,
                                     fontWeight = FontWeight.Normal
@@ -442,21 +446,21 @@ fun SignUpPage(
                                     passwordError = password.length < 6
                                     isPasswordEmpty = password.isEmpty()
                                 },
-                                placeholder = "Your password, at least 6 symbols",
+                                placeholder = localization["password_placeholder_sign_up"]!!,
                                 isVisible = isPasswordVisible
                             )
                         }
                         if (isPasswordEmpty) {
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                "Email cant be empty",
+                                localization["password_empty"]!!,
                                 color = Color(0xFFB71C1C),
                                 style = MaterialTheme.typography.bodySmall
                             )
                         } else if (passwordError) {
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                "Password must be at least 6 symbols",
+                                localization["password_length"]!!,
                                 color = Color(0xFFB71C1C),
                                 style = MaterialTheme.typography.bodySmall
                             )
@@ -472,7 +476,7 @@ fun SignUpPage(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(
-                                    text = "Confirm Password",
+                                    text = localization["confirm_password_title"]!!,
                                     fontSize = 24.sp,
                                     fontFamily = RubikFont,
                                     fontWeight = FontWeight.Normal
@@ -502,21 +506,21 @@ fun SignUpPage(
                                     confirmPassword = it
                                     isConfirmPasswordEmpty = confirmPassword.isEmpty()
                                 },
-                                placeholder = "Re-type your password",
+                                placeholder = localization["confirm_password_placeholder"]!!,
                                 isVisible = isConfirmPasswordVisible
                             )
                         }
                         if (isConfirmPasswordEmpty) {
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                "Email cant be empty",
+                                localization["confirm_password_empty"]!!,
                                 color = Color(0xFFB71C1C),
                                 style = MaterialTheme.typography.bodySmall
                             )
                         } else if (confirmPasswordError) {
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                "Passwords don't match",
+                                localization["passwords_do_not_match"]!!,
                                 color = Color(0xFFB71C1C),
                                 style = MaterialTheme.typography.bodySmall
                             )
@@ -526,64 +530,64 @@ fun SignUpPage(
                             onClick = {
                                 isNameEmpty = name.isEmpty()
                                 if(isNameEmpty) {
-                                    Toast.makeText(context, "Please, enter your name", Toast.LENGTH_LONG).show()
+                                    Toast.makeText(context, localization["name_empty_error"]!!, Toast.LENGTH_LONG).show()
                                     return@Button
                                 }
                                 isEmailEmpty = email.isEmpty()
                                 if(isEmailEmpty) {
-                                    Toast.makeText(context, "Please, enter your email", Toast.LENGTH_LONG).show()
+                                    Toast.makeText(context, localization["email_empty_error"]!!, Toast.LENGTH_LONG).show()
                                     return@Button
                                 }
                                 emailError = !isValidEmail(email)
                                 if(emailError) {
-                                    Toast.makeText(context, "Please, enter correct email address", Toast.LENGTH_LONG).show()
-                                    return@Button
-                                }
-                                isPhoneNumberEmpty = phoneNumber.isEmpty()
-                                if(isPhoneNumberEmpty) {
-                                    Toast.makeText(context, "Please, enter your phone", Toast.LENGTH_LONG).show()
-                                    return@Button
-                                }
-                                phoneNumberError = !isValidPhoneNumber(phoneNumber)
-                                if(phoneNumberError) {
-                                    Toast.makeText(context, "Please, enter correct phone number", Toast.LENGTH_LONG).show()
+                                    Toast.makeText(context, localization["email_invalid_error"]!!, Toast.LENGTH_LONG).show()
                                     return@Button
                                 }
                                 isSelectedRegionEmpty = selectedRegion.isEmpty()
                                 if(isSelectedRegionEmpty) {
-                                    Toast.makeText(context, "Please, enter your region", Toast.LENGTH_LONG).show()
+                                    Toast.makeText(context, localization["region_select_error"]!!, Toast.LENGTH_LONG).show()
                                     return@Button
                                 }
                                 if(!isRegionSelected) {
-                                    Toast.makeText(context, "Please, select your region", Toast.LENGTH_LONG).show()
+                                    Toast.makeText(context, localization["region_select_error"]!!, Toast.LENGTH_LONG).show()
+                                    return@Button
+                                }
+                                isPhoneNumberEmpty = phoneNumber.isEmpty()
+                                if(isPhoneNumberEmpty) {
+                                    Toast.makeText(context, localization["phone_empty_error"]!!, Toast.LENGTH_LONG).show()
+                                    return@Button
+                                }
+                                phoneNumberError = !isValidPhoneNumber(phoneNumber)
+                                if(phoneNumberError) {
+                                    Toast.makeText(context, localization["phone_invalid_error"]!!, Toast.LENGTH_LONG).show()
                                     return@Button
                                 }
                                 isPasswordEmpty = password.isEmpty()
                                 if(isPasswordEmpty) {
-                                    Toast.makeText(context, "Please, enter a password", Toast.LENGTH_LONG).show()
+                                    Toast.makeText(context, localization["password_empty_error"]!!, Toast.LENGTH_LONG).show()
                                     return@Button
                                 }
                                 passwordError = password.length < 6
                                 if(passwordError) {
-                                    Toast.makeText(context, "Password must be at least 6 symbols", Toast.LENGTH_LONG).show()
+                                    Toast.makeText(context, localization["password_length_error"]!!, Toast.LENGTH_LONG).show()
                                     return@Button
                                 }
                                 isConfirmPasswordEmpty = confirmPassword.isEmpty()
                                 if(isConfirmPasswordEmpty) {
-                                    Toast.makeText(context, "Please, confirm your password", Toast.LENGTH_LONG).show()
+                                    Toast.makeText(context, localization["confirm_password_empty_error"]!!, Toast.LENGTH_LONG).show()
                                     return@Button
                                 }
                                 confirmPasswordError = password != confirmPassword
                                 if(confirmPasswordError) {
-                                    Toast.makeText(context, "Passwords don't match", Toast.LENGTH_LONG).show()
+                                    Toast.makeText(context, localization["passwords_do_not_match_error"]!!, Toast.LENGTH_LONG).show()
                                     return@Button
                                 }
                                 if(!isImageSelected) {
-                                    Toast.makeText(context, "Please, add your avatar", Toast.LENGTH_LONG).show()
+                                    Toast.makeText(context, localization["no_avatar_error"]!!, Toast.LENGTH_LONG).show()
                                     return@Button
                                 }
                                 if(croppedImageUri == null) {
-                                    Toast.makeText(context, "Please, re-add your avatar", Toast.LENGTH_LONG).show()
+                                    Toast.makeText(context, localization["re_add_avatar_error"]!!, Toast.LENGTH_LONG).show()
                                     return@Button
                                 } else {
                                     authViewModel.signup(
@@ -593,8 +597,9 @@ fun SignUpPage(
                                         phoneNumber = phoneNumber.replace(" ", ""),
                                         region = selectedRegion,
                                         photo = userPhoto,
-                                        context,
-                                        coroutineScope
+                                        context = context,
+                                        coroutineScope = coroutineScope,
+                                        localization = localization
                                     )
                                 }
                             },
@@ -617,7 +622,7 @@ fun SignUpPage(
                                 }
                             } else {
                                 Text(
-                                    text = "Sign Up",
+                                    text = localization["sign_up_button"]!!,
                                     fontSize = 24.sp,
                                     fontFamily = RubikFont,
                                     fontWeight = FontWeight.Normal
@@ -637,7 +642,7 @@ fun SignUpPage(
                             ) {
                                 Text(
                                     modifier = Modifier,
-                                    text = "Already have an account? Login here",
+                                    text = localization["login_here_button"]!!,
                                     fontSize = 14.sp,
                                     color = Color(0xFF6369FF),
                                     fontFamily = RubikFont,
@@ -663,13 +668,13 @@ fun SignUpPage(
                     if (isImageSelected) {
                         Image(
                             painter = rememberAsyncImagePainter(croppedImageUri),
-                            contentDescription = "Cropped Image",
+                            contentDescription = "",
                             modifier = Modifier.size(100.dp)
                         )
                     } else {
                         Icon(
                             imageVector = ImageVector.vectorResource(R.drawable.add_photo_alternate),
-                            contentDescription = "Upload Photo",
+                            contentDescription = "",
                             tint = Color(0xFF606060),
                             modifier = Modifier.size(36.dp)
                         )

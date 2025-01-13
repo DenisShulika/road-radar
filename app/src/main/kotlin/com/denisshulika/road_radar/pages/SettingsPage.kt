@@ -61,6 +61,7 @@ import com.denisshulika.road_radar.AuthState
 import com.denisshulika.road_radar.AuthViewModel
 import com.denisshulika.road_radar.IncidentManager
 import com.denisshulika.road_radar.Routes
+import com.denisshulika.road_radar.SettingsViewModel
 import com.denisshulika.road_radar.local.SettingsLocalStorage
 import com.denisshulika.road_radar.local.UserLocalStorage
 import com.denisshulika.road_radar.model.CustomDrawerState
@@ -83,6 +84,7 @@ fun SettingsPage(
     @Suppress("UNUSED_PARAMETER") modifier: Modifier = Modifier,
     navController: NavController,
     authViewModel: AuthViewModel,
+    settingsViewModel: SettingsViewModel,
     incidentManager: IncidentManager
 ) {
     val context = LocalContext.current
@@ -97,6 +99,8 @@ fun SettingsPage(
             else -> Unit
         }
     }
+
+    val localization = settingsViewModel.localization.observeAsState().value!!
 
     var drawerState by remember { mutableStateOf(CustomDrawerState.Closed) }
     var selectedNavigationItem by remember { mutableStateOf(NavigationItem.Settings) }
@@ -140,7 +144,7 @@ fun SettingsPage(
     var password by remember { mutableStateOf("") }
 
     val userLocalStorage = UserLocalStorage(context)
-    val settingsLocalStorage = SettingsLocalStorage(context)
+    val settingsLocalStorage = SettingsLocalStorage(context, settingsViewModel)
     LaunchedEffect(Unit) {
         themeState = settingsLocalStorage.getTheme()
         languageState = settingsLocalStorage.getLanguage()
@@ -161,7 +165,8 @@ fun SettingsPage(
             password = password,
             context = context,
             coroutineScope = coroutineScope,
-            incidentManager = incidentManager
+            incidentManager = incidentManager,
+            localization = localization
         )
         isDialogVisible = false
     }
@@ -189,6 +194,7 @@ fun SettingsPage(
             },
             onCloseClick = { drawerState = CustomDrawerState.Closed },
             authViewModel = authViewModel,
+            settingsViewModel = settingsViewModel,
             navController = navController,
             incidentManager = incidentManager
         )
@@ -209,7 +215,7 @@ fun SettingsPage(
                     modifier = Modifier,
                     title = {
                         Text(
-                            text = selectedNavigationItem.title,
+                            text = selectedNavigationItem.getTitle(localization),
                             textAlign = TextAlign.Center,
                             fontFamily = RubikFont
                         )
@@ -250,7 +256,7 @@ fun SettingsPage(
                                 .padding(14.dp)
                         ) {
                             Text(
-                                text = "Theme",
+                                text = localization["theme_title"]!!,
                                 fontSize = 24.sp,
                                 fontFamily = RubikFont,
                                 fontWeight = FontWeight.Medium
@@ -279,7 +285,7 @@ fun SettingsPage(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "System",
+                                text = localization["theme_system"]!!,
                                 fontSize = 20.sp,
                                 fontFamily = RubikFont,
                                 fontWeight = FontWeight.Normal
@@ -308,7 +314,7 @@ fun SettingsPage(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "Light",
+                                text = localization["theme_light"]!!,
                                 fontSize = 20.sp,
                                 fontFamily = RubikFont,
                                 fontWeight = FontWeight.Normal
@@ -337,7 +343,7 @@ fun SettingsPage(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "Dark",
+                                text = localization["theme_dark"]!!,
                                 fontSize = 20.sp,
                                 fontFamily = RubikFont,
                                 fontWeight = FontWeight.Normal
@@ -360,7 +366,7 @@ fun SettingsPage(
                                 .padding(14.dp)
                         ) {
                             Text(
-                                text = "Language",
+                                text = localization["language_title"]!!,
                                 fontSize = 24.sp,
                                 fontFamily = RubikFont,
                                 fontWeight = FontWeight.Medium
@@ -382,14 +388,14 @@ fun SettingsPage(
                                 onClick = {
                                     languageState = LanguageState.UKRAINIAN
                                     CoroutineScope(Dispatchers.Main).launch {
-                                        settingsLocalStorage.saveLanguage(languageState)
+                                        settingsLocalStorage.saveLanguage(languageState, context)
                                     }
                                 },
                                 selected = languageState == LanguageState.UKRAINIAN
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "Ukrainian",
+                                text = localization["language_uk"]!!,
                                 fontSize = 20.sp,
                                 fontFamily = RubikFont,
                                 fontWeight = FontWeight.Normal
@@ -411,14 +417,14 @@ fun SettingsPage(
                                 onClick = {
                                     languageState = LanguageState.ENGLISH
                                     CoroutineScope(Dispatchers.Main).launch {
-                                        settingsLocalStorage.saveLanguage(languageState)
+                                        settingsLocalStorage.saveLanguage(languageState, context)
                                     }
                                 },
                                 selected = languageState == LanguageState.ENGLISH
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "English",
+                                text = localization["language_en"]!!,
                                 fontSize = 20.sp,
                                 fontFamily = RubikFont,
                                 fontWeight = FontWeight.Normal
@@ -441,7 +447,7 @@ fun SettingsPage(
                                 .padding(14.dp)
                         ) {
                             Text(
-                                text = "Actions With Account",
+                                text = localization["account_actions_title"]!!,
                                 fontSize = 24.sp,
                                 fontFamily = RubikFont,
                                 fontWeight = FontWeight.Medium
@@ -469,7 +475,7 @@ fun SettingsPage(
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
                                     Text(
-                                        text = "Change email",
+                                        text = localization["account_action_change_email"]!!,
                                         fontSize = 20.sp,
                                         fontFamily = RubikFont,
                                         fontWeight = FontWeight.Normal
@@ -507,7 +513,7 @@ fun SettingsPage(
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
                                     Text(
-                                        text = "Change password",
+                                        text = localization["account_action_change_password"]!!,
                                         fontSize = 20.sp,
                                         fontFamily = RubikFont,
                                         fontWeight = FontWeight.Normal
@@ -546,7 +552,7 @@ fun SettingsPage(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(
-                                    text = "Delete account",
+                                    text = localization["account_action_delete_account"]!!,
                                     fontSize = 20.sp,
                                     fontFamily = RubikFont,
                                     fontWeight = FontWeight.Normal
@@ -565,7 +571,8 @@ fun SettingsPage(
                             DeleteAccountDialog(
                                 isDialogVisible = isDialogVisible,
                                 onConfirm = { confirmDelete() },
-                                onCancel = { cancelDelete() }
+                                onCancel = { cancelDelete() },
+                                localization = localization
                             )
                         }
                         HorizontalDivider(
@@ -589,7 +596,7 @@ fun SettingsPage(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(
-                                    text = "Sign out",
+                                    text = localization["account_action_sign_out"]!!,
                                     fontSize = 20.sp,
                                     fontFamily = RubikFont,
                                     fontWeight = FontWeight.Normal
@@ -621,7 +628,8 @@ fun SettingsPage(
 fun DeleteAccountDialog(
     isDialogVisible: Boolean,
     onConfirm: () -> Unit,
-    onCancel: () -> Unit
+    onCancel: () -> Unit,
+    localization: Map<String, String>
 ) {
     if (isDialogVisible) {
         AlertDialog(
@@ -630,14 +638,14 @@ fun DeleteAccountDialog(
             },
             title = {
                 Text(
-                    text = "Confirmation",
+                    text = localization["account_delete_title"]!!,
                     fontFamily = RubikFont,
                     fontWeight = FontWeight.Normal
                 )
             },
             text = {
                 Text(
-                    text = "Are you sure you want to delete your account? This action cannot be undone.",
+                    text = localization["account_delete_info"]!!,
                     fontFamily = RubikFont,
                     fontWeight = FontWeight.Normal
                 )
@@ -650,7 +658,7 @@ fun DeleteAccountDialog(
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF474EFF))
                 ) {
                     Text(
-                        text = "Yes, delete",
+                        text = localization["account_delete_confirm"]!!,
                         fontFamily = RubikFont,
                         fontWeight = FontWeight.Normal
                     )
@@ -664,7 +672,7 @@ fun DeleteAccountDialog(
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF474EFF))
                 ) {
                     Text(
-                        text = "Cancel",
+                        text = localization["account_delete_cancel"]!!,
                         fontFamily = RubikFont,
                         fontWeight = FontWeight.Normal
                     )

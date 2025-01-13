@@ -55,6 +55,7 @@ import com.denisshulika.road_radar.AuthState
 import com.denisshulika.road_radar.AuthViewModel
 import com.denisshulika.road_radar.R
 import com.denisshulika.road_radar.Routes
+import com.denisshulika.road_radar.SettingsViewModel
 import com.denisshulika.road_radar.ui.components.StyledBasicTextField
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
@@ -70,8 +71,12 @@ val RubikFont = FontFamily(
 fun LoginPage(
     @Suppress("UNUSED_PARAMETER") modifier: Modifier = Modifier,
     navController: NavController,
-    authViewModel: AuthViewModel
+    authViewModel: AuthViewModel,
+    settingsViewModel: SettingsViewModel
 ) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
     val systemUiController = rememberSystemUiController()
 
     systemUiController.setStatusBarColor(
@@ -83,6 +88,9 @@ fun LoginPage(
         darkIcons = false
     )
 
+
+    val localization = settingsViewModel.localization.observeAsState().value!!
+
     var email by remember { mutableStateOf("") }
     var emailError by remember { mutableStateOf(false) }
     var isEmailEmpty by remember { mutableStateOf(false) }
@@ -92,9 +100,6 @@ fun LoginPage(
     var isPasswordVisible by remember { mutableStateOf(false) }
 
     val authState = authViewModel.authState.observeAsState()
-
-    val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(authState.value) {
         when(authState.value) {
@@ -129,7 +134,7 @@ fun LoginPage(
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "Login",
+                    text = localization["login_title"]!!,
                     fontSize = 60.sp,
                     color = Color.White,
                     fontFamily = RubikFont,
@@ -152,7 +157,7 @@ fun LoginPage(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Text(
-                            text = "Email",
+                            text = localization["email_title"]!!,
                             fontSize = 24.sp,
                             fontFamily = RubikFont,
                             fontWeight = FontWeight.Normal
@@ -164,21 +169,21 @@ fun LoginPage(
                                 emailError = !isValidEmail(it)
                                 isEmailEmpty = email.isEmpty()
                             },
-                            placeholder = "Enter your email",
+                            placeholder = localization["email_placeholder_login"]!!,
                             keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Email)
                         )
                     }
                     if (isEmailEmpty) {
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            "Email cant be empty",
+                            localization["email_empty"]!!,
                             color = Color(0xFFB71C1C),
                             style = MaterialTheme.typography.bodySmall
                         )
                     } else if (emailError) {
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            "Invalid email address",
+                            localization["email_invalid"]!!,
                             color = Color(0xFFB71C1C),
                             style = MaterialTheme.typography.bodySmall
                         )
@@ -194,7 +199,7 @@ fun LoginPage(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = "Password",
+                                text = localization["password_title"]!!,
                                 fontSize = 24.sp,
                                 fontFamily = RubikFont,
                                 fontWeight = FontWeight.Normal
@@ -225,7 +230,7 @@ fun LoginPage(
                                 password = it
                                 isPasswordEmpty = password.isEmpty()
                             },
-                            placeholder = "Enter your password",
+                            placeholder = localization["password_placeholder_login"]!!,
                             isVisible = isPasswordVisible
                         )
                     }
@@ -243,7 +248,7 @@ fun LoginPage(
                     ) {
                         if (isPasswordEmpty) {
                             Text(
-                                "Password cant be empty",
+                                localization["password_empty"]!!,
                                 color = Color(0xFFB71C1C),
                                 style = MaterialTheme.typography.bodySmall
                             )
@@ -255,7 +260,7 @@ fun LoginPage(
                             enabled = authState.value != AuthState.Loading
                         ) {
                             Text(
-                                text = "Forgot password?",
+                                text = localization["forgot_password_button"]!!,
                                 fontSize = 14.sp,
                                 color = Color(0xFF6369FF),
                                 fontFamily = RubikFont,
@@ -271,20 +276,20 @@ fun LoginPage(
                         onClick = {
                             isEmailEmpty = email.isEmpty()
                             if(isEmailEmpty) {
-                                Toast.makeText(context, "Please, enter your email", Toast.LENGTH_LONG).show()
-                                return@Button
-                            }
-                            isPasswordEmpty = password.isEmpty()
-                            if(isPasswordEmpty) {
-                                Toast.makeText(context, "Please, enter a password", Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, localization["email_empty_error"]!!, Toast.LENGTH_LONG).show()
                                 return@Button
                             }
                             emailError = email.isEmpty()
                             if (emailError) {
-                                Toast.makeText(context, "Invalid email address", Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, localization["email_invalid_error"]!!, Toast.LENGTH_LONG).show()
                                 return@Button
                             }
-                            authViewModel.login(email, password, context, coroutineScope)
+                            isPasswordEmpty = password.isEmpty()
+                            if(isPasswordEmpty) {
+                                Toast.makeText(context, localization["password_empty_error"]!!, Toast.LENGTH_LONG).show()
+                                return@Button
+                            }
+                            authViewModel.login(email, password, context, coroutineScope, localization)
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF474EFF)),
                         enabled = authState.value != AuthState.Loading
@@ -302,7 +307,7 @@ fun LoginPage(
                             }
                         } else {
                             Text(
-                                text = "Login",
+                                text = localization["login_button"]!!,
                                 fontSize = 24.sp,
                                 fontFamily = RubikFont,
                                 fontWeight = FontWeight.Normal
@@ -322,7 +327,7 @@ fun LoginPage(
                             enabled = authState.value != AuthState.Loading
                         ) {
                             Text(
-                                text = "Don't have an account yet? Register here",
+                                text = localization["register_here_button"]!!,
                                 fontSize = 14.sp,
                                 color = Color(0xFF6369FF),
                                 fontFamily = RubikFont,
@@ -346,7 +351,7 @@ fun LoginPage(
                                 modifier = Modifier
                                     .background(Color.White)
                                     .padding(start = 4.dp, end = 4.dp),
-                                text = "Or Sign In with",
+                                text = localization["or_sign_in_with"]!!,
                                 color = Color(0xFF707070),
                                 fontFamily = RubikFont,
                                 fontWeight = FontWeight.Normal
@@ -355,7 +360,7 @@ fun LoginPage(
                     }
                     IconButton(
                         onClick = {
-                            authViewModel.signInWithGoogle(context, coroutineScope)
+                            authViewModel.signInWithGoogle(context, coroutineScope, localization)
                         },
                         modifier = Modifier
                             .size(52.dp)

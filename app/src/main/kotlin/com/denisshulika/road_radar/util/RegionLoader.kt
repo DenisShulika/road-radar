@@ -1,7 +1,7 @@
 import android.content.Context
+import com.google.android.gms.maps.model.LatLng
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import com.google.android.gms.maps.model.LatLng
 import java.io.InputStream
 
 data class Region(val name: String, val latitude: Double, val longitude: Double)

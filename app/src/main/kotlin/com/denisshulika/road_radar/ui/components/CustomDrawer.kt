@@ -17,6 +17,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -36,9 +37,11 @@ import com.denisshulika.road_radar.AuthViewModel
 import com.denisshulika.road_radar.IncidentManager
 import com.denisshulika.road_radar.R
 import com.denisshulika.road_radar.Routes
+import com.denisshulika.road_radar.SettingsViewModel
 import com.denisshulika.road_radar.local.UserLocalStorage
 import com.denisshulika.road_radar.model.NavigationItem
 import com.denisshulika.road_radar.pages.RubikFont
+import com.google.android.libraries.places.api.model.kotlin.localTime
 
 @Composable
 fun CustomDrawer (
@@ -47,17 +50,20 @@ fun CustomDrawer (
     onCloseClick : () -> Unit,
     navController: NavController,
     authViewModel : AuthViewModel,
+    settingsViewModel: SettingsViewModel,
     incidentManager: IncidentManager
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
-    val userName = remember { mutableStateOf<String?>("Failed to get a name") }
+    val localization = settingsViewModel.localization.observeAsState().value!!
+
+    val userName = remember { mutableStateOf("") }
     val userPhotoUrl = remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
         userPhotoUrl.value = UserLocalStorage(context).getUserPhotoUrl()
-        userName.value = UserLocalStorage(context).getUserName() ?: "Failed to get a name"
+        userName.value = UserLocalStorage(context).getUserName() ?: localization["user_name_fail"] ?: "Failed to get a name"
     }
     Column(
         modifier = Modifier
@@ -103,7 +109,7 @@ fun CustomDrawer (
                             .size(100.dp)
                             .clip(RoundedCornerShape(10.dp)),
                         painter = rememberAsyncImagePainter(userPhotoUrl.value),
-                        contentDescription = "User Photo"
+                        contentDescription = ""
                     )
                 } else {
                     Image(
@@ -111,12 +117,12 @@ fun CustomDrawer (
                             .size(100.dp)
                             .clip(RoundedCornerShape(10.dp)),
                         painter = painterResource(id = R.drawable.ic_launcher_background),
-                        contentDescription = "Placeholder"
+                        contentDescription = ""
                     )
                 }
                 Spacer(modifier = Modifier.size(8.dp))
                 Text(
-                    text = userName.value ?: "Failed to get a name",
+                    text = userName.value,
                     fontSize = 20.sp,
                     color = Color(0xFF000000),
                     fontFamily = RubikFont,
@@ -129,6 +135,7 @@ fun CustomDrawer (
         Spacer(modifier = Modifier.size(40.dp))
         NavigationItem.entries.toTypedArray().take(3).forEach { navigationItem ->
             NavigationDrawerItem(
+                settingsViewModel = settingsViewModel,
                 navigationItem = navigationItem,
                 selected = navigationItem == selectedNavigationItem,
                 onClick = {
@@ -139,9 +146,9 @@ fun CustomDrawer (
                                 navController.navigate(Routes.INCIDENTS)
                             }
                         }
-                        NavigationItem.Map -> {
-                            if(selectedNavigationItem != NavigationItem.Map) {
-                                onNavigationItemClick(NavigationItem.Map)
+                        NavigationItem.MapRadar -> {
+                            if(selectedNavigationItem != NavigationItem.MapRadar) {
+                                onNavigationItemClick(NavigationItem.MapRadar)
                                 navController.navigate(Routes.MAP_RADAR)
                             }
                         }
@@ -160,6 +167,7 @@ fun CustomDrawer (
         Spacer(modifier = Modifier.weight(1f))
         NavigationItem.entries.toTypedArray().takeLast(3).forEach { navigationItem ->
             NavigationDrawerItem(
+                settingsViewModel =settingsViewModel,
                 navigationItem = navigationItem,
                 selected = navigationItem == selectedNavigationItem,
                 onClick = {
@@ -186,5 +194,4 @@ fun CustomDrawer (
             Spacer(modifier = Modifier.size(8.dp))
         }
     }
-
 }

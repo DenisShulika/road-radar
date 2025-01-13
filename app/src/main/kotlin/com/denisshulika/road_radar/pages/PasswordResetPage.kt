@@ -50,6 +50,7 @@ import com.denisshulika.road_radar.IncidentManager
 import com.denisshulika.road_radar.R
 import com.denisshulika.road_radar.ResetPasswordState
 import com.denisshulika.road_radar.Routes
+import com.denisshulika.road_radar.SettingsViewModel
 import com.denisshulika.road_radar.ui.components.StyledBasicTextField
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
@@ -58,8 +59,12 @@ fun PasswordResetPage(
     @Suppress("UNUSED_PARAMETER") modifier: Modifier = Modifier,
     navController: NavController,
     authViewModel: AuthViewModel,
+    settingsViewModel: SettingsViewModel,
     incidentManager: IncidentManager
 ) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
     val systemUiController = rememberSystemUiController()
 
     systemUiController.setStatusBarColor(
@@ -71,8 +76,7 @@ fun PasswordResetPage(
         darkIcons = false
     )
 
-    val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
+    val localization = settingsViewModel.localization.observeAsState().value!!
 
     val resetPasswordState = authViewModel.resetPasswordState.observeAsState()
 
@@ -113,14 +117,14 @@ fun PasswordResetPage(
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "Reset",
+                    text = localization["password_reset_title_1"]!!,
                     fontSize = 64.sp,
                     color = Color.White,
                     fontFamily = RubikFont,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    text = "Password",
+                    text = localization["password_reset_title_2"]!!,
                     fontSize = 64.sp,
                     color = Color.White,
                     fontFamily = RubikFont,
@@ -145,7 +149,7 @@ fun PasswordResetPage(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Text(
-                            text = "Email",
+                            text = localization["email_title"]!!,
                             fontSize = 24.sp,
                             fontFamily = RubikFont,
                             fontWeight = FontWeight.Normal
@@ -157,21 +161,21 @@ fun PasswordResetPage(
                                 emailError = !isValidEmail(it)
                                 isEmailEmpty = email.isEmpty()
                             },
-                            placeholder = "Enter your email",
+                            placeholder = localization["email_placeholder_password_reset"]!!,
                             keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Email)
                         )
                     }
                     if (isEmailEmpty) {
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            "Email cant be empty",
+                            localization["email_empty"]!!,
                             color = Color(0xFFB71C1C),
                             style = MaterialTheme.typography.bodySmall
                         )
                     } else if (emailError) {
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            "Invalid email address",
+                            localization["email_invalid"]!!,
                             color = Color(0xFFB71C1C),
                             style = MaterialTheme.typography.bodySmall
                         )
@@ -184,19 +188,20 @@ fun PasswordResetPage(
                         onClick = {
                             isEmailEmpty = email.isEmpty()
                             if(isEmailEmpty) {
-                                Toast.makeText(context, "Please, enter your email", Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, localization["email_empty_error"]!!, Toast.LENGTH_LONG).show()
                                 return@Button
                             }
                             emailError = !isValidEmail(email)
                             if(emailError) {
-                                Toast.makeText(context, "Please, enter correct email address", Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, localization["email_invalid_error"]!!, Toast.LENGTH_LONG).show()
                                 return@Button
                             }
                             authViewModel.resetPassword(
                                 emailAddress = email,
                                 context = context,
                                 coroutineScope = coroutineScope,
-                                incidentManager = incidentManager
+                                incidentManager = incidentManager,
+                                localization = localization
                             )
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF474EFF)),
@@ -215,7 +220,7 @@ fun PasswordResetPage(
                             }
                         } else {
                             Text(
-                                text = "Reset Password",
+                                text = localization["password_reset_button"]!!,
                                 fontSize = 24.sp,
                                 fontFamily = RubikFont,
                                 fontWeight = FontWeight.Normal
@@ -235,7 +240,7 @@ fun PasswordResetPage(
                             enabled = resetPasswordState.value != ResetPasswordState.Loading
                         ) {
                             Text(
-                                text = "Go back",
+                                text = localization["go_back_button"]!!,
                                 fontSize = 16.sp,
                                 color = Color(0xFF6369FF),
                                 fontFamily = RubikFont,

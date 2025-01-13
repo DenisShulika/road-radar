@@ -67,6 +67,7 @@ import com.denisshulika.road_radar.AuthViewModel
 import com.denisshulika.road_radar.IncidentCreationState
 import com.denisshulika.road_radar.IncidentManager
 import com.denisshulika.road_radar.Routes
+import com.denisshulika.road_radar.SettingsViewModel
 import com.denisshulika.road_radar.model.IncidentType
 import com.denisshulika.road_radar.ui.components.AutocompleteTextFieldForAddress
 import com.denisshulika.road_radar.ui.components.AutocompleteTextFieldForRegion
@@ -79,12 +80,21 @@ fun AddNewIncidentPage(
     @Suppress("UNUSED_PARAMETER") modifier: Modifier = Modifier,
     navController: NavController,
     authViewModel: AuthViewModel,
+    settingsViewModel: SettingsViewModel,
     incidentManager: IncidentManager,
     placesClient: PlacesClient
 ) {
     val context = LocalContext.current
 
-    val incidentTypesEn = listOf("Car accident", "Roadblock", "Weather conditions", "Traffic jam", "Other")
+    val localization = settingsViewModel.localization.observeAsState().value!!
+
+    val incidentTypes = listOf(
+        localization["incident_type_car_accident"]!!,
+        localization["incident_type_roadblock"]!!,
+        localization["incident_type_weather_conditions"]!!,
+        localization["incident_type_traffic_jam"]!!,
+        localization["incident_type_other"]!!
+    )
 
     val incidentCreationState = incidentManager.incidentCreationState.observeAsState()
 
@@ -129,7 +139,7 @@ fun AddNewIncidentPage(
             val imageUris = uriList.filter { uri ->
                 val mimeType = context.contentResolver.getType(uri)
                 if (mimeType?.startsWith("image/") == false) {
-                    Toast.makeText(context, "You cannot select videos", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, localization["select_videos_error"], Toast.LENGTH_SHORT).show()
                 }
                 mimeType?.startsWith("image/") == true
 
@@ -138,7 +148,7 @@ fun AddNewIncidentPage(
             if (imageUris.size + incidentPhotos.size <= 3) {
                 incidentPhotos = incidentPhotos + imageUris
             } else {
-                Toast.makeText(context, "You can select up to 3 photos", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, localization["photo_limit_error"], Toast.LENGTH_SHORT).show()
             }
         }
     )
@@ -155,7 +165,7 @@ fun AddNewIncidentPage(
                 CenterAlignedTopAppBar(
                     title = {
                         Text(
-                            text = "Add new incident",
+                            text = localization["add_new_incident_title"]!!,
                             textAlign = TextAlign.Center,
                             fontFamily = RubikFont
                         )
@@ -184,7 +194,7 @@ fun AddNewIncidentPage(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Text(
-                            text = "Incident type",
+                            text = localization["incident_type_title"]!!,
                             fontSize = 24.sp,
                             fontFamily = RubikFont
                         )
@@ -213,12 +223,12 @@ fun AddNewIncidentPage(
                                 ) {
                                     Text(
                                         text = when(selectedIncidentType) {
-                                            null -> "Select incident type"
-                                            IncidentType.CAR_ACCIDENT -> "Car accident"
-                                            IncidentType.ROADBLOCK -> "Roadblock"
-                                            IncidentType.WEATHER_CONDITIONS -> "Weather conditions"
-                                            IncidentType.TRAFFIC_JAM -> "Traffic jam"
-                                            IncidentType.OTHER -> "Other"
+                                            null -> localization["incident_type_placeholder"]!!
+                                            IncidentType.CAR_ACCIDENT -> localization["incident_type_car_accident"]!!
+                                            IncidentType.ROADBLOCK -> localization["incident_type_roadblock"]!!
+                                            IncidentType.WEATHER_CONDITIONS -> localization["incident_type_weather_conditions"]!!
+                                            IncidentType.TRAFFIC_JAM -> localization["incident_type_traffic_jam"]!!
+                                            IncidentType.OTHER -> localization["incident_type_other"]!!
                                         },
                                         color = if (selectedIncidentType != null) Color(0xFF000000) else Color(0xFFADADAD),
                                         fontSize = 22.sp,
@@ -231,7 +241,7 @@ fun AddNewIncidentPage(
                                     expanded = isIncidentTypeDropdownExpanded,
                                     onDismissRequest = { isIncidentTypeDropdownExpanded = false }
                                 ) {
-                                    incidentTypesEn.forEach { type ->
+                                    incidentTypes.forEach { type ->
                                         DropdownMenuItem(
                                             text = {
                                                 Text(
@@ -243,11 +253,11 @@ fun AddNewIncidentPage(
                                             },
                                             onClick = {
                                                 selectedIncidentType = when(type) {
-                                                    "Car accident" -> IncidentType.CAR_ACCIDENT
-                                                    "Roadblock" -> IncidentType.ROADBLOCK
-                                                    "Weather conditions" -> IncidentType.WEATHER_CONDITIONS
-                                                    "Traffic jam" -> IncidentType.TRAFFIC_JAM
-                                                    "Other" -> IncidentType.OTHER
+                                                    localization["incident_type_car_accident"] -> IncidentType.CAR_ACCIDENT
+                                                    localization["incident_type_roadblock"] -> IncidentType.ROADBLOCK
+                                                    localization["incident_type_weather_conditions"] -> IncidentType.WEATHER_CONDITIONS
+                                                    localization["incident_type_traffic_jam"] -> IncidentType.TRAFFIC_JAM
+                                                    localization["incident_type_other"] -> IncidentType.OTHER
                                                     else -> IncidentType.OTHER
                                                 }
                                                 isIncidentTypeDropdownExpanded = false
@@ -263,7 +273,7 @@ fun AddNewIncidentPage(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Text(
-                            text = "Description",
+                            text = localization["description_title"]!!,
                             fontSize = 24.sp,
                             fontFamily = RubikFont
                         )
@@ -273,14 +283,14 @@ fun AddNewIncidentPage(
                                 incidentDescription = it
                                 isIncidentDescriptionEmpty = incidentDescription.isEmpty()
                             },
-                            placeholder = "Enter a description to an accident",
+                            placeholder = localization["description_placeholder"]!!,
                             singleLine = false
                         )
                     }
                     if (isIncidentDescriptionEmpty) {
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            "Description can't be empty",
+                            localization["description_empty_text"]!!,
                             color = Color(0xFFB71C1C),
                             style = MaterialTheme.typography.bodySmall
                         )
@@ -291,7 +301,7 @@ fun AddNewIncidentPage(
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             Text(
-                                text = "Region",
+                                text = localization["region_title"]!!,
                                 fontSize = 24.sp,
                                 fontFamily = RubikFont,
                                 fontWeight = FontWeight.Normal
@@ -313,13 +323,13 @@ fun AddNewIncidentPage(
                                     isAddressSelected = false
                                     isSelectedAddressEmpty = false
                                 },
-                                placeholder = "Enter region"
+                                placeholder = localization["region_placeholder"]!!
                             )
                         }
                         if (isSelectedRegionEmpty) {
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                "Region cant be empty",
+                                localization["region_empty"]!!,
                                 color = Color(0xFFB71C1C),
                                 style = MaterialTheme.typography.bodySmall
                             )
@@ -331,14 +341,14 @@ fun AddNewIncidentPage(
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             Text(
-                                text = "Address",
+                                text = localization["address_title"]!!,
                                 fontSize = 24.sp,
                                 fontFamily = RubikFont,
                                 fontWeight = FontWeight.Normal
                             )
                             if (!isRegionSelected) {
                                 Text(
-                                    text = "Enter a region firstly",
+                                    text = localization["enter_region_firstly"]!!,
                                     fontSize = 20.sp,
                                     fontFamily = RubikFont,
                                     fontWeight = FontWeight.Normal,
@@ -361,7 +371,7 @@ fun AddNewIncidentPage(
                                         isAddressSelected = false
                                         isSelectedAddressEmpty = selectedAddress.isEmpty()
                                     },
-                                    placeholder = "Enter address",
+                                    placeholder = localization["address_placeholder"]!!,
                                     region = selectedRegion,
                                     context = context
                                 )
@@ -370,7 +380,7 @@ fun AddNewIncidentPage(
                         if (isSelectedAddressEmpty) {
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                "Address cant be empty",
+                                localization["address_empty"]!!,
                                 color = Color(0xFFB71C1C),
                                 style = MaterialTheme.typography.bodySmall
                             )
@@ -382,7 +392,7 @@ fun AddNewIncidentPage(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Text(
-                            text = "Photos",
+                            text = localization["photos_title"]!!,
                             fontSize = 24.sp,
                             fontFamily = RubikFont
                         )
@@ -395,7 +405,7 @@ fun AddNewIncidentPage(
                                     horizontalArrangement = Arrangement.Center
                                 ) {
                                     Text(
-                                        text = "No photos selected",
+                                        text = localization["no_photos_selected"]!!,
                                         fontSize = 16.sp,
                                         fontFamily = RubikFont,
                                         color = Color(0xFFADADAD)
@@ -405,7 +415,8 @@ fun AddNewIncidentPage(
                             incidentPhotos.forEachIndexed { index, uri ->
                                 val fileName = getFileNameFromUri(
                                     uri = uri ?: Uri.EMPTY,
-                                    context = context
+                                    context = context,
+                                    localization = localization
                                 )
                                 Column {
                                     Row(
@@ -437,7 +448,7 @@ fun AddNewIncidentPage(
                                         ) {
                                             Icon(
                                                 imageVector = Icons.Filled.Delete,
-                                                contentDescription = "Delete Photo",
+                                                contentDescription = "",
                                                 tint = Color.Red
                                             )
                                         }
@@ -471,7 +482,7 @@ fun AddNewIncidentPage(
                                 enabled = incidentCreationState.value != IncidentCreationState.Loading
                             ) {
                                 Text(
-                                    text = "Add photos (up to 3)",
+                                    text = localization["add_photos_button"]!!,
                                     fontSize = 20.sp,
                                     color = Color(0xFF6369FF),
                                     fontFamily = RubikFont
@@ -494,30 +505,30 @@ fun AddNewIncidentPage(
                             .height(52.dp),
                         onClick = {
                             if (selectedIncidentType == null) {
-                                Toast.makeText(context, "Please, choose an incident type", Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, localization["type_error"], Toast.LENGTH_LONG).show()
                                 return@Button
                             }
                             isIncidentDescriptionEmpty = incidentDescription.isEmpty()
                             if (isIncidentDescriptionEmpty) {
-                                Toast.makeText(context, "Please, enter a description", Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, localization["description_error"], Toast.LENGTH_LONG).show()
                                 return@Button
                             }
                             isSelectedRegionEmpty = selectedRegion.isEmpty()
                             if(isSelectedRegionEmpty) {
-                                Toast.makeText(context, "Please, enter region", Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, localization["region_enter_error"], Toast.LENGTH_LONG).show()
                                 return@Button
                             }
                             if(!isRegionSelected) {
-                                Toast.makeText(context, "Please, select region", Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, localization["region_select_error"], Toast.LENGTH_LONG).show()
                                 return@Button
                             }
                             isSelectedAddressEmpty = selectedAddress.isEmpty()
                             if(isSelectedAddressEmpty) {
-                                Toast.makeText(context, "Please, enter address", Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, localization["address_enter_error"], Toast.LENGTH_LONG).show()
                                 return@Button
                             }
                             if(!isAddressSelected) {
-                                Toast.makeText(context, "Please, select address", Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, localization["address_select_error"], Toast.LENGTH_LONG).show()
                                 return@Button
                             }
 
@@ -531,6 +542,7 @@ fun AddNewIncidentPage(
                                 address = selectedAddress,
                                 latitude = latitude,
                                 longitude = longitude,
+                                localization = localization
                             )
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF474EFF)),
@@ -545,7 +557,7 @@ fun AddNewIncidentPage(
                                     horizontalArrangement = Arrangement.Center
                                 ) {
                                     Text(
-                                        text = "Loading...",
+                                        text = localization["loading"]!!,
                                         fontSize = 24.sp,
                                         fontFamily = RubikFont
                                     )
@@ -563,7 +575,7 @@ fun AddNewIncidentPage(
                                     horizontalArrangement = Arrangement.Center
                                 ) {
                                     Text(
-                                        text = "Uploading photos...",
+                                        text = localization["uploading_photos"]!!,
                                         fontSize = 24.sp,
                                         fontFamily = RubikFont
                                     )
@@ -581,7 +593,7 @@ fun AddNewIncidentPage(
                                     horizontalArrangement = Arrangement.Center
                                 ) {
                                     Text(
-                                        text = "Creating incident...",
+                                        text = localization["creating_incident"]!!,
                                         fontSize = 24.sp,
                                         fontFamily = RubikFont
                                     )
@@ -593,7 +605,7 @@ fun AddNewIncidentPage(
                             }
                             else -> {
                                 Text(
-                                    text = "Publish the incident",
+                                    text = localization["publish_incident_button"]!!,
                                     fontSize = 24.sp,
                                     fontFamily = RubikFont
                                 )
@@ -608,9 +620,10 @@ fun AddNewIncidentPage(
 
 fun getFileNameFromUri(
     uri: Uri,
-    context: Context
+    context: Context,
+    localization: Map<String, String>
 ): String {
-    var result = "Unknown file name"
+    var result = localization["unknown_file_name"]!!
 
     if (uri.scheme == "content") {
         val cursor = context.contentResolver.query(uri, null, null, null, null)

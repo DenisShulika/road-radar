@@ -94,7 +94,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     fun updateUserProfile(
         name : String,
         photo: String,
-        context: Context
+        context: Context,
+        localization: Map<String, String>
     ) {
         val user = auth.currentUser!!
 
@@ -106,9 +107,9 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         user.updateProfile(profileUpdates)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    Toast.makeText(context, "Profile updated successfully", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, localization["profile_updating_success"] ?: localization["something_went_wrong"] ?: "Something went wrong", Toast.LENGTH_SHORT).show()
                 } else {
-                    Toast.makeText(context, "Failed to update profile", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, localization["profile_updating_fail"] ?: localization["something_went_wrong"] ?: "Something went wrong", Toast.LENGTH_SHORT).show()
                 }
             }
     }
@@ -117,7 +118,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         email: String,
         password: String,
         context: Context,
-        coroutineScope: CoroutineScope
+        coroutineScope: CoroutineScope,
+        localization: Map<String, String>
     ) {
         _authState.value = AuthState.Loading
         auth.signInWithEmailAndPassword(email, password)
@@ -149,12 +151,12 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                                 }
                             }
                             .addOnFailureListener {
-                                _authState.value = AuthState.Error("Failed to load user data")
+                                _authState.value = AuthState.Error(localization["user_data_loading_fail"] ?: localization["something_went_wrong"] ?: "Something went wrong")
                             }
                     }
                 } else {
                     _authState.value = AuthState.Error(
-                        task.exception?.message ?: "Something went wrong"
+                        task.exception?.message ?: localization["something_went_wrong"] ?: "Something went wrong"
                     )
                 }
             }
@@ -168,7 +170,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         region: String,
         photo: String,
         context: Context,
-        coroutineScope: CoroutineScope
+        coroutineScope: CoroutineScope,
+        localization: Map<String, String>
     ) {
         _authState.value = AuthState.Loading
         auth.createUserWithEmailAndPassword(email, password)
@@ -186,7 +189,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                         ?.addOnCompleteListener { profileTask ->
                             if (!profileTask.isSuccessful) {
                                 _authState.value = AuthState.Error(
-                                    task.exception?.message ?: "Something went wrong"
+                                    task.exception?.message ?: localization["something_went_wrong"] ?: "Something went wrong"
                                 )
                             }
                         }
@@ -217,12 +220,12 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                             _authState.value = AuthState.Authenticated
                         }
                         .addOnFailureListener {
-                            _authState.value = AuthState.Error("Failed to save user data")
+                            _authState.value = AuthState.Error(localization["user_data_saving_fail"] ?: localization["something_went_wrong"] ?: "Something went wrong")
                         }
 
                 } else {
                     _authState.value = AuthState.Error(
-                        task.exception?.message ?: "Something went wrong"
+                        task.exception?.message ?: localization["something_went_wrong"] ?: "Something went wrong"
                     )
                 }
             }
@@ -230,7 +233,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     fun signInWithGoogle(
         context: Context,
-        coroutineScope: CoroutineScope
+        coroutineScope: CoroutineScope,
+        localization: Map<String, String>
     ) {
         _authState.value = AuthState.Loading
 
@@ -297,7 +301,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                                                 _authState.value = AuthState.Authenticated
                                             }
                                             .addOnFailureListener {
-                                                _authState.value = AuthState.Error("Failed to load user data")
+                                                _authState.value = AuthState.Error(localization["user_data_loading_fail"] ?: localization["something_went_wrong"] ?: "Something went wrong")
                                             }
                                     }
                                 } else {
@@ -305,22 +309,22 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                                 }
                             } else {
                                 _authState.value = AuthState.Error(
-                                    task.exception?.message ?: "Something went wrong"
+                                    task.exception?.message ?: localization["something_went_wrong"] ?: "Something went wrong"
                                 )
                             }
                         }
                     }
             } catch (e: GetCredentialException) {
                 coroutineScope.launch(Dispatchers.Main) {
-                    _authState.value = AuthState.Error(e.message ?: "Something went wrong")
+                    _authState.value = AuthState.Error(e.message ?: localization["something_went_wrong"] ?: "Something went wrong")
                 }
             } catch (e: GoogleIdTokenParsingException) {
                 coroutineScope.launch(Dispatchers.Main) {
-                    _authState.value = AuthState.Error(e.message ?: "Something went wrong")
+                    _authState.value = AuthState.Error(e.message ?: localization["something_went_wrong"] ?: "Something went wrong")
                 }
             } catch (e: Exception) {
                 coroutineScope.launch(Dispatchers.Main) {
-                    _authState.value = AuthState.Error(e.message ?: "Unknown error occurred")
+                    _authState.value = AuthState.Error(e.message ?: localization["unknown_error"] ?: "Unknown error occupied")
                 }
             }
         }
@@ -330,11 +334,12 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         phoneNumber: String,
         region: String,
         context: Context,
-        coroutineScope: CoroutineScope
+        coroutineScope: CoroutineScope,
+        localization: Map<String, String>
     ) {
         val user = auth.currentUser
         if (user == null) {
-            _authState.value = AuthState.Error("User is not authenticated")
+            _authState.value = AuthState.Error(localization["user_not_authenticated"] ?: localization["something_went_wrong"] ?: "Something went wrong")
             return
         }
 
@@ -367,7 +372,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 _authState.value = AuthState.Authenticated
             }
             .addOnFailureListener { e ->
-                _authState.value = AuthState.Error("Failed to save user data: ${e.message}")
+                _authState.value = AuthState.Error("${localization["user_data_saving_fail"] ?: localization["something_went_wrong"] ?: "Something went wrong"}: ${e.message}")
             }
     }
 
@@ -409,7 +414,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         password: String,
         context: Context,
         coroutineScope: CoroutineScope,
-        incidentManager: IncidentManager
+        incidentManager: IncidentManager,
+        localization: Map<String, String>
     ) {
         val user = auth.currentUser
 
@@ -428,11 +434,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 user.reauthenticate(credential)
                     .addOnCompleteListener {}
             } else {
-                Toast.makeText(
-                    context,
-                    "Failed to Re-auth. Try to delete later",
-                    Toast.LENGTH_LONG
-                ).show()
+                Toast.makeText(context, localization["reauthenticate_fail"] ?: localization["something_went_wrong"] ?: "Something went wrong", Toast.LENGTH_LONG).show()
                 return
             }
 
@@ -446,7 +448,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                                 } else {
                                     Toast.makeText(
                                         context,
-                                        deleteTask.exception?.message ?: "Failed to delete account",
+                                        deleteTask.exception?.message ?: localization["account_deleting_fail"] ?: localization["something_went_wrong"] ?: "Something went wrong",
                                         Toast.LENGTH_LONG
                                     ).show()
                                 }
@@ -454,7 +456,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                     } else {
                         Toast.makeText(
                             context,
-                            task.exception?.message ?: "Failed to delete Firestore data",
+                            task.exception?.message ?: localization["firestore_deleting_fail"] ?: localization["something_went_wrong"] ?: "Something went wrong",
                             Toast.LENGTH_LONG
                         ).show()
                     }
@@ -463,83 +465,69 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun resetPassword(
-        emailAddress: String?,
+        emailAddress: String,
         context: Context,
         coroutineScope: CoroutineScope,
-        incidentManager: IncidentManager
+        incidentManager: IncidentManager,
+        localization: Map<String, String>
     ) {
         _resetPasswordState.value = ResetPasswordState.Loading
 
-        if (emailAddress == null) {
-            showToast(context = context, message = "No email address found")
-        } else if (emailAddress.isEmpty()) {
-            showToast(context = context, message = "Email cant be empty")
-        } else {
-            auth.sendPasswordResetEmail(emailAddress)
-                .addOnCompleteListener { task ->
-                    if (task.isSuccessful) {
-                        _resetPasswordState.value = ResetPasswordState.Success
-                        signout(context, coroutineScope, incidentManager)
-                        Toast.makeText(context, "Password reset email sent. Please check your inbox.", Toast.LENGTH_LONG).show()
-                    } else {
-                        _resetPasswordState.value = ResetPasswordState.Error(task.exception?.message?:"Failed to send reset email")
-                    }
+        auth.sendPasswordResetEmail(emailAddress)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    _resetPasswordState.value = ResetPasswordState.Success
+                    signout(context, coroutineScope, incidentManager)
+                    Toast.makeText(context, localization["password_reset_email_success"] ?: localization["something_went_wrong"] ?: "Something went wrong", Toast.LENGTH_LONG).show()
+                } else {
+                    _resetPasswordState.value = ResetPasswordState.Error(task.exception?.message ?: localization["password_reset_email_fail"] ?: localization["something_went_wrong"] ?: "Something went wrong")
                 }
-        }
+            }
     }
 
     fun resetEmail(
-        newEmailAddress: String?,
+        newEmailAddress: String,
         email : String,
         password: String,
         context: Context,
         coroutineScope: CoroutineScope,
-        incidentManager: IncidentManager
+        incidentManager: IncidentManager,
+        localization: Map<String, String>
     ) {
         _resetEmailState.value = ResetEmailState.Loading
 
-        if (newEmailAddress == null) {
-            showToast(context = context, message = "No email address found")
-        } else if (newEmailAddress.isEmpty()) {
-            showToast(context = context, message = "Email can't be empty")
-        } else {
-            val user = auth.currentUser
+        val user = auth.currentUser
 
-            user?.let {
-                val credential = if (isUserLoggedInWithGoogle()) {
-                    GoogleAuthProvider.getCredential(user.getIdToken(true).toString(), null)
-                } else if(isUserLoggedInWithEmailPassword()) {
-                    EmailAuthProvider.getCredential(email, password)
-                } else {
-                    null
-                }
-
-                if(credential != null) {
-                    user.reauthenticate(credential)
-                        .addOnCompleteListener {}
-                } else {
-                    Toast.makeText(
-                        context,
-                        "Failed to Re-auth. Try to delete later",
-                        Toast.LENGTH_LONG
-                    ).show()
-                    return
-                }
-            }
-            if (user != null) {
-                user.verifyBeforeUpdateEmail(newEmailAddress)
-                    .addOnCompleteListener { task ->
-                        if (task.isSuccessful) {
-                            _resetEmailState.value = ResetEmailState.Success
-                            signout(context, coroutineScope, incidentManager)
-                            Toast.makeText(context, "Email reset email sent. Please check your inbox.", Toast.LENGTH_LONG).show()
-                        } else {
-                            _resetEmailState.value = ResetEmailState.Error(task.exception?.message ?: "Failed to send reset email")
-                        }
-                    }
+        user?.let {
+            val credential = if (isUserLoggedInWithGoogle()) {
+                GoogleAuthProvider.getCredential(user.getIdToken(true).toString(), null)
+            } else if(isUserLoggedInWithEmailPassword()) {
+                EmailAuthProvider.getCredential(email, password)
             } else {
-                showToast(context = context, message = "No user is signed in")
+                null
             }
+
+            if(credential != null) {
+                user.reauthenticate(credential)
+                    .addOnCompleteListener {}
+            } else {
+                Toast.makeText(context, localization["reauthenticate_fail"] ?: localization["something_went_wrong"] ?: "Something went wrong", Toast.LENGTH_LONG).show()
+                return
+            }
+        }
+        if (user != null) {
+            user.verifyBeforeUpdateEmail(newEmailAddress)
+                .addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        _resetEmailState.value = ResetEmailState.Success
+                        signout(context, coroutineScope, incidentManager)
+                        Toast.makeText(context, localization["email_reset_email_success"] ?: localization["something_went_wrong"] ?: "Something went wrong", Toast.LENGTH_LONG).show()
+                    } else {
+                        _resetEmailState.value = ResetEmailState.Error(task.exception?.message ?: localization["email_reset_email_fail"] ?: localization["something_went_wrong"] ?: "Something went wrong")
+                    }
+                }
+        } else {
+            Toast.makeText(context, localization["reauthenticate_fail"] ?: localization["something_went_wrong"] ?: "Something went wrong", Toast.LENGTH_LONG).show()
         }
     }
 }
@@ -567,10 +555,6 @@ fun isValidEmail(email: String): Boolean {
     return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
 }
 
-private fun showToast(context: Context, message: String) {
-    Toast.makeText(context, message, Toast.LENGTH_LONG).show()
-}
-
 sealed class AuthState {
     data object Authenticated : AuthState()
     data object Unauthenticated : AuthState()
@@ -593,8 +577,3 @@ sealed class ResetEmailState {
     data object Null : ResetEmailState()
     data class Error(val message: String) : ResetEmailState()
 }
-
-//TODO() Expand exceptions that may occur
-// Google them and walk through each one
-
-//TODO() remove hardcoded strings and colors

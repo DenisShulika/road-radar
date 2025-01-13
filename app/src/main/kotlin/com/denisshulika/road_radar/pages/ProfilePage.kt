@@ -79,6 +79,7 @@ import com.denisshulika.road_radar.AuthViewModel
 import com.denisshulika.road_radar.IncidentManager
 import com.denisshulika.road_radar.R
 import com.denisshulika.road_radar.Routes
+import com.denisshulika.road_radar.SettingsViewModel
 import com.denisshulika.road_radar.isValidPhoneNumber
 import com.denisshulika.road_radar.local.UserLocalStorage
 import com.denisshulika.road_radar.model.CustomDrawerState
@@ -104,6 +105,7 @@ fun ProfilePage(
     @Suppress("UNUSED_PARAMETER") modifier: Modifier = Modifier,
     navController: NavController,
     authViewModel: AuthViewModel,
+    settingsViewModel: SettingsViewModel,
     placesClient: PlacesClient,
     incidentManager: IncidentManager
 ) {
@@ -153,7 +155,7 @@ fun ProfilePage(
         darkIcons = true
     )
     //TODO()
-
+    val localization = settingsViewModel.localization.observeAsState().value!!
 
     var isEditingState by remember { mutableStateOf(false) }
 
@@ -221,6 +223,7 @@ fun ProfilePage(
             },
             onCloseClick = { drawerState = CustomDrawerState.Closed },
             authViewModel = authViewModel,
+            settingsViewModel = settingsViewModel,
             navController = navController,
             incidentManager = incidentManager
         )
@@ -242,7 +245,7 @@ fun ProfilePage(
                     modifier = Modifier,
                     title = {
                         Text(
-                            text = if (isEditingState) "Edit profile" else selectedNavigationItem.title,
+                            text = if (isEditingState) localization["edit_profile_title"]!! else selectedNavigationItem.getTitle(localization),
                             textAlign = TextAlign.Center,
                             fontFamily = RubikFont
                         )
@@ -309,7 +312,7 @@ fun ProfilePage(
                                 verticalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
                                 Text(
-                                    text = "Name",
+                                    text = localization["name_title"]!!,
                                     fontSize = 24.sp,
                                     fontFamily = RubikFont,
                                     fontWeight = FontWeight.Normal,
@@ -326,7 +329,7 @@ fun ProfilePage(
                                 verticalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
                                 Text(
-                                    text = "Region",
+                                    text = localization["region_title"]!!,
                                     fontSize = 24.sp,
                                     fontFamily = RubikFont,
                                     fontWeight = FontWeight.Normal,
@@ -344,7 +347,7 @@ fun ProfilePage(
                                     verticalArrangement = Arrangement.spacedBy(12.dp)
                                 ) {
                                     Text(
-                                        text = "Email",
+                                        text = localization["email_title"]!!,
                                         fontSize = 24.sp,
                                         fontFamily = RubikFont,
                                         fontWeight = FontWeight.Normal,
@@ -362,7 +365,7 @@ fun ProfilePage(
                                 verticalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
                                 Text(
-                                    text = "Phone Number",
+                                    text = localization["phone_title"]!!,
                                     fontSize = 24.sp,
                                     fontFamily = RubikFont,
                                     fontWeight = FontWeight.Normal,
@@ -396,7 +399,7 @@ fun ProfilePage(
                                 )
                             ) {
                                 Text(
-                                    text = "Edit profile",
+                                    text = localization["edit_profile_button"]!!,
                                     fontSize = 20.sp,
                                     color = Color.White,
                                     fontFamily = RubikFont
@@ -430,7 +433,7 @@ fun ProfilePage(
                                 ) {
                                     Image(
                                         painter = rememberAsyncImagePainter(userPhoto),
-                                        contentDescription = "Cropped Image",
+                                        contentDescription = "",
                                         modifier = Modifier.size(100.dp)
                                     )
                                 }
@@ -447,7 +450,7 @@ fun ProfilePage(
                                     verticalArrangement = Arrangement.spacedBy(12.dp)
                                 ) {
                                     Text(
-                                        text = "Name",
+                                        text = localization["name_title"]!!,
                                         fontSize = 24.sp,
                                         fontFamily = RubikFont,
                                         fontWeight = FontWeight.Normal,
@@ -459,13 +462,13 @@ fun ProfilePage(
                                             userName = it
                                             isNameEmpty = userName.isEmpty()
                                         },
-                                        placeholder = "Your Name, e.g: John Doe"
+                                        placeholder = localization["name_placeholder"]!!
                                     )
                                 }
                                 if (isNameEmpty) {
                                     Spacer(modifier = Modifier.height(4.dp))
                                     Text(
-                                        "Name cant be empty",
+                                        localization["name_empty"]!!,
                                         color = Color(0xFFB71C1C),
                                         style = MaterialTheme.typography.bodySmall
                                     )
@@ -479,7 +482,7 @@ fun ProfilePage(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Text(
-                                            text = "Region",
+                                            text = localization["region_title"]!!,
                                             fontSize = 24.sp,
                                             fontFamily = RubikFont,
                                             fontWeight = FontWeight.Normal,
@@ -494,7 +497,7 @@ fun ProfilePage(
                                                     modifier = Modifier.padding(20.dp),
                                                     title = {
                                                         Text(
-                                                            text = "Region",
+                                                            text = localization["region_tip_title"]!!,
                                                             fontSize = 20.sp,
                                                             fontFamily = RubikFont,
                                                             fontWeight = FontWeight.SemiBold
@@ -502,7 +505,7 @@ fun ProfilePage(
                                                     },
                                                     text = {
                                                         Text(
-                                                            text = "Incidents are filtered by region, so enter the one you live in",
+                                                            text = localization["region_tip_text"]!!,
                                                             fontSize = 16.sp,
                                                             fontFamily = RubikFont,
                                                             fontWeight = FontWeight.Normal
@@ -544,13 +547,13 @@ fun ProfilePage(
                                             isRegionSelected = false
                                             isSelectedRegionEmpty = selectedRegion.isEmpty()
                                         },
-                                        placeholder = "Enter your region"
+                                        placeholder = localization["region_placeholder"]!!
                                     )
                                 }
                                 if (isSelectedRegionEmpty) {
                                     Spacer(modifier = Modifier.height(4.dp))
                                     Text(
-                                        "Region cant be empty",
+                                        localization["region_empty"]!!,
                                         color = Color(0xFFB71C1C),
                                         style = MaterialTheme.typography.bodySmall
                                     )
@@ -561,7 +564,7 @@ fun ProfilePage(
                                     verticalArrangement = Arrangement.spacedBy(12.dp)
                                 ) {
                                     Text(
-                                        text = "Email",
+                                        text = localization["email_title"]!!,
                                         fontSize = 24.sp,
                                         fontFamily = RubikFont,
                                         fontWeight = FontWeight.Normal,
@@ -580,7 +583,7 @@ fun ProfilePage(
                                     verticalArrangement = Arrangement.spacedBy(12.dp)
                                 ) {
                                     Text(
-                                        text = "Phone Number",
+                                        text = localization["phone_title"]!!,
                                         fontSize = 24.sp,
                                         fontFamily = RubikFont,
                                         fontWeight = FontWeight.Normal,
@@ -593,20 +596,20 @@ fun ProfilePage(
                                             isPhoneNumberEmpty = userPhoneNumber.isEmpty()
                                             phoneNumberError = !isValidPhoneNumber(it)
                                         },
-                                        placeholder = "Your phone, e.g: +380.. or 0.."
+                                        placeholder = localization["phone_placeholder"]!!
                                     )
                                 }
                                 if (isPhoneNumberEmpty) {
                                     Spacer(modifier = Modifier.height(4.dp))
                                     Text(
-                                        "Phone number cant be empty",
+                                        localization["phone_empty"]!!,
                                         color = Color(0xFFB71C1C),
                                         style = MaterialTheme.typography.bodySmall
                                     )
                                 } else if (phoneNumberError) {
                                     Spacer(modifier = Modifier.height(4.dp))
                                     Text(
-                                        "Invalid phone number",
+                                        localization["phone_invalid"]!!,
                                         color = Color(0xFFB71C1C),
                                         style = MaterialTheme.typography.bodySmall
                                     )
@@ -633,11 +636,16 @@ fun ProfilePage(
                                         selectedRegion = userLocalStorage.getUserRegion().toString()
                                         userPhoto = userLocalStorage.getUserPhotoUrl().toString()
                                     }
+                                    isNameEmpty = false
+                                    isPhoneNumberEmpty = false
+                                    phoneNumberError = false
+                                    isSelectedRegionEmpty = false
+                                    isRegionSelected = true
                                     isEditingState = !isEditingState
                                 }
                             ) {
                                 Text(
-                                    text = "Discard changes",
+                                    text = localization["discard_changes_button"]!!,
                                     fontSize = 20.sp,
                                     color = Color(0xFF474EFF),
                                     fontFamily = RubikFont
@@ -649,26 +657,26 @@ fun ProfilePage(
                                 onClick = {
                                     isNameEmpty = userName.isEmpty()
                                     if(isNameEmpty) {
-                                        Toast.makeText(context, "Please, enter your name", Toast.LENGTH_LONG).show()
+                                        Toast.makeText(context, localization["name_empty_error"]!!, Toast.LENGTH_LONG).show()
                                         return@Button
                                     }
                                     isPhoneNumberEmpty = userPhoneNumber.isEmpty()
                                     if(isPhoneNumberEmpty) {
-                                        Toast.makeText(context, "Please, enter your phone", Toast.LENGTH_LONG).show()
+                                        Toast.makeText(context, localization["phone_empty_error"]!!, Toast.LENGTH_LONG).show()
                                         return@Button
                                     }
                                     phoneNumberError = !isValidPhoneNumber(userPhoneNumber)
                                     if(phoneNumberError) {
-                                        Toast.makeText(context, "Please, enter correct phone number", Toast.LENGTH_LONG).show()
+                                        Toast.makeText(context, localization["phone_invalid_error"]!!, Toast.LENGTH_LONG).show()
                                         return@Button
                                     }
                                     isSelectedRegionEmpty = selectedRegion.isEmpty()
                                     if(isSelectedRegionEmpty) {
-                                        Toast.makeText(context, "Please, enter your region", Toast.LENGTH_LONG).show()
+                                        Toast.makeText(context, localization["region_enter_error"]!!, Toast.LENGTH_LONG).show()
                                         return@Button
                                     }
                                     if(!isRegionSelected) {
-                                        Toast.makeText(context, "Please, select your region", Toast.LENGTH_LONG).show()
+                                        Toast.makeText(context, localization["region_select_error"]!!, Toast.LENGTH_LONG).show()
                                         return@Button
                                     }
 
@@ -686,7 +694,8 @@ fun ProfilePage(
                                             authViewModel.updateUserProfile(
                                                 name = userName,
                                                 photo = userPhoto,
-                                                context = context
+                                                context = context,
+                                                localization = localization
                                             )
                                             var userPassword = ""
                                             CoroutineScope(Dispatchers.Main).launch {
@@ -711,7 +720,7 @@ fun ProfilePage(
                                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF474EFF))
                             ) {
                                 Text(
-                                    text = "Save",
+                                    text = localization["save_profile_button"]!!,
                                     fontSize = 20.sp,
                                     color = Color.White,
                                     fontFamily = RubikFont

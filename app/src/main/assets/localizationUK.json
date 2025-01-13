@@ -1,0 +1,262 @@
+{
+  "drawer_incidents": "Інциденти",
+  "drawer_map_radar": "Карта Радар",
+  "drawer_profile": "Профіль",
+  "drawer_settings": "Налаштування",
+  "drawer_about": "Про додаток",
+  "drawer_signout": "Вийти",
+
+  "something_went_wrong": "Щось пішло не так",
+
+  "unknown_user": "Невідомий користувач",
+  "unknown_error": "Невідома помилка",
+
+  "incident_adding_success": "Інцидент успішно додано!",
+  "incident_adding_fail": "Не вдалося додати інцидент",
+  "photos_adding_fail": "Не вдалося завантажити фото",
+
+  "incidents_loading_fail": "Не вдалося завантажити інциденти",
+
+  "profile_updating_success": "Профіль успішно оновлений!",
+  "profile_updating_fail": "Не вдалося оновити профіль",
+
+  "user_data_loading_fail": "Не вдалося завантажити дані",
+  "user_data_saving_fail": "Не вдалося зберегти дані",
+
+  "user_not_authenticated": "Користувач не пройшов автентифікацію",
+
+  "reauthenticate_fail": "Не вдалося повторно підтвердити особу",
+
+  "account_deleting_fail": "Не вдалося видалити аккаунт",
+  "firestore_deleting_fail": "Не вдалося видалити дані з Firestore",
+
+  "password_reset_email_success": "Лист відправлено! Перевірте вашу скриньку",
+  "password_reset_email_fail": "Не вдалося відправити лист для скидання пароля",
+
+  "email_reset_email_success": "Лист відправлено! Перевірте вашу скриньку",
+  "email_reset_email_fail": "Не вдалося відправити лист для скидання пошти",
+
+  "user_name_fail": "Не вдалося отримати ім'я",
+
+  "app_title": "Road Radar",
+  "app_description_title": " — мобільний додаток для водіїв та звичайних користувачів,",
+  "app_description_text": "що надає інформацію про поточні дорожні умови та можливі небезпеки на маршруті. З його допомогою ви можете отримувати та обмінюватись останньою інформацією про аварії, затори, небезпечні ділянки та інші ситуації, які можуть вплинути на вашу поїздку.",
+
+  "faq_title": "FAQs:",
+  "faq_register_question": "Як зареєструватися в додатку?",
+  "faq_register_answer": "Для реєстрації ви можете скористатися електронною поштою або увійти через Google. Після цього потрібно ввести додаткові дані для завершення реєстрації",
+  "faq_login_question": "Як увійти в додаток?",
+  "faq_login_answer": "Вхід можливий через електронну пошту та пароль або через Google, якщо у вас вже є обліковий запис.",
+  "faq_help_question": "Як додаток допомагає на дорозі?",
+  "faq_help_answer": "Road Radar дозволяє обмінюватися інформацією про аварії, затори, небезпечні ділянки та погодні умови, що можуть вплинути на вашу поїздку.",
+  "faq_view_incidents_question": "Як переглянути поточні інциденти в моїй області?",
+  "faq_view_incidents_answer": "Інциденти відображаються на сторінці \"Інциденти\", де вони сортуються за датою (від найновіших) і фільтруються за вашою областю, вказаною в профілі.",
+  "faq_report_incident_question": "Як повідомити про новий інцидент?",
+  "faq_report_incident_answer": "Для повідомлення про новий інцидент натисніть на відповідну кнопку в додатку та заповніть форму з детальним описом ситуації.",
+  "faq_profile_question": "Як переглянути та редагувати мій профіль?",
+  "faq_profile_answer": "Інформацію про профіль можна переглянути на сторінці \"Профіль\". Тут також є кнопка для редагування даних.",
+  "faq_settings_question": "Як змінити налаштування додатку та керувати акаунтом?",
+  "faq_settings_answer": "Ви можете змінити тему та мову додатку в налаштуваннях, а також здійснити налаштування акаунту.",
+  "faq_map_incidents_question": "Як переглянути інциденти на карті?",
+  "faq_map_incidents_answer": "Інциденти можна переглядати на карті, де вони позначаються маркерами. При натисканні на маркер з’явиться детальна інформація про інцидент.",
+  "faq_data_storage_question": "Як додаток зберігає мої дані?",
+  "faq_data_storage_answer": "Деякі дані зберігаються локально на пристрої для швидкого доступу та мінімізації використання інтернету, а інші синхронізуються з сервером для збереження прогресу та налаштувань.",
+  "faq_technical_problems_question": "Що робити при технічних проблемах?",
+  "faq_technical_problems_answer": "Спробуйте перезапустити додаток або зверніться до розробника через контактні дані нижче.",
+  "developer_contact_title": "Контактні дані розробника:",
+  "developer_name": "Денис Шуліка Геннадійович",
+  "developer_email_title": "Пошта: ",
+  "developer_email": "Пошта: denisshulika31@gmail.com",
+  "developer_phone": "Телефон: +380 67 880 50 16",
+  "developer_telegram_title": "Telegram: ",
+  "developer_telegram": "Telegram: t.me/denisshulika",
+  "developer_github_title": "GitHub: ",
+  "developer_github": "GitHub: github.com/DenisShulika",
+
+  "incident_type_car_accident": "Автомобільна аварія",
+  "incident_type_roadblock": "Перекриття дороги",
+  "incident_type_weather_conditions": "Погодні умови",
+  "incident_type_traffic_jam": "Затори",
+  "incident_type_other": "Інше",
+
+  "select_videos_error": "Ви не можете додати відео",
+  "photo_limit_error": "Ви можете додати до 3 фото",
+
+  "add_new_incident_title": "Додати новий інцидент",
+
+  "incident_type_title": "Тип інциденту",
+  "incident_type_placeholder": "Оберіть тип інциденту",
+
+  "description_title": "Опис",
+  "description_placeholder": "Введіть опис до інциденту",
+  "description_empty_text": "Опис не може бути порожнім",
+
+  "region_title": "Область",
+  "region_placeholder": "Введіть область",
+  "region_empty": "Область не може бути порожньою",
+
+  "address_title": "Адреса",
+  "enter_region_firstly": "Спочатку введіть область",
+  "address_placeholder": "Введіть адресу",
+  "address_empty": "Адреса не може бути порожньою",
+
+  "photos_title": "Фото",
+  "no_photos_selected": "Фото не обрані",
+  "add_photos_button": "Додати фото (до 3 фото)",
+
+  "type_error": "Будь-ласка, оберіть тип інциденту",
+
+  "description_error": "Будь-ласка, введіть опис",
+
+  "region_enter_error": "Будь-ласка, введіть область",
+  "region_select_error": "Будь-ласка, оберіть область",
+
+  "address_enter_error": "Будь-ласка, введіть адресу",
+  "address_select_error": "Будь-ласка, оберіть адресу",
+
+  "loading": "Завантаження...",
+  "uploading_photos": "Завантаження фото...",
+  "creating_incident": "Створення інциденту...",
+  "loading_incidents": "Завантаження інцидетів...",
+
+  "publish_incident_button": "Опублікувати інцидент",
+
+  "unknown_file_name": "Невідоме ім'я файлу",
+
+  "reset_email_title_1": "Скидання",
+  "reset_email_title_2": "Пошти",
+
+  "new_email_title": "Нова електронна пошта",
+  "new_email_placeholder": "Введіть нову електронну пошту",
+
+  "email_empty": "Електронна пошта не може бути пустою",
+  "email_invalid": "Недійсна адреса електронної пошти",
+
+  "email_empty_error": "Будь-ласка, введіть електронну пошту",
+  "email_invalid_error": "Будь-ласка, введіть дійсну електронну пошту",
+
+  "reset_email_button": "Скинути пошту",
+  "go_back_button": "Повернутись назад",
+
+  "google_sign_in_title_1": "Увійти",
+  "google_sign_in_title_2": "З Google",
+
+  "google_sign_in_info": "Щоб завершити вхід у Google, надайте нам додаткову інформацію",
+
+  "region_tip_title": "Область",
+  "region_tip_text": "Інциденти відфільтровано за областю, тому введіть ту, у якій Ви живете",
+
+  "phone_title": "Телефон",
+  "phone_placeholder": "Ваш телефон",
+  "phone_empty": "Телефон не може бути порожнім",
+  "phone_invalid": "Недійсний номер телефону",
+
+  "phone_empty_error": "Будь-ласка, введіть номер телефону",
+  "phone_invalid_error": "Будь-ласка, введіть дійсний номер телефону",
+
+  "complete_google_sign_in_button": "Завершити реєстрацію",
+  "terminate_google_sign_in_button": "Передумали реєструватись з Google?",
+
+  "incident_info_title": "Інформація про інцидент",
+
+  "incident_type_subtext": "Тип:",
+  "incident_date_subtext": "Дата:",
+  "incident_address_subtext": "Адреса:",
+  "incident_description_subtext": "Опис:",
+  "incident_created_by_subtext": "Створено:",
+
+  "no_incidents_in_region": "Чудові новини!\nЖодних інцидентів у Вашій області",
+  "smile": ":)",
+
+  "incident_has_been_ended": "Цей інцидент завершився",
+
+  "date_format_language": "uk",
+  "date_format_country": "UA",
+
+  "login_title": "Увійти",
+
+  "email_title": "Електронна пошта",
+  "email_placeholder_login": "Введіть електронну пошту",
+
+  "password_title": "Пароль",
+  "password_placeholder_login": "Введіть пароль",
+  "password_empty": "Пароль не може бути порожнім",
+
+  "forgot_password_button": "Забули пароль?",
+
+  "password_empty_error": "Будь-ласка, введіть пароль",
+
+  "login_button": "Увійти",
+
+  "register_here_button": "Немає облікового запису? Зареєструватися тут",
+  "or_sign_in_with": "Або увійти з",
+
+  "loading_map": "Завантаження карти...",
+  "loading_map_error_text": "Ось чому не вдалося завантажити карту",
+
+  "password_reset_title_1": "Скидання",
+  "password_reset_title_2": "Пароля",
+
+  "password_reset_button": "Скинути пароль",
+
+  "edit_profile_title": "Редагувати профіль",
+
+  "name_title": "Ім'я",
+  "name_placeholder": "Ваше ім'я, напр.: Ігор Мельник",
+  "name_empty": "Ім'я не може бути порожнім",
+
+  "edit_profile_button": "Редагувати",
+
+  "discard_changes_button": "Скинути зміни",
+  "save_profile_button": "Зберегти",
+
+  "name_empty_error": "Будь-ласка, введіть ваше ім'я",
+
+  "theme_title": "Тема",
+
+  "theme_system": "Як у системі",
+  "theme_light": "Світла",
+  "theme_dark": "Темна",
+
+  "language_title": "Мова",
+
+  "language_uk": "Українська",
+  "language_en": "Англійська",
+
+  "account_actions_title": "Дії З Аккаунтом",
+
+  "account_action_change_email": "Змінити електронну пошту",
+  "account_action_change_password": "Змінити пароль",
+  "account_action_delete_account": "Видалити аккаунт",
+  "account_action_sign_out": "Вийти",
+
+  "account_delete_title": "Підтвердження",
+  "account_delete_info": "Ви впевнені, що хочете видалити свій обліковий запис? Цю дію не можна скасувати.",
+  "account_delete_confirm": "Так, видалити",
+  "account_delete_cancel": "Скасувати",
+
+  "sign_up_title": "Реєстрація",
+
+  "email_placeholder_sign_up": "Ваша пошта, igor@gmail.com",
+
+  "email_placeholder_password_reset": "Введіть вашу пошту",
+
+  "password_placeholder_sign_up": "Ваш пароль, мінімум 6 символів",
+  "password_length": "Пароль повинен бути мінімум 6 символів",
+
+  "confirm_password_title": "Підтвердіть пароль",
+  "confirm_password_placeholder": "Повторно введіть пароль",
+
+  "confirm_password_empty": "Пароль не може бути порожнім",
+  "passwords_do_not_match": "Паролі не збігаються",
+
+  "password_length_error": "Пароль повинен бути як мінімум 6 символів",
+  "confirm_password_empty_error": "Будь-ласка, підтвердіть Ваш пароль",
+  "passwords_do_not_match_error": "Паролі не збігаються",
+  "no_avatar_error": "Будь-ласка, додайте ваш аватар",
+  "re_add_avatar_error": "Будь-ласка, додайте ваш аватар ще раз",
+
+  "sign_up_button": "Зареєструватись",
+
+  "login_here_button": "Вже маєте акаунт? Увійдіть тут"
+}

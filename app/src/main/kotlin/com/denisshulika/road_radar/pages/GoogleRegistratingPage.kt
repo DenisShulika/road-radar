@@ -61,6 +61,7 @@ import com.denisshulika.road_radar.AuthViewModel
 import com.denisshulika.road_radar.IncidentManager
 import com.denisshulika.road_radar.R
 import com.denisshulika.road_radar.Routes
+import com.denisshulika.road_radar.SettingsViewModel
 import com.denisshulika.road_radar.isValidPhoneNumber
 import com.denisshulika.road_radar.ui.components.AutocompleteTextFieldForRegion
 import com.denisshulika.road_radar.ui.components.StyledBasicTextField
@@ -74,9 +75,13 @@ fun GoogleRegistratingPage(
     @Suppress("UNUSED_PARAMETER") modifier: Modifier = Modifier,
     navController: NavController,
     authViewModel: AuthViewModel,
+    settingsViewModel: SettingsViewModel,
     placesClient: PlacesClient,
     incidentManager: IncidentManager
 ) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
     val systemUiController = rememberSystemUiController()
 
     systemUiController.setStatusBarColor(
@@ -88,10 +93,9 @@ fun GoogleRegistratingPage(
         darkIcons = false
     )
 
-    val authState = authViewModel.authState.observeAsState()
+    val localization = settingsViewModel.localization.observeAsState().value!!
 
-    val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
+    val authState = authViewModel.authState.observeAsState()
 
     var phoneNumber by remember { mutableStateOf("") }
     var phoneNumberError by remember { mutableStateOf(false) }
@@ -136,14 +140,14 @@ fun GoogleRegistratingPage(
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "Sign in",
+                    text = localization["google_sign_in_title_1"]!!,
                     fontSize = 52.sp,
                     color = Color.White,
                     fontFamily = RubikFont,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    text = "with Google",
+                    text = localization["google_sign_in_title_2"]!!,
                     fontSize = 52.sp,
                     color = Color.White,
                     fontFamily = RubikFont,
@@ -174,7 +178,7 @@ fun GoogleRegistratingPage(
                             verticalArrangement = Arrangement.Center
                         ) {
                             Text(
-                                text = "To complete Google sign in, please provide us with additional information",
+                                text = localization["google_sign_in_info"]!!,
                                 fontSize = 14.sp,
                                 fontFamily = RubikFont,
                                 fontWeight = FontWeight.Normal,
@@ -190,7 +194,7 @@ fun GoogleRegistratingPage(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text = "Region",
+                                        text = localization["region_title"]!!,
                                         fontSize = 24.sp,
                                         fontFamily = RubikFont,
                                         fontWeight = FontWeight.Normal
@@ -204,7 +208,7 @@ fun GoogleRegistratingPage(
                                                 modifier = Modifier.padding(20.dp),
                                                 title = {
                                                     Text(
-                                                        text = "Region",
+                                                        text = localization["region_tip_title"]!!,
                                                         fontSize = 20.sp,
                                                         fontFamily = RubikFont,
                                                         fontWeight = FontWeight.SemiBold
@@ -212,7 +216,7 @@ fun GoogleRegistratingPage(
                                                 },
                                                 text = {
                                                     Text(
-                                                        text = "Incidents are filtered by region, so enter the one you live in",
+                                                        text = localization["region_tip_text"]!!,
                                                         fontSize = 16.sp,
                                                         fontFamily = RubikFont,
                                                         fontWeight = FontWeight.Normal
@@ -254,13 +258,13 @@ fun GoogleRegistratingPage(
                                         isRegionSelected = false
                                         isSelectedRegionEmpty = selectedRegion.isEmpty()
                                     },
-                                    placeholder = "Enter your region"
+                                    placeholder = localization["region_placeholder"]!!
                                 )
                             }
                             if (isSelectedRegionEmpty) {
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    "Region cant be empty",
+                                    localization["region_empty"]!!,
                                     color = Color(0xFFB71C1C),
                                     style = MaterialTheme.typography.bodySmall
                                 )
@@ -271,7 +275,7 @@ fun GoogleRegistratingPage(
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             Text(
-                                text = "Phone Number",
+                                text = localization["phone_title"]!!,
                                 fontSize = 24.sp,
                                 fontFamily = RubikFont,
                                 fontWeight = FontWeight.Normal
@@ -283,20 +287,20 @@ fun GoogleRegistratingPage(
                                     isPhoneNumberEmpty = phoneNumber.isEmpty()
                                     phoneNumberError = !isValidPhoneNumber(it)
                                 },
-                                placeholder = "Your phone, e.g: +380.. or 0.."
+                                placeholder = localization["phone_placeholder"]!!
                             )
                         }
                         if (isPhoneNumberEmpty) {
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                "Phone number cant be empty",
+                                localization["phone_empty"]!!,
                                 color = Color(0xFFB71C1C),
                                 style = MaterialTheme.typography.bodySmall
                             )
                         } else if (phoneNumberError) {
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                "Invalid phone number",
+                                localization["phone_invalid"]!!,
                                 color = Color(0xFFB71C1C),
                                 style = MaterialTheme.typography.bodySmall
                             )
@@ -306,28 +310,29 @@ fun GoogleRegistratingPage(
                             onClick = {
                                 isPhoneNumberEmpty = phoneNumber.isEmpty()
                                 if(isPhoneNumberEmpty) {
-                                    Toast.makeText(context, "Please, enter your phone", Toast.LENGTH_LONG).show()
+                                    Toast.makeText(context, localization["phone_empty_error"]!!, Toast.LENGTH_LONG).show()
                                     return@Button
                                 }
                                 phoneNumberError = !isValidPhoneNumber(phoneNumber)
                                 if(phoneNumberError) {
-                                    Toast.makeText(context, "Please, enter correct phone number", Toast.LENGTH_LONG).show()
+                                    Toast.makeText(context, localization["phone_invalid_error"]!!, Toast.LENGTH_LONG).show()
                                     return@Button
                                 }
                                 isSelectedRegionEmpty = selectedRegion.isEmpty()
                                 if(isSelectedRegionEmpty) {
-                                    Toast.makeText(context, "Please, enter your region", Toast.LENGTH_LONG).show()
+                                    Toast.makeText(context, localization["region_enter_error"]!!, Toast.LENGTH_LONG).show()
                                     return@Button
                                 }
                                 if(!isRegionSelected) {
-                                    Toast.makeText(context, "Please, select your region", Toast.LENGTH_LONG).show()
+                                    Toast.makeText(context, localization["region_select_error"]!!, Toast.LENGTH_LONG).show()
                                     return@Button
                                 }
                                 authViewModel.completeRegistrationViaGoogle(
                                     phoneNumber,
                                     selectedRegion,
                                     context,
-                                    coroutineScope
+                                    coroutineScope,
+                                    localization
                                 )
                             },
                             modifier = Modifier
@@ -349,7 +354,7 @@ fun GoogleRegistratingPage(
                                 }
                             } else {
                                 Text(
-                                    text = "Complete Signing Up",
+                                    text = localization["complete_google_sign_in_button"]!!,
                                     fontSize = 24.sp,
                                     fontFamily = RubikFont,
                                     fontWeight = FontWeight.Normal
@@ -369,13 +374,14 @@ fun GoogleRegistratingPage(
                                         password = "",
                                         context = context,
                                         coroutineScope = coroutineScope,
-                                        incidentManager = incidentManager
+                                        incidentManager = incidentManager,
+                                        localization = localization
                                     )
                                 }
                             ) {
                                 Text(
                                     modifier = Modifier,
-                                    text = "Changed your mind about signing in with Google?",
+                                    text = localization["terminate_google_sign_in_button"]!!,
                                     fontSize = 14.sp,
                                     color = Color(0xFF6369FF),
                                     fontFamily = RubikFont,

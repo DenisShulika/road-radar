@@ -57,6 +57,7 @@ import com.denisshulika.road_radar.AuthState
 import com.denisshulika.road_radar.AuthViewModel
 import com.denisshulika.road_radar.IncidentManager
 import com.denisshulika.road_radar.Routes
+import com.denisshulika.road_radar.SettingsViewModel
 import com.denisshulika.road_radar.model.CustomDrawerState
 import com.denisshulika.road_radar.model.NavigationItem
 import com.denisshulika.road_radar.model.isOpened
@@ -64,7 +65,6 @@ import com.denisshulika.road_radar.model.opposite
 import com.denisshulika.road_radar.ui.components.CustomDrawer
 import com.denisshulika.road_radar.util.coloredShadow
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.google.common.io.Files.append
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -73,6 +73,7 @@ fun AboutPage(
     @Suppress("UNUSED_PARAMETER") modifier: Modifier = Modifier,
     navController: NavController,
     authViewModel: AuthViewModel,
+    settingsViewModel: SettingsViewModel,
     incidentManager: IncidentManager
 ) {
     val context = LocalContext.current
@@ -86,6 +87,8 @@ fun AboutPage(
             else -> Unit
         }
     }
+
+    val localization = settingsViewModel.localization.observeAsState().value!!
 
     var drawerState by remember { mutableStateOf(CustomDrawerState.Closed) }
     var selectedNavigationItem by remember { mutableStateOf(NavigationItem.About) }
@@ -141,6 +144,7 @@ fun AboutPage(
             },
             onCloseClick = { drawerState = CustomDrawerState.Closed },
             authViewModel = authViewModel,
+            settingsViewModel = settingsViewModel,
             navController = navController,
             incidentManager = incidentManager
         )
@@ -162,7 +166,7 @@ fun AboutPage(
                     modifier = Modifier,
                     title = {
                         Text(
-                            text = selectedNavigationItem.title,
+                            text = selectedNavigationItem.getTitle(localization),
                             textAlign = TextAlign.Center,
                             fontFamily = RubikFont
                         )
@@ -196,38 +200,45 @@ fun AboutPage(
                     Text(
                         text = buildAnnotatedString {
                             withStyle(style = SpanStyle(color = Color(0xFF474EFF))) {
-                                append("Road Radar")
+                                append(localization["app_title"])
                             }
-                            append(" — a mobile application for drivers and other users")
+                            append(localization["app_description_title"])
                         },
                         fontSize = 24.sp,
                         fontFamily = RubikFont,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "that provides information about current road conditions and possible hazards along your route. With it, you can receive and exchange up-to-date information about accidents, traffic jams, dangerous sections, and other situations that may affect your trip.",
+                        text = localization["app_description_text"]!!,
                         fontSize = 18.sp,
                         fontFamily = RubikFont,
                         fontWeight = FontWeight.Normal,
                         modifier = Modifier.padding(bottom = 20.dp)
                     )
+                    Text(
+                        text = localization["faq_title"]!!,
+                        fontSize = 20.sp,
+                        fontFamily = RubikFont,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(bottom = 8.dp, top = 8.dp)
+                    )
                     val faqItems = listOf(
-                        "How do I register in the app?" to "To register, you can use your email or sign in through Google. Afterward, you need to enter additional details to complete the registration.",
-                        "How do I log into the app?" to "You can log in using your email and password or through Google if you already have an account.",
-                        "How does the app help on the road?" to "Road Radar allows you to exchange information about accidents, traffic jams, dangerous areas, and weather conditions that could impact your journey.",
-                        "How can I view current incidents in my area?" to "Incidents are displayed on the 'Incidents' page, sorted by date (from the newest) and filtered by your area as indicated in your profile.",
-                        "How do I report a new incident?" to "To report a new incident, click the appropriate button in the app and fill out the form with a detailed description of the situation.",
-                        "How do I view and edit my profile?" to "Profile information can be viewed on the 'Profile' page. There is also a button to edit your details.",
-                        "How do I change the app settings and manage my account?" to "You can change the app's theme and language in the settings, as well as manage your account settings.",
-                        "How do I view incidents on the map?" to "Incidents can be viewed on the map, where they are marked with pins. Clicking on a pin will show detailed information about the incident.",
-                        "How does the app store my data?" to "Some data is stored locally on the device for faster access and to minimize internet usage, while others are synced with the server to save progress and settings.",
-                        "What should I do in case of technical problems?" to "Try restarting the app or contact the developer through the contact details below."
+                        localization["faq_register_question"]!! to localization["faq_register_answer"]!!,
+                        localization["faq_login_question"]!! to localization["faq_login_answer"]!!,
+                        localization["faq_help_question"]!! to localization["faq_help_answer"]!!,
+                        localization["faq_view_incidents_question"]!! to localization["faq_view_incidents_answer"]!!,
+                        localization["faq_report_incident_question"]!! to localization["faq_report_incident_answer"]!!,
+                        localization["faq_profile_question"]!! to localization["faq_profile_answer"]!!,
+                        localization["faq_settings_question"]!! to localization["faq_settings_answer"]!!,
+                        localization["faq_map_incidents_question"]!! to localization["faq_map_incidents_answer"]!!,
+                        localization["faq_data_storage_question"]!! to localization["faq_data_storage_answer"]!!,
+                        localization["faq_technical_problems_question"]!! to localization["faq_technical_problems_answer"]!!
                     )
                     faqItems.forEach { (question, answer) ->
                         FaqItem(question = question, answer = answer)
                     }
                     Text(
-                        text = "Developer Contact Information:",
+                        text = localization["developer_contact_title"]!!,
                         fontSize = 20.sp,
                         fontFamily = RubikFont,
                         fontWeight = FontWeight.Bold,
@@ -235,21 +246,21 @@ fun AboutPage(
                     )
 
                     val contactInfo = listOf(
-                        "Denis Shulika Hennadiyovych",
-                        "Email: denisshulika31@gmail.com",
-                        "Phone: +380 67 880 50 16",
-                        "Telegram: t.me/denisshulika",
-                        "GitHub: github.com/DenisShulika"
+                        localization["developer_name"]!!,
+                        localization["developer_email"]!!,
+                        localization["developer_phone"]!!,
+                        localization["developer_telegram"]!!,
+                        localization["developer_github"]!!
                     )
 
                     Column {
                         contactInfo.forEach { contact ->
                             when {
-                                contact.contains("Email:") -> {
-                                    val email = contact.substringAfter("Email: ").trim()
+                                contact.contains(localization["developer_email_title"].toString()) -> {
+                                    val email = "denisshulika31@gmail.com"
                                     Text(
                                         text = buildAnnotatedString {
-                                            append("● Email: ")
+                                            append("● ${localization["developer_email_title"]}")
                                             withStyle(
                                                 style = SpanStyle(
                                                     color = Color(0xFF474EFF),
@@ -264,17 +275,20 @@ fun AboutPage(
                                         fontWeight = FontWeight.Normal,
                                         modifier = Modifier
                                             .clickable {
-                                                val intent = Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:$email"))
+                                                val intent = Intent(
+                                                    Intent.ACTION_SENDTO,
+                                                    Uri.parse("mailto:$email")
+                                                )
                                                 context.startActivity(intent)
                                             }
                                             .padding(bottom = 4.dp)
                                     )
                                 }
-                                contact.contains("Telegram:") -> {
-                                    val telegramLink = contact.substringAfter("Telegram: ").trim()
+                                contact.contains(localization["developer_telegram_title"].toString()) -> {
+                                    val telegramLink = "t.me/denisshulika"
                                     Text(
                                         text = buildAnnotatedString {
-                                            append("● Telegram: ")
+                                            append("● ${localization["developer_telegram_title"]}")
                                             withStyle(
                                                 style = SpanStyle(
                                                     color = Color(0xFF474EFF),
@@ -289,17 +303,20 @@ fun AboutPage(
                                         fontWeight = FontWeight.Normal,
                                         modifier = Modifier
                                             .clickable {
-                                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://$telegramLink"))
+                                                val intent = Intent(
+                                                    Intent.ACTION_VIEW,
+                                                    Uri.parse("https://$telegramLink")
+                                                )
                                                 context.startActivity(intent)
                                             }
                                             .padding(bottom = 4.dp)
                                     )
                                 }
-                                contact.contains("GitHub:") -> {
-                                    val githubLink = contact.substringAfter("GitHub: ").trim()
+                                contact.contains(localization["developer_github_title"].toString()) -> {
+                                    val githubLink = "github.com/DenisShulika"
                                     Text(
                                         text = buildAnnotatedString {
-                                            append("● GitHub: ")
+                                            append("● ${localization["developer_github_title"]}")
                                             withStyle(
                                                 style = SpanStyle(
                                                     color = Color(0xFF474EFF),
@@ -314,7 +331,10 @@ fun AboutPage(
                                         fontWeight = FontWeight.Normal,
                                         modifier = Modifier
                                             .clickable {
-                                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://$githubLink"))
+                                                val intent = Intent(
+                                                    Intent.ACTION_VIEW,
+                                                    Uri.parse("https://$githubLink")
+                                                )
                                                 context.startActivity(intent)
                                             }
                                             .padding(bottom = 4.dp)
