@@ -258,5 +258,8 @@
 
   "sign_up_button": "Sign Up",
 
-  "login_here_button": "Already have an account? Login here"
+  "login_here_button": "Already have an account? Login here",
+
+  "wrong_email_or_password": "Incorrect email or password",
+  "email_in_use": "This email address is already in use by another account"
 }

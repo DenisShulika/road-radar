@@ -155,9 +155,15 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                             }
                     }
                 } else {
-                    _authState.value = AuthState.Error(
-                        task.exception?.message ?: localization["something_went_wrong"] ?: "Something went wrong"
-                    )
+                    if (task.exception?.message!!.contains("The supplied auth credential is incorrect")) {
+                        _authState.value = AuthState.Error(
+                            localization["wrong_email_or_password"] ?: localization["something_went_wrong"] ?: "Something went wrong"
+                        )
+                    } else {
+                        _authState.value = AuthState.Error(
+                            task.exception?.message ?: localization["something_went_wrong"] ?: "Something went wrong"
+                        )
+                    }
                 }
             }
     }
@@ -224,9 +230,15 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                         }
 
                 } else {
-                    _authState.value = AuthState.Error(
-                        task.exception?.message ?: localization["something_went_wrong"] ?: "Something went wrong"
-                    )
+                    if (task.exception?.message!!.contains("is already in use")) {
+                        _authState.value = AuthState.Error(
+                            localization["email_in_use"] ?: localization["something_went_wrong"] ?: "Something went wrong"
+                        )
+                    } else {
+                        _authState.value = AuthState.Error(
+                            task.exception?.message ?: localization["something_went_wrong"] ?: "Something went wrong"
+                        )
+                    }
                 }
             }
     }
