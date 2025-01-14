@@ -6,6 +6,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,8 +33,10 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.RadioButtonColors
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -101,6 +104,7 @@ fun SettingsPage(
     }
 
     val localization = settingsViewModel.localization.observeAsState().value!!
+    val theme = settingsViewModel.themeColors.observeAsState().value!!
 
     var drawerState by remember { mutableStateOf(CustomDrawerState.Closed) }
     var selectedNavigationItem by remember { mutableStateOf(NavigationItem.Settings) }
@@ -128,14 +132,13 @@ fun SettingsPage(
     val systemUiController = rememberSystemUiController()
 
     systemUiController.setStatusBarColor(
-        color = if (drawerState == CustomDrawerState.Closed) Color(0xFFFEF9FE) else  Color(0xFFECE7EB),
-        darkIcons = true
+        color = if (drawerState == CustomDrawerState.Closed) theme["top_bar_background"]!! else theme["drawer_background"]!!,
+        darkIcons = settingsViewModel.getTheme() != ThemeState.DARK || !isSystemInDarkTheme()
     )
     systemUiController.setNavigationBarColor(
-        color = if (drawerState == CustomDrawerState.Closed) Color(0xFFFEF9FE) else  Color(0xFFECE7EB),
-        darkIcons = true
+        color = if (drawerState == CustomDrawerState.Closed) theme["background"]!! else theme["drawer_background"]!!,
+        darkIcons = settingsViewModel.getTheme() != ThemeState.DARK || !isSystemInDarkTheme()
     )
-    //TODO()
 
     var themeState by remember { mutableStateOf(ThemeState.SYSTEM) }
     var languageState by remember { mutableStateOf(LanguageState.UKRAINIAN) }
@@ -152,6 +155,8 @@ fun SettingsPage(
         email = userLocalStorage.getUserEmail().toString()
         password = userLocalStorage.getUserPassword().toString()
     }
+
+
 
     var isDialogVisible by remember { mutableStateOf(false) }
 
@@ -175,10 +180,13 @@ fun SettingsPage(
         isDialogVisible = false
     }
 
+
+
     Box(
         modifier = Modifier
             .statusBarsPadding()
             .navigationBarsPadding()
+            .background(theme["drawer_background"]!!)
             .fillMaxSize()
             .pointerInput(Unit) {
                 detectHorizontalDragGestures { _, dragAmount ->
@@ -187,6 +195,7 @@ fun SettingsPage(
                 }
             }
     ) {
+        val isSystemInDarkTheme = isSystemInDarkTheme()
         CustomDrawer(
             selectedNavigationItem = selectedNavigationItem,
             onNavigationItemClick = {
@@ -203,21 +212,26 @@ fun SettingsPage(
                 .offset { IntOffset(animatedOffset.roundToPx(), 0) }
                 .scale(scale = animatedScale)
                 .coloredShadow(
-                    color = Color.Black,
+                    color = theme["shadow"]!!,
                     alpha = 0.1f,
-                    shadowRadius = 50.dp
+                    shadowRadius = 30.dp
                 )
                 .clickable(enabled = drawerState == CustomDrawerState.Opened) {
                     drawerState = CustomDrawerState.Closed
                 },
             topBar = {
                 CenterAlignedTopAppBar(
-                    modifier = Modifier,
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = theme["top_bar_background"]!!,
+                        titleContentColor = theme["text"]!!,
+                        navigationIconContentColor = theme["icon"]!!
+                    ),
                     title = {
                         Text(
                             text = selectedNavigationItem.getTitle(localization),
                             textAlign = TextAlign.Center,
-                            fontFamily = RubikFont
+                            fontFamily = RubikFont,
+                            fontWeight = FontWeight.Bold
                         )
                     },
                     navigationIcon = {
@@ -238,6 +252,7 @@ fun SettingsPage(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .background(theme["background"]!!)
                     .padding(innerPadding)
                     .verticalScroll(rememberScrollState())
             ) {
@@ -247,7 +262,7 @@ fun SettingsPage(
                 ) {
                     Column(
                         modifier = Modifier
-                            .background(Color(0x10000000))
+                            .background(theme["drawer_background"]!!)
                             .fillMaxWidth()
                     ) {
                         Column(
@@ -259,7 +274,8 @@ fun SettingsPage(
                                 text = localization["theme_title"]!!,
                                 fontSize = 24.sp,
                                 fontFamily = RubikFont,
-                                fontWeight = FontWeight.Medium
+                                fontWeight = FontWeight.Medium,
+                                color = theme["text"]!!
                             )
                         }
                     }
@@ -278,17 +294,24 @@ fun SettingsPage(
                                 onClick = {
                                     themeState = ThemeState.SYSTEM
                                     CoroutineScope(Dispatchers.Main).launch {
-                                        settingsLocalStorage.saveTheme(themeState)
+                                        settingsLocalStorage.saveTheme(themeState, isSystemInDarkTheme)
                                     }
                                 },
-                                selected = themeState == ThemeState.SYSTEM
+                                selected = themeState == ThemeState.SYSTEM,
+                                colors = RadioButtonColors(
+                                    selectedColor = theme["primary"]!!,
+                                    unselectedColor = theme["placeholder"]!!,
+                                    disabledSelectedColor = theme["primary"]!!,
+                                    disabledUnselectedColor = theme["placeholder"]!!,
+                                )
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = localization["theme_system"]!!,
                                 fontSize = 20.sp,
                                 fontFamily = RubikFont,
-                                fontWeight = FontWeight.Normal
+                                fontWeight = FontWeight.Normal,
+                                color = theme["text"]!!
                             )
                         }
                         HorizontalDivider(
@@ -307,17 +330,24 @@ fun SettingsPage(
                                 onClick = {
                                     themeState = ThemeState.LIGHT
                                     CoroutineScope(Dispatchers.Main).launch {
-                                        settingsLocalStorage.saveTheme(themeState)
+                                        settingsLocalStorage.saveTheme(themeState, isSystemInDarkTheme)
                                     }
                                 },
-                                selected = themeState == ThemeState.LIGHT
+                                selected = themeState == ThemeState.LIGHT,
+                                colors = RadioButtonColors(
+                                    selectedColor = theme["primary"]!!,
+                                    unselectedColor = theme["placeholder"]!!,
+                                    disabledSelectedColor = theme["primary"]!!,
+                                    disabledUnselectedColor = theme["placeholder"]!!,
+                                )
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = localization["theme_light"]!!,
                                 fontSize = 20.sp,
                                 fontFamily = RubikFont,
-                                fontWeight = FontWeight.Normal
+                                fontWeight = FontWeight.Normal,
+                                color = theme["text"]!!
                             )
                         }
                         HorizontalDivider(
@@ -336,17 +366,24 @@ fun SettingsPage(
                                 onClick = {
                                     themeState = ThemeState.DARK
                                     CoroutineScope(Dispatchers.Main).launch {
-                                        settingsLocalStorage.saveTheme(themeState)
+                                        settingsLocalStorage.saveTheme(themeState, isSystemInDarkTheme)
                                     }
                                 },
-                                selected = themeState == ThemeState.DARK
+                                selected = themeState == ThemeState.DARK,
+                                colors = RadioButtonColors(
+                                    selectedColor = theme["primary"]!!,
+                                    unselectedColor = theme["placeholder"]!!,
+                                    disabledSelectedColor = theme["primary"]!!,
+                                    disabledUnselectedColor = theme["placeholder"]!!,
+                                )
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = localization["theme_dark"]!!,
                                 fontSize = 20.sp,
                                 fontFamily = RubikFont,
-                                fontWeight = FontWeight.Normal
+                                fontWeight = FontWeight.Normal,
+                                color = theme["text"]!!
                             )
                         }
                     }
@@ -357,7 +394,7 @@ fun SettingsPage(
                 ) {
                     Column(
                         modifier = Modifier
-                            .background(Color(0x10000000))
+                            .background(theme["drawer_background"]!!)
                             .fillMaxWidth()
                     ) {
                         Column(
@@ -369,7 +406,8 @@ fun SettingsPage(
                                 text = localization["language_title"]!!,
                                 fontSize = 24.sp,
                                 fontFamily = RubikFont,
-                                fontWeight = FontWeight.Medium
+                                fontWeight = FontWeight.Medium,
+                                color = theme["text"]!!
                             )
                         }
                     }
@@ -391,14 +429,21 @@ fun SettingsPage(
                                         settingsLocalStorage.saveLanguage(languageState, context)
                                     }
                                 },
-                                selected = languageState == LanguageState.UKRAINIAN
+                                selected = languageState == LanguageState.UKRAINIAN,
+                                colors = RadioButtonColors(
+                                    selectedColor = theme["primary"]!!,
+                                    unselectedColor = theme["placeholder"]!!,
+                                    disabledSelectedColor = theme["primary"]!!,
+                                    disabledUnselectedColor = theme["placeholder"]!!,
+                                )
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = localization["language_uk"]!!,
                                 fontSize = 20.sp,
                                 fontFamily = RubikFont,
-                                fontWeight = FontWeight.Normal
+                                fontWeight = FontWeight.Normal,
+                                color = theme["text"]!!
                             )
                         }
                         HorizontalDivider(
@@ -420,14 +465,21 @@ fun SettingsPage(
                                         settingsLocalStorage.saveLanguage(languageState, context)
                                     }
                                 },
-                                selected = languageState == LanguageState.ENGLISH
+                                selected = languageState == LanguageState.ENGLISH,
+                                colors = RadioButtonColors(
+                                    selectedColor = theme["primary"]!!,
+                                    unselectedColor = theme["placeholder"]!!,
+                                    disabledSelectedColor = theme["primary"]!!,
+                                    disabledUnselectedColor = theme["placeholder"]!!,
+                                )
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = localization["language_en"]!!,
                                 fontSize = 20.sp,
                                 fontFamily = RubikFont,
-                                fontWeight = FontWeight.Normal
+                                fontWeight = FontWeight.Normal,
+                                color = theme["text"]!!
                             )
                         }
                     }
@@ -438,7 +490,7 @@ fun SettingsPage(
                 ) {
                     Column(
                         modifier = Modifier
-                            .background(Color(0x10000000))
+                            .background(theme["drawer_background"]!!)
                             .fillMaxWidth()
                     ) {
                         Column(
@@ -450,7 +502,8 @@ fun SettingsPage(
                                 text = localization["account_actions_title"]!!,
                                 fontSize = 24.sp,
                                 fontFamily = RubikFont,
-                                fontWeight = FontWeight.Medium
+                                fontWeight = FontWeight.Medium,
+                                color = theme["text"]!!
                             )
                         }
                     }
@@ -478,7 +531,8 @@ fun SettingsPage(
                                         text = localization["account_action_change_email"]!!,
                                         fontSize = 20.sp,
                                         fontFamily = RubikFont,
-                                        fontWeight = FontWeight.Normal
+                                        fontWeight = FontWeight.Normal,
+                                        color = theme["text"]!!
                                     )
                                     IconButton(
                                         onClick = {
@@ -487,7 +541,8 @@ fun SettingsPage(
                                     ) {
                                         Icon(
                                             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                            contentDescription = ""
+                                            contentDescription = "",
+                                            tint = theme["icon"]!!
                                         )
                                     }
                                 }
@@ -516,7 +571,8 @@ fun SettingsPage(
                                         text = localization["account_action_change_password"]!!,
                                         fontSize = 20.sp,
                                         fontFamily = RubikFont,
-                                        fontWeight = FontWeight.Normal
+                                        fontWeight = FontWeight.Normal,
+                                        color = theme["text"]!!
                                     )
                                     IconButton(
                                         onClick = {
@@ -525,7 +581,8 @@ fun SettingsPage(
                                     ) {
                                         Icon(
                                             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                            contentDescription = ""
+                                            contentDescription = "",
+                                            tint = theme["icon"]!!
                                         )
                                     }
                                 }
@@ -555,7 +612,8 @@ fun SettingsPage(
                                     text = localization["account_action_delete_account"]!!,
                                     fontSize = 20.sp,
                                     fontFamily = RubikFont,
-                                    fontWeight = FontWeight.Normal
+                                    fontWeight = FontWeight.Normal,
+                                    color = theme["text"]!!
                                 )
                                 IconButton(
                                     onClick = {
@@ -564,7 +622,8 @@ fun SettingsPage(
                                 ) {
                                     Icon(
                                         imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                        contentDescription = ""
+                                        contentDescription = "",
+                                        tint = theme["icon"]!!
                                     )
                                 }
                             }
@@ -572,7 +631,8 @@ fun SettingsPage(
                                 isDialogVisible = isDialogVisible,
                                 onConfirm = { confirmDelete() },
                                 onCancel = { cancelDelete() },
-                                localization = localization
+                                localization = localization,
+                                theme = theme
                             )
                         }
                         HorizontalDivider(
@@ -599,7 +659,8 @@ fun SettingsPage(
                                     text = localization["account_action_sign_out"]!!,
                                     fontSize = 20.sp,
                                     fontFamily = RubikFont,
-                                    fontWeight = FontWeight.Normal
+                                    fontWeight = FontWeight.Normal,
+                                    color = theme["text"]!!
                                 )
                                 IconButton(
                                     onClick = {
@@ -612,7 +673,8 @@ fun SettingsPage(
                                 ) {
                                     Icon(
                                         imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                        contentDescription = ""
+                                        contentDescription = "",
+                                        tint = theme["icon"]!!
                                     )
                                 }
                             }
@@ -629,7 +691,8 @@ fun DeleteAccountDialog(
     isDialogVisible: Boolean,
     onConfirm: () -> Unit,
     onCancel: () -> Unit,
-    localization: Map<String, String>
+    localization: Map<String, String>,
+    theme: Map<String, Color>
 ) {
     if (isDialogVisible) {
         AlertDialog(
@@ -640,14 +703,16 @@ fun DeleteAccountDialog(
                 Text(
                     text = localization["account_delete_title"]!!,
                     fontFamily = RubikFont,
-                    fontWeight = FontWeight.Normal
+                    fontWeight = FontWeight.Medium,
+                    color = theme["text"]!!
                 )
             },
             text = {
                 Text(
                     text = localization["account_delete_info"]!!,
                     fontFamily = RubikFont,
-                    fontWeight = FontWeight.Normal
+                    fontWeight = FontWeight.Normal,
+                    color = theme["placeholder"]!!
                 )
             },
             confirmButton = {
@@ -655,12 +720,13 @@ fun DeleteAccountDialog(
                     onClick = {
                         onConfirm()
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF474EFF))
+                    colors = ButtonDefaults.buttonColors(containerColor = theme["primary"]!!)
                 ) {
                     Text(
                         text = localization["account_delete_confirm"]!!,
                         fontFamily = RubikFont,
-                        fontWeight = FontWeight.Normal
+                        fontWeight = FontWeight.Medium,
+                        color = theme["text"]!!
                     )
                 }
             },
@@ -669,15 +735,17 @@ fun DeleteAccountDialog(
                     onClick = {
                         onCancel()
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF474EFF))
+                    colors = ButtonDefaults.buttonColors(containerColor = theme["primary"]!!)
                 ) {
                     Text(
                         text = localization["account_delete_cancel"]!!,
                         fontFamily = RubikFont,
-                        fontWeight = FontWeight.Normal
+                        fontWeight = FontWeight.Medium,
+                        color = theme["text"]!!
                     )
                 }
-            }
+            },
+            containerColor = theme["background"]!!
         )
     }
 }

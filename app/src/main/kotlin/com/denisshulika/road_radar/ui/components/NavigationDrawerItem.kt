@@ -29,7 +29,8 @@ fun NavigationDrawerItem(
     settingsViewModel : SettingsViewModel,
     navigationItem : NavigationItem,
     selected : Boolean,
-    onClick : () -> Unit
+    onClick : () -> Unit,
+    theme: Map<String, Color>
 ) {
     val localization = settingsViewModel.localization.observeAsState()
 
@@ -41,7 +42,7 @@ fun NavigationDrawerItem(
                 onClick()
             }
             .background(
-                if (selected) Color(0xFF474EFF) else Color(0xFF6369FF),
+                if (selected) theme["primary"]!! else theme["secondary"]!!,
                 RoundedCornerShape(30)
             )
             .padding(horizontal = 12.dp, vertical = 10.dp),
@@ -50,15 +51,15 @@ fun NavigationDrawerItem(
         Icon(
             painter = painterResource(navigationItem.icon),
             contentDescription = "",
-            tint = Color.White
+            tint = theme["icon"]!!
         )
         Spacer(modifier = Modifier.size(12.dp))
         Text(
             text = navigationItem.getTitle(localization.value!!),
             fontSize = 20.sp,
-            color = Color.White,
+            color = theme["text"]!!,
             fontFamily = RubikFont,
-            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
             lineHeight = 20.sp
         )
     }

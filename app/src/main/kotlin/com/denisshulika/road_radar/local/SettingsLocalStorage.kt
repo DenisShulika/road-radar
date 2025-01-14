@@ -1,14 +1,15 @@
 package com.denisshulika.road_radar.local
 
 import android.content.Context
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.graphics.Color
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.denisshulika.road_radar.SettingsViewModel
 import com.denisshulika.road_radar.model.LanguageState
 import com.denisshulika.road_radar.model.ThemeState
+import com.denisshulika.road_radar.ui.theme.darkThemeColors
+import com.denisshulika.road_radar.ui.theme.lightThemeColors
 import com.denisshulika.road_radar.util.readValueFromJsonFile
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
@@ -25,13 +26,13 @@ class SettingsLocalStorage(
         private val FIRST_LAUNCH_KEY = stringPreferencesKey("first_launch")
     }
 
-    suspend fun initializeSettings(context: Context) {
+    suspend fun initializeSettings(context: Context, isSystemInDarkTheme: Boolean) {
         val isFirstLaunch = context.settingsDataStore.data
             .map { prefs -> prefs[FIRST_LAUNCH_KEY] }
             .firstOrNull() == null
 
         if (isFirstLaunch) {
-            saveTheme(ThemeState.SYSTEM)
+            saveTheme(ThemeState.SYSTEM, isSystemInDarkTheme)
             saveLanguage(LanguageState.UKRAINIAN, context)
 
             context.settingsDataStore.edit { prefs ->
@@ -42,15 +43,29 @@ class SettingsLocalStorage(
             settingsViewModel.setLanguage(LanguageState.UKRAINIAN)
         }
 
+        saveTheme(getTheme(), isSystemInDarkTheme)
         settingsViewModel.setTheme(getTheme())
         settingsViewModel.setLanguage(getLanguage())
     }
 
-    suspend fun saveTheme(theme: ThemeState) {
+    suspend fun saveTheme(theme: ThemeState, isSystemInDarkTheme: Boolean) {
         context.settingsDataStore.edit { prefs ->
             prefs[THEME_KEY] = theme.value
         }
         settingsViewModel.setTheme(theme)
+
+        val map : Map<String, Color> = when(theme) {
+            ThemeState.DARK -> darkThemeColors
+            ThemeState.LIGHT -> lightThemeColors
+            ThemeState.SYSTEM -> {
+                if (isSystemInDarkTheme) {
+                    darkThemeColors
+                } else {
+                    lightThemeColors
+                }
+            }
+        }
+        settingsViewModel.setThemeColors(map)
     }
 
     suspend fun getTheme(): ThemeState {

@@ -22,7 +22,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
-import coil.compose.rememberImagePainter
 import com.denisshulika.road_radar.local.SettingsLocalStorage
 import com.denisshulika.road_radar.model.ThemeState
 import com.denisshulika.road_radar.util.readValueFromJsonFile
@@ -50,7 +49,9 @@ class MainActivity : ComponentActivity() {
             Places.initialize(applicationContext, BuildConfig.PLACES_API_KEY, Locale("uk"))
         }
 
+        var isSystemInDarkTheme = false
         setContent {
+            isSystemInDarkTheme = isSystemInDarkTheme()
             Surface(
                 modifier = Modifier
                     .fillMaxSize()
@@ -71,8 +72,9 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+
         lifecycleScope.launch {
-            settingsStorage.initializeSettings(this@MainActivity)
+            settingsStorage.initializeSettings(this@MainActivity, isSystemInDarkTheme)
 
             setContent {
                 Surface(

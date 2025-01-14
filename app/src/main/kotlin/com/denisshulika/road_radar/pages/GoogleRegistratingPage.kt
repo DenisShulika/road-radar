@@ -2,6 +2,7 @@ package com.denisshulika.road_radar.pages
 
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -63,6 +64,7 @@ import com.denisshulika.road_radar.R
 import com.denisshulika.road_radar.Routes
 import com.denisshulika.road_radar.SettingsViewModel
 import com.denisshulika.road_radar.isValidPhoneNumber
+import com.denisshulika.road_radar.model.ThemeState
 import com.denisshulika.road_radar.ui.components.AutocompleteTextFieldForRegion
 import com.denisshulika.road_radar.ui.components.StyledBasicTextField
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
@@ -84,16 +86,17 @@ fun GoogleRegistratingPage(
 
     val systemUiController = rememberSystemUiController()
 
+    val localization = settingsViewModel.localization.observeAsState().value!!
+    val theme = settingsViewModel.themeColors.observeAsState().value!!
+
     systemUiController.setStatusBarColor(
         color = Color.Transparent,
-        darkIcons = false
+        darkIcons = settingsViewModel.getTheme() != ThemeState.DARK || !isSystemInDarkTheme()
     )
     systemUiController.setNavigationBarColor(
-        color = Color.Transparent,
-        darkIcons = false
+        color = theme["background"]!!,
+        darkIcons = settingsViewModel.getTheme() != ThemeState.DARK || !isSystemInDarkTheme()
     )
-
-    val localization = settingsViewModel.localization.observeAsState().value!!
 
     val authState = authViewModel.authState.observeAsState()
 
@@ -124,7 +127,7 @@ fun GoogleRegistratingPage(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .paint(painterResource(R.drawable.auth_background), contentScale = ContentScale.Crop)
+            .paint(painterResource(id = if (settingsViewModel.getTheme() == ThemeState.DARK) R.drawable.auth_dark_background else R.drawable.auth_light_background), contentScale = ContentScale.Crop)
     ) {
         Column(
             modifier = Modifier
@@ -142,14 +145,14 @@ fun GoogleRegistratingPage(
                 Text(
                     text = localization["google_sign_in_title_1"]!!,
                     fontSize = 52.sp,
-                    color = Color.White,
+                    color = theme["text"]!!,
                     fontFamily = RubikFont,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
                     text = localization["google_sign_in_title_2"]!!,
                     fontSize = 52.sp,
-                    color = Color.White,
+                    color = theme["text"]!!,
                     fontFamily = RubikFont,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -162,7 +165,7 @@ fun GoogleRegistratingPage(
                 Column(
                     modifier = Modifier
                         .clip(RoundedCornerShape(topStart = 25.dp, topEnd = 25.dp))
-                        .background(Color.White)
+                        .background(theme["background"]!!)
                         .fillMaxSize(),
                     verticalArrangement = Arrangement.Top
                 ) {
@@ -182,7 +185,7 @@ fun GoogleRegistratingPage(
                                 fontSize = 14.sp,
                                 fontFamily = RubikFont,
                                 fontWeight = FontWeight.Normal,
-                                color = Color(0xFFADADAD)
+                                color = theme["placeholder"]!!
                             )
                         }
                         Spacer(modifier = Modifier.size(20.dp))
@@ -197,7 +200,8 @@ fun GoogleRegistratingPage(
                                         text = localization["region_title"]!!,
                                         fontSize = 24.sp,
                                         fontFamily = RubikFont,
-                                        fontWeight = FontWeight.Normal
+                                        fontWeight = FontWeight.Normal,
+                                        color = theme["text"]!!
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
 
@@ -223,10 +227,10 @@ fun GoogleRegistratingPage(
                                                     )
                                                 },
                                                 colors = RichTooltipColors(
-                                                    containerColor = Color(0xFF474EFF),
-                                                    contentColor = Color(0xFFFFFFFF),
-                                                    titleContentColor = Color(0xFFFFFFFF),
-                                                    actionContentColor = Color(0xFFFFFFFF)
+                                                    containerColor = theme["primary"]!!,
+                                                    contentColor = theme["text"]!!,
+                                                    titleContentColor = theme["text"]!!,
+                                                    actionContentColor = theme["text"]!!
                                                 )
                                             )
                                         },
@@ -240,7 +244,7 @@ fun GoogleRegistratingPage(
                                             Icon(
                                                 imageVector = ImageVector.vectorResource(R.drawable.info),
                                                 contentDescription = "",
-                                                tint = Color(0xFFADADAD)
+                                                tint = theme["icon"]!!
                                             )
                                         }
                                     }
@@ -258,15 +262,18 @@ fun GoogleRegistratingPage(
                                         isRegionSelected = false
                                         isSelectedRegionEmpty = selectedRegion.isEmpty()
                                     },
-                                    placeholder = localization["region_placeholder"]!!
+                                    placeholder = localization["region_placeholder"]!!,
+                                    settingsViewModel = settingsViewModel
                                 )
                             }
                             if (isSelectedRegionEmpty) {
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
                                     localization["region_empty"]!!,
-                                    color = Color(0xFFB71C1C),
-                                    style = MaterialTheme.typography.bodySmall
+                                    color = theme["error"]!!,
+                                    fontSize = 12.sp,
+                                    fontFamily = RubikFont,
+                                    fontWeight = FontWeight.Normal
                                 )
                             }
                         }
@@ -278,7 +285,8 @@ fun GoogleRegistratingPage(
                                 text = localization["phone_title"]!!,
                                 fontSize = 24.sp,
                                 fontFamily = RubikFont,
-                                fontWeight = FontWeight.Normal
+                                fontWeight = FontWeight.Normal,
+                                color = theme["text"]!!
                             )
                             StyledBasicTextField(
                                 value = phoneNumber,
@@ -287,22 +295,27 @@ fun GoogleRegistratingPage(
                                     isPhoneNumberEmpty = phoneNumber.isEmpty()
                                     phoneNumberError = !isValidPhoneNumber(it)
                                 },
-                                placeholder = localization["phone_placeholder"]!!
+                                placeholder = localization["phone_placeholder"]!!,
+                                theme = theme
                             )
                         }
                         if (isPhoneNumberEmpty) {
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 localization["phone_empty"]!!,
-                                color = Color(0xFFB71C1C),
-                                style = MaterialTheme.typography.bodySmall
+                                color = theme["error"]!!,
+                                fontSize = 12.sp,
+                                fontFamily = RubikFont,
+                                fontWeight = FontWeight.Normal
                             )
                         } else if (phoneNumberError) {
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 localization["phone_invalid"]!!,
-                                color = Color(0xFFB71C1C),
-                                style = MaterialTheme.typography.bodySmall
+                                color = theme["error"]!!,
+                                fontSize = 12.sp,
+                                fontFamily = RubikFont,
+                                fontWeight = FontWeight.Normal
                             )
                         }
                         Spacer(modifier = Modifier.size(32.dp))
@@ -338,7 +351,10 @@ fun GoogleRegistratingPage(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(52.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF474EFF)),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = theme["primary"]!!,
+                                disabledContainerColor = theme["drawer_background"]!!
+                            ),
                             enabled = authState.value != AuthState.Loading
                         ) {
                             if (authState.value is AuthState.Loading) {
@@ -349,7 +365,7 @@ fun GoogleRegistratingPage(
                                     CircularProgressIndicator(
                                         modifier = Modifier
                                             .align(Alignment.Center),
-                                        color = Color(0xFF474EFF)
+                                        color = theme["primary"]!!
                                     )
                                 }
                             } else {
@@ -357,7 +373,7 @@ fun GoogleRegistratingPage(
                                     text = localization["complete_google_sign_in_button"]!!,
                                     fontSize = 24.sp,
                                     fontFamily = RubikFont,
-                                    fontWeight = FontWeight.Normal
+                                    fontWeight = FontWeight.Medium
                                 )
                             }
                         }
@@ -383,9 +399,9 @@ fun GoogleRegistratingPage(
                                     modifier = Modifier,
                                     text = localization["terminate_google_sign_in_button"]!!,
                                     fontSize = 14.sp,
-                                    color = Color(0xFF6369FF),
+                                    color = theme["primary"]!!,
                                     fontFamily = RubikFont,
-                                    fontWeight = FontWeight.Normal,
+                                    fontWeight = FontWeight.Medium,
                                     textAlign = TextAlign.Center
                                 )
                             }

@@ -32,7 +32,8 @@ fun StyledBasicTextField(
     placeholder: String,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     isVisible: Boolean = true,
-    singleLine: Boolean = true
+    singleLine: Boolean = true,
+    theme: Map<String, Color>
 ) {
     val textLayoutResult = remember { mutableStateOf<TextLayoutResult?>(null) }
 
@@ -52,7 +53,7 @@ fun StyledBasicTextField(
                 val strokeWidth = 1.dp.toPx()
                 val y = size.height - strokeWidth / 2
                 drawLine(
-                    color = Color(0xFFD3D3D3),
+                    color = theme["placeholder"]!!,
                     start = Offset(0f, y),
                     end = Offset(size.width, y),
                     strokeWidth = strokeWidth
@@ -66,7 +67,7 @@ fun StyledBasicTextField(
                 .fillMaxWidth()
                 .height(animatedHeight.value),
             textStyle = TextStyle(
-                color = Color.Black,
+                color = theme["text"]!!,
                 fontSize = 22.sp,
                 fontFamily = RubikFont,
                 fontWeight = FontWeight.Normal
@@ -75,11 +76,9 @@ fun StyledBasicTextField(
                 if (value.isEmpty()) {
                     Text(
                         text = placeholder,
-                        style = TextStyle(
-                            color = Color(0xFFADADAD),
-                            fontSize = 22.sp,
-                            lineHeight = 24.sp
-                        ),
+                        color = theme["placeholder"]!!,
+                        fontSize = 22.sp,
+                        lineHeight = 24.sp,
                         fontFamily = RubikFont,
                         fontWeight = FontWeight.Normal
                     )

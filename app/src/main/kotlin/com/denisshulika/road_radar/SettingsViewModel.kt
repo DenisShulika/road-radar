@@ -1,6 +1,7 @@
 package com.denisshulika.road_radar
 
 import android.app.Application
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -17,12 +18,19 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private val _localization = MutableLiveData<Map<String, String>>(emptyMap())
     val localization: LiveData<Map<String, String>> get() = _localization
 
+    private val _themeColors = MutableLiveData<Map<String, Color>>(emptyMap())
+    val themeColors: LiveData<Map<String, Color>> get() = _themeColors
+
     fun setTheme(state : ThemeState) {
         _theme.value = state
     }
 
     fun setLanguage(state : LanguageState) {
         _language.value = state
+    }
+
+    fun setThemeColors(map : Map<String, Color>) {
+        _themeColors.value = map
     }
 
     fun setLocalisation(map : Map<String, String>) {
@@ -35,9 +43,5 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     fun getLanguage(): LanguageState {
         return _language.value!!
-    }
-
-    fun getLocalisation(): Map<String, String> {
-        return _localization.value!!
     }
 }

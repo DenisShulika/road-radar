@@ -13,12 +13,15 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.denisshulika.road_radar.SettingsViewModel
+import com.denisshulika.road_radar.pages.RubikFont
 import com.google.android.libraries.places.api.model.AutocompleteSessionToken
 import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRequest
 import com.google.android.libraries.places.api.net.PlacesClient
@@ -37,8 +40,11 @@ fun AutocompleteTextFieldForRegion(
     modifier: Modifier = Modifier,
     onValueChange: (String) -> Unit,
     onPlaceSelected: (String) -> Unit,
-    placeholder: String
+    placeholder: String,
+    settingsViewModel: SettingsViewModel
 ) {
+    val theme = settingsViewModel.themeColors.observeAsState().value!!
+
     var suggestions by remember { mutableStateOf(listOf<String>()) }
     var debounceJob by remember { mutableStateOf<Job?>(null) }
 
@@ -75,7 +81,8 @@ fun AutocompleteTextFieldForRegion(
                     suggestions = emptyList()
                 }
             },
-            placeholder = placeholder
+            placeholder = placeholder,
+            theme = theme
         )
 
         AnimatedVisibility(
@@ -96,11 +103,13 @@ fun AutocompleteTextFieldForRegion(
                                 onPlaceSelected(suggestion)
                                 suggestions = emptyList()
                             }
-                            .padding(8.dp)
+                            .padding(8.dp),
+                        fontFamily = RubikFont,
+                        color = theme["text"]!!
                     )
                     HorizontalDivider(
                         thickness = 1.dp,
-                        color = Color(0xFFADADAD)
+                        color = theme["accent"]!!
                     )
                 }
             }
@@ -117,8 +126,11 @@ fun AutocompleteTextFieldForAddress(
     onPlaceSelected: (String, Double, Double) -> Unit,
     placeholder: String,
     region: String,
-    context: Context
+    context: Context,
+    settingsViewModel: SettingsViewModel
 ) {
+    val theme = settingsViewModel.themeColors.observeAsState().value!!
+
     var suggestions by remember { mutableStateOf(listOf<String>()) }
     var debounceJob by remember { mutableStateOf<Job?>(null) }
 
@@ -171,7 +183,8 @@ fun AutocompleteTextFieldForAddress(
                 }
             },
             placeholder = placeholder,
-            singleLine = false
+            singleLine = false,
+            theme = theme
         )
 
         AnimatedVisibility(
@@ -194,11 +207,13 @@ fun AutocompleteTextFieldForAddress(
                                 }
                                 suggestions = emptyList()
                             }
-                            .padding(8.dp)
+                            .padding(8.dp),
+                        fontFamily = RubikFont,
+                        color = theme["text"]!!
                     )
                     HorizontalDivider(
                         thickness = 1.dp,
-                        color = Color(0xFFADADAD)
+                        color = theme["accent"]!!
                     )
                 }
             }

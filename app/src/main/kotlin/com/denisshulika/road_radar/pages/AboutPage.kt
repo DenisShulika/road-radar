@@ -6,8 +6,10 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -28,6 +30,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -60,6 +63,7 @@ import com.denisshulika.road_radar.Routes
 import com.denisshulika.road_radar.SettingsViewModel
 import com.denisshulika.road_radar.model.CustomDrawerState
 import com.denisshulika.road_radar.model.NavigationItem
+import com.denisshulika.road_radar.model.ThemeState
 import com.denisshulika.road_radar.model.isOpened
 import com.denisshulika.road_radar.model.opposite
 import com.denisshulika.road_radar.ui.components.CustomDrawer
@@ -89,6 +93,7 @@ fun AboutPage(
     }
 
     val localization = settingsViewModel.localization.observeAsState().value!!
+    val theme = settingsViewModel.themeColors.observeAsState().value!!
 
     var drawerState by remember { mutableStateOf(CustomDrawerState.Closed) }
     var selectedNavigationItem by remember { mutableStateOf(NavigationItem.About) }
@@ -116,19 +121,19 @@ fun AboutPage(
     val systemUiController = rememberSystemUiController()
 
     systemUiController.setStatusBarColor(
-        color = if (drawerState == CustomDrawerState.Closed) Color(0xFFFEF9FE) else  Color(0xFFECE7EB),
-        darkIcons = true
+        color = if (drawerState == CustomDrawerState.Closed) theme["top_bar_background"]!! else theme["drawer_background"]!!,
+        darkIcons = settingsViewModel.getTheme() != ThemeState.DARK || !isSystemInDarkTheme()
     )
     systemUiController.setNavigationBarColor(
-        color = if (drawerState == CustomDrawerState.Closed) Color(0xFFFEF9FE) else  Color(0xFFECE7EB),
-        darkIcons = true
+        color = if (drawerState == CustomDrawerState.Closed) theme["background"]!! else theme["drawer_background"]!!,
+        darkIcons = settingsViewModel.getTheme() != ThemeState.DARK || !isSystemInDarkTheme()
     )
-    //TODO()
 
     Box(
         modifier = Modifier
             .statusBarsPadding()
             .navigationBarsPadding()
+            .background(theme["drawer_background"]!!)
             .fillMaxSize()
             .pointerInput(Unit) {
                 detectHorizontalDragGestures { _, dragAmount ->
@@ -154,21 +159,26 @@ fun AboutPage(
                 .offset { IntOffset(animatedOffset.roundToPx(), 0) }
                 .scale(scale = animatedScale)
                 .coloredShadow(
-                    color = Color.Black,
+                    color = theme["shadow"]!!,
                     alpha = 0.1f,
-                    shadowRadius = 50.dp
+                    shadowRadius = 30.dp
                 )
                 .clickable(enabled = drawerState == CustomDrawerState.Opened) {
                     drawerState = CustomDrawerState.Closed
                 },
             topBar = {
                 CenterAlignedTopAppBar(
-                    modifier = Modifier,
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = theme["top_bar_background"]!!,
+                        titleContentColor = theme["text"]!!,
+                        navigationIconContentColor = theme["icon"]!!
+                    ),
                     title = {
                         Text(
                             text = selectedNavigationItem.getTitle(localization),
                             textAlign = TextAlign.Center,
-                            fontFamily = RubikFont
+                            fontFamily = RubikFont,
+                            fontWeight = FontWeight.Bold
                         )
                     },
                     navigationIcon = {
@@ -193,34 +203,41 @@ fun AboutPage(
             ) {
                 Column(
                     modifier = Modifier
+                        .background(theme["background"]!!)
                         .fillMaxSize()
                         .padding(start = 20.dp, end = 20.dp)
                         .verticalScroll(rememberScrollState())
                 ) {
+                    Spacer(modifier = Modifier.height(20.dp))
                     Text(
                         text = buildAnnotatedString {
-                            withStyle(style = SpanStyle(color = Color(0xFF474EFF))) {
+                            withStyle(style = SpanStyle(color = theme["secondary"]!!)) {
                                 append(localization["app_title"])
                             }
                             append(localization["app_description_title"])
                         },
                         fontSize = 24.sp,
                         fontFamily = RubikFont,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = theme["text"]!!
                     )
                     Text(
+                        modifier = Modifier
+                            .padding(bottom = 20.dp),
                         text = localization["app_description_text"]!!,
                         fontSize = 18.sp,
                         fontFamily = RubikFont,
                         fontWeight = FontWeight.Normal,
-                        modifier = Modifier.padding(bottom = 20.dp)
+                        color = theme["placeholder"]!!
                     )
                     Text(
+                        modifier = Modifier
+                            .padding(bottom = 8.dp, top = 8.dp),
                         text = localization["faq_title"]!!,
                         fontSize = 20.sp,
                         fontFamily = RubikFont,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(bottom = 8.dp, top = 8.dp)
+                        color = theme["text"]!!
                     )
                     val faqItems = listOf(
                         localization["faq_register_question"]!! to localization["faq_register_answer"]!!,
@@ -235,14 +252,16 @@ fun AboutPage(
                         localization["faq_technical_problems_question"]!! to localization["faq_technical_problems_answer"]!!
                     )
                     faqItems.forEach { (question, answer) ->
-                        FaqItem(question = question, answer = answer)
+                        FaqItem(question = question, answer = answer, theme = theme)
                     }
                     Text(
+                        modifier = Modifier
+                            .padding(bottom = 8.dp, top = 8.dp),
                         text = localization["developer_contact_title"]!!,
                         fontSize = 20.sp,
                         fontFamily = RubikFont,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(bottom = 8.dp, top = 8.dp)
+                        color = theme["text"]!!
                     )
 
                     val contactInfo = listOf(
@@ -263,7 +282,7 @@ fun AboutPage(
                                             append("● ${localization["developer_email_title"]}")
                                             withStyle(
                                                 style = SpanStyle(
-                                                    color = Color(0xFF474EFF),
+                                                    color = theme["primary"]!!,
                                                     textDecoration = TextDecoration.Underline
                                                 )
                                             ) {
@@ -273,6 +292,7 @@ fun AboutPage(
                                         fontSize = 18.sp,
                                         fontFamily = RubikFont,
                                         fontWeight = FontWeight.Normal,
+                                        color = theme["placeholder"]!!,
                                         modifier = Modifier
                                             .clickable {
                                                 val intent = Intent(
@@ -291,7 +311,7 @@ fun AboutPage(
                                             append("● ${localization["developer_telegram_title"]}")
                                             withStyle(
                                                 style = SpanStyle(
-                                                    color = Color(0xFF474EFF),
+                                                    color = theme["primary"]!!,
                                                     textDecoration = TextDecoration.Underline
                                                 )
                                             ) {
@@ -301,6 +321,7 @@ fun AboutPage(
                                         fontSize = 18.sp,
                                         fontFamily = RubikFont,
                                         fontWeight = FontWeight.Normal,
+                                        color = theme["placeholder"]!!,
                                         modifier = Modifier
                                             .clickable {
                                                 val intent = Intent(
@@ -319,7 +340,7 @@ fun AboutPage(
                                             append("● ${localization["developer_github_title"]}")
                                             withStyle(
                                                 style = SpanStyle(
-                                                    color = Color(0xFF474EFF),
+                                                    color = theme["primary"]!!,
                                                     textDecoration = TextDecoration.Underline
                                                 )
                                             ) {
@@ -329,6 +350,7 @@ fun AboutPage(
                                         fontSize = 18.sp,
                                         fontFamily = RubikFont,
                                         fontWeight = FontWeight.Normal,
+                                        color = theme["placeholder"]!!,
                                         modifier = Modifier
                                             .clickable {
                                                 val intent = Intent(
@@ -346,6 +368,7 @@ fun AboutPage(
                                         fontSize = 18.sp,
                                         fontFamily = RubikFont,
                                         fontWeight = FontWeight.Normal,
+                                        color = theme["placeholder"]!!,
                                         modifier = Modifier.padding(bottom = 4.dp)
                                     )
                                 }
@@ -360,7 +383,11 @@ fun AboutPage(
 }
 
 @Composable
-fun FaqItem(question: String, answer: String) {
+fun FaqItem(
+    question: String,
+    answer: String,
+    theme: Map<String, Color>
+) {
     var isExpanded by remember { mutableStateOf(false) }
 
     val height by animateDpAsState(
@@ -373,13 +400,14 @@ fun FaqItem(question: String, answer: String) {
             .padding(bottom = 12.dp)
     ) {
         Text(
+            modifier = Modifier
+                .padding(bottom = 4.dp)
+                .clickable { isExpanded = !isExpanded },
             text = "● $question",
             fontSize = 18.sp,
             fontFamily = RubikFont,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier
-                .padding(bottom = 4.dp)
-                .clickable { isExpanded = !isExpanded }
+            color = theme["text"]!!
         )
 
         AnimatedVisibility(visible = isExpanded) {
@@ -388,7 +416,8 @@ fun FaqItem(question: String, answer: String) {
                     text = answer,
                     fontSize = 16.sp,
                     fontFamily = RubikFont,
-                    fontWeight = FontWeight.Normal
+                    fontWeight = FontWeight.Normal,
+                    color = theme["placeholder"]!!
                 )
             }
         }

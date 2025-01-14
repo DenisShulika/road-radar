@@ -11,6 +11,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -78,6 +79,7 @@ import com.denisshulika.road_radar.Routes
 import com.denisshulika.road_radar.SettingsViewModel
 import com.denisshulika.road_radar.isValidEmail
 import com.denisshulika.road_radar.isValidPhoneNumber
+import com.denisshulika.road_radar.model.ThemeState
 import com.denisshulika.road_radar.ui.components.AutocompleteTextFieldForRegion
 import com.denisshulika.road_radar.ui.components.StyledBasicTextField
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
@@ -100,18 +102,19 @@ fun SignUpPage(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
+    val localization = settingsViewModel.localization.observeAsState().value!!
+    val theme = settingsViewModel.themeColors.observeAsState().value!!
+
     val systemUiController = rememberSystemUiController()
 
     systemUiController.setStatusBarColor(
         color = Color.Transparent,
-        darkIcons = false
+        darkIcons = settingsViewModel.getTheme() != ThemeState.DARK || !isSystemInDarkTheme()
     )
     systemUiController.setNavigationBarColor(
-        color = Color.Transparent,
-        darkIcons = false
+        color = theme["background"]!!,
+        darkIcons = settingsViewModel.getTheme() != ThemeState.DARK || !isSystemInDarkTheme()
     )
-
-    val localization = settingsViewModel.localization.observeAsState().value!!
 
     val authState = authViewModel.authState.observeAsState()
 
@@ -173,7 +176,7 @@ fun SignUpPage(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .paint(painterResource(R.drawable.auth_background), contentScale = ContentScale.Crop)
+            .paint(painterResource(id = if (settingsViewModel.getTheme() == ThemeState.DARK) R.drawable.auth_dark_background else R.drawable.auth_light_background), contentScale = ContentScale.Crop)
     ) {
         Column(
             modifier = Modifier
@@ -190,8 +193,8 @@ fun SignUpPage(
             ) {
                 Text(
                     text = localization["sign_up_title"]!!,
-                    fontSize = 52.sp,
-                    color = Color.White,
+                    fontSize = 60.sp,
+                    color = theme["text"]!!,
                     fontFamily = RubikFont,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -204,7 +207,7 @@ fun SignUpPage(
                 Column(
                     modifier = Modifier
                         .clip(RoundedCornerShape(topStart = 25.dp, topEnd = 25.dp))
-                        .background(Color.White)
+                        .background(theme["background"]!!)
                         .fillMaxSize(),
                     verticalArrangement = Arrangement.Top
                 ) {
@@ -225,7 +228,8 @@ fun SignUpPage(
                                 text = localization["name_title"]!!,
                                 fontSize = 24.sp,
                                 fontFamily = RubikFont,
-                                fontWeight = FontWeight.Normal
+                                fontWeight = FontWeight.Normal,
+                                color = theme["text"]!!
                             )
                             StyledBasicTextField(
                                 value = name,
@@ -233,15 +237,18 @@ fun SignUpPage(
                                     name = it
                                     isNameEmpty = name.isEmpty()
                                 },
-                                placeholder = localization["name_placeholder"]!!
+                                placeholder = localization["name_placeholder"]!!,
+                                theme = theme
                             )
                         }
                         if (isNameEmpty) {
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 localization["name_empty"]!!,
-                                color = Color(0xFFB71C1C),
-                                style = MaterialTheme.typography.bodySmall
+                                color = theme["error"]!!,
+                                fontSize = 12.sp,
+                                fontFamily = RubikFont,
+                                fontWeight = FontWeight.Normal
                             )
                         }
                         Spacer(modifier = Modifier.size(32.dp))
@@ -252,7 +259,8 @@ fun SignUpPage(
                                 text = localization["email_title"]!!,
                                 fontSize = 24.sp,
                                 fontFamily = RubikFont,
-                                fontWeight = FontWeight.Normal
+                                fontWeight = FontWeight.Normal,
+                                color = theme["text"]!!
                             )
                             StyledBasicTextField(
                                 value = email,
@@ -262,22 +270,27 @@ fun SignUpPage(
                                     isEmailEmpty = email.isEmpty()
                                 },
                                 placeholder = localization["email_placeholder_sign_up"]!!,
-                                keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Email)
+                                keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Email),
+                                theme = theme
                             )
                         }
                         if (isEmailEmpty) {
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 localization["email_empty"]!!,
-                                color = Color(0xFFB71C1C),
-                                style = MaterialTheme.typography.bodySmall
+                                color = theme["error"]!!,
+                                fontSize = 12.sp,
+                                fontFamily = RubikFont,
+                                fontWeight = FontWeight.Normal
                             )
                         } else if (emailError) {
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 localization["email_invalid"]!!,
-                                color = Color(0xFFB71C1C),
-                                style = MaterialTheme.typography.bodySmall
+                                color = theme["error"]!!,
+                                fontSize = 12.sp,
+                                fontFamily = RubikFont,
+                                fontWeight = FontWeight.Normal
                             )
                         }
                         Spacer(modifier = Modifier.size(32.dp))
@@ -292,7 +305,8 @@ fun SignUpPage(
                                         text = localization["region_title"]!!,
                                         fontSize = 24.sp,
                                         fontFamily = RubikFont,
-                                        fontWeight = FontWeight.Normal
+                                        fontWeight = FontWeight.Normal,
+                                        color = theme["text"]!!
                                     )
                                     Spacer(modifier = Modifier.width(12.dp))
 
@@ -318,10 +332,10 @@ fun SignUpPage(
                                                     )
                                                 },
                                                 colors = RichTooltipColors(
-                                                    containerColor = Color(0xFF474EFF),
-                                                    contentColor = Color(0xFFFFFFFF),
-                                                    titleContentColor = Color(0xFFFFFFFF),
-                                                    actionContentColor = Color(0xFFFFFFFF)
+                                                    containerColor = theme["primary"]!!,
+                                                    contentColor = theme["text"]!!,
+                                                    titleContentColor = theme["text"]!!,
+                                                    actionContentColor = theme["text"]!!
                                                 )
                                             )
                                         },
@@ -339,7 +353,7 @@ fun SignUpPage(
                                             Icon(
                                                 imageVector = ImageVector.vectorResource(R.drawable.info),
                                                 contentDescription = "",
-                                                tint = Color(0xFFADADAD)
+                                                tint = theme["icon"]!!
                                             )
                                         }
                                     }
@@ -357,15 +371,18 @@ fun SignUpPage(
                                         isRegionSelected = false
                                         isSelectedRegionEmpty = selectedRegion.isEmpty()
                                     },
-                                    placeholder = localization["region_placeholder"]!!
+                                    placeholder = localization["region_placeholder"]!!,
+                                    settingsViewModel = settingsViewModel
                                 )
                             }
                             if (isSelectedRegionEmpty) {
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
                                     localization["region_empty"]!!,
-                                    color = Color(0xFFB71C1C),
-                                    style = MaterialTheme.typography.bodySmall
+                                    color = theme["error"]!!,
+                                    fontSize = 12.sp,
+                                    fontFamily = RubikFont,
+                                    fontWeight = FontWeight.Normal
                                 )
                             }
                         }
@@ -377,7 +394,8 @@ fun SignUpPage(
                                 text = localization["phone_title"]!!,
                                 fontSize = 24.sp,
                                 fontFamily = RubikFont,
-                                fontWeight = FontWeight.Normal
+                                fontWeight = FontWeight.Normal,
+                                color = theme["text"]!!
                             )
                             StyledBasicTextField(
                                 value = phoneNumber,
@@ -386,22 +404,27 @@ fun SignUpPage(
                                     isPhoneNumberEmpty = phoneNumber.isEmpty()
                                     phoneNumberError = !isValidPhoneNumber(it)
                                 },
-                                placeholder = localization["phone_placeholder"]!!
+                                placeholder = localization["phone_placeholder"]!!,
+                                theme = theme
                             )
                         }
                         if (isPhoneNumberEmpty) {
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 localization["phone_empty"]!!,
-                                color = Color(0xFFB71C1C),
-                                style = MaterialTheme.typography.bodySmall
+                                color = theme["error"]!!,
+                                fontSize = 12.sp,
+                                fontFamily = RubikFont,
+                                fontWeight = FontWeight.Normal
                             )
                         } else if (phoneNumberError) {
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 localization["phone_invalid"]!!,
-                                color = Color(0xFFB71C1C),
-                                style = MaterialTheme.typography.bodySmall
+                                color = theme["error"]!!,
+                                fontSize = 12.sp,
+                                fontFamily = RubikFont,
+                                fontWeight = FontWeight.Normal
                             )
                         }
                         Spacer(modifier = Modifier.size(32.dp))
@@ -418,7 +441,8 @@ fun SignUpPage(
                                     text = localization["password_title"]!!,
                                     fontSize = 24.sp,
                                     fontFamily = RubikFont,
-                                    fontWeight = FontWeight.Normal
+                                    fontWeight = FontWeight.Normal,
+                                    color = theme["text"]!!
                                 )
                                 IconButton(
                                     modifier = Modifier
@@ -435,7 +459,7 @@ fun SignUpPage(
                                         } else {
                                             Icons.Rounded.VisibilityOff
                                         },
-                                        tint = Color(0xFFADADAD)
+                                        tint = theme["accent"]!!
                                     )
                                 }
                             }
@@ -447,22 +471,27 @@ fun SignUpPage(
                                     isPasswordEmpty = password.isEmpty()
                                 },
                                 placeholder = localization["password_placeholder_sign_up"]!!,
-                                isVisible = isPasswordVisible
+                                isVisible = isPasswordVisible,
+                                theme = theme
                             )
                         }
                         if (isPasswordEmpty) {
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 localization["password_empty"]!!,
-                                color = Color(0xFFB71C1C),
-                                style = MaterialTheme.typography.bodySmall
+                                color = theme["error"]!!,
+                                fontSize = 12.sp,
+                                fontFamily = RubikFont,
+                                fontWeight = FontWeight.Normal
                             )
                         } else if (passwordError) {
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 localization["password_length"]!!,
-                                color = Color(0xFFB71C1C),
-                                style = MaterialTheme.typography.bodySmall
+                                color = theme["error"]!!,
+                                fontSize = 12.sp,
+                                fontFamily = RubikFont,
+                                fontWeight = FontWeight.Normal
                             )
                         }
                         Spacer(modifier = Modifier.size(32.dp))
@@ -479,7 +508,8 @@ fun SignUpPage(
                                     text = localization["confirm_password_title"]!!,
                                     fontSize = 24.sp,
                                     fontFamily = RubikFont,
-                                    fontWeight = FontWeight.Normal
+                                    fontWeight = FontWeight.Normal,
+                                    color = theme["text"]!!
                                 )
                                 IconButton(
                                     modifier = Modifier
@@ -496,7 +526,7 @@ fun SignUpPage(
                                         } else {
                                             Icons.Rounded.VisibilityOff
                                         },
-                                        tint = Color(0xFFADADAD)
+                                        tint = theme["accent"]!!
                                     )
                                 }
                             }
@@ -507,22 +537,27 @@ fun SignUpPage(
                                     isConfirmPasswordEmpty = confirmPassword.isEmpty()
                                 },
                                 placeholder = localization["confirm_password_placeholder"]!!,
-                                isVisible = isConfirmPasswordVisible
+                                isVisible = isConfirmPasswordVisible,
+                                theme = theme
                             )
                         }
                         if (isConfirmPasswordEmpty) {
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 localization["confirm_password_empty"]!!,
-                                color = Color(0xFFB71C1C),
-                                style = MaterialTheme.typography.bodySmall
+                                color = theme["error"]!!,
+                                fontSize = 12.sp,
+                                fontFamily = RubikFont,
+                                fontWeight = FontWeight.Normal
                             )
                         } else if (confirmPasswordError) {
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 localization["passwords_do_not_match"]!!,
-                                color = Color(0xFFB71C1C),
-                                style = MaterialTheme.typography.bodySmall
+                                color = theme["error"]!!,
+                                fontSize = 12.sp,
+                                fontFamily = RubikFont,
+                                fontWeight = FontWeight.Normal
                             )
                         }
                         Spacer(modifier = Modifier.size(24.dp))
@@ -606,7 +641,10 @@ fun SignUpPage(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(52.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF474EFF)),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = theme["primary"]!!,
+                                disabledContainerColor = theme["drawer_background"]!!
+                            ),
                             enabled = authState.value != AuthState.Loading
                         ) {
                             if (authState.value is AuthState.Loading) {
@@ -617,7 +655,7 @@ fun SignUpPage(
                                     CircularProgressIndicator(
                                         modifier = Modifier
                                             .align(Alignment.Center),
-                                        color = Color(0xFF474EFF)
+                                        color = theme["primary"]!!
                                     )
                                 }
                             } else {
@@ -625,7 +663,7 @@ fun SignUpPage(
                                     text = localization["sign_up_button"]!!,
                                     fontSize = 24.sp,
                                     fontFamily = RubikFont,
-                                    fontWeight = FontWeight.Normal
+                                    fontWeight = FontWeight.Medium
                                 )
                             }
                         }
@@ -644,9 +682,9 @@ fun SignUpPage(
                                     modifier = Modifier,
                                     text = localization["login_here_button"]!!,
                                     fontSize = 14.sp,
-                                    color = Color(0xFF6369FF),
+                                    color = theme["primary"]!!,
                                     fontFamily = RubikFont,
-                                    fontWeight = FontWeight.Normal
+                                    fontWeight = FontWeight.Medium
                                 )
                             }
                         }
@@ -659,7 +697,7 @@ fun SignUpPage(
                         .offset(y = (-50).dp)
                         .align(Alignment.TopCenter)
                         .clip(RoundedCornerShape(10.dp))
-                        .background(Color(0xFFEFF1F3))
+                        .background(theme["drawer_background"]!!)
                         .clickable {
                             getContent.launch("image/*")
                         },
@@ -675,7 +713,7 @@ fun SignUpPage(
                         Icon(
                             imageVector = ImageVector.vectorResource(R.drawable.add_photo_alternate),
                             contentDescription = "",
-                            tint = Color(0xFF606060),
+                            tint = theme["placeholder"]!!,
                             modifier = Modifier.size(36.dp)
                         )
                     }

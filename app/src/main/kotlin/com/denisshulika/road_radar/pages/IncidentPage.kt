@@ -2,6 +2,8 @@ package com.denisshulika.road_radar.pages
 
 import android.widget.Toast
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,6 +28,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
@@ -35,6 +38,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -42,6 +46,8 @@ import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.denisshulika.road_radar.IncidentManager
 import com.denisshulika.road_radar.SettingsViewModel
+import com.denisshulika.road_radar.model.ThemeState
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,6 +63,18 @@ fun IncidentPage(
     val incidentInfo by incidentManager.selectedDocumentInfo.observeAsState()
 
     val localization = settingsViewModel.localization.observeAsState().value!!
+    val theme = settingsViewModel.themeColors.observeAsState().value!!
+
+    val systemUiController = rememberSystemUiController()
+
+    systemUiController.setStatusBarColor(
+        color = theme["top_bar_background"]!!,
+        darkIcons = settingsViewModel.getTheme() != ThemeState.DARK || !isSystemInDarkTheme()
+    )
+    systemUiController.setNavigationBarColor(
+        color = theme["background"]!!,
+        darkIcons = settingsViewModel.getTheme() != ThemeState.DARK || !isSystemInDarkTheme()
+    )
 
     Box(
         modifier = Modifier
@@ -68,12 +86,17 @@ fun IncidentPage(
             modifier = Modifier.fillMaxSize(),
             topBar = {
                 CenterAlignedTopAppBar(
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = theme["top_bar_background"]!!,
+                        titleContentColor = theme["text"]!!,
+                        navigationIconContentColor = theme["icon"]!!
+                    ),
                     title = {
                         Text(
                             text = localization["incident_info_title"]!!,
                             textAlign = TextAlign.Center,
-                            style = MaterialTheme.typography.titleLarge,
-                            fontFamily = RubikFont
+                            fontFamily = RubikFont,
+                            fontWeight = FontWeight.Bold
                         )
                     },
                     navigationIcon = {
@@ -90,6 +113,7 @@ fun IncidentPage(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
+                    .background(theme["background"]!!)
                     .padding(innerPadding)
             ) {
                 incidentInfo?.let { info ->
@@ -104,38 +128,42 @@ fun IncidentPage(
                         Text(
                             text = "${localization["incident_type_subtext"]!!} ${info.type}",
                             fontSize = 20.sp,
-                            fontFamily = RubikFont
+                            fontFamily = RubikFont,
+                            color = theme["text"]!!
                         )
                         HorizontalDivider(
                             thickness = 1.dp,
-                            color = Color(0xFFADADAD)
+                            color = theme["accent"]!!
                         )
                         Text(
                             text = "${localization["incident_date_subtext"]!!} ${info.date}",
                             fontSize = 20.sp,
-                            fontFamily = RubikFont
+                            fontFamily = RubikFont,
+                            color = theme["text"]!!
                         )
                         HorizontalDivider(
                             thickness = 1.dp,
-                            color = Color(0xFFADADAD)
+                            color = theme["accent"]!!
                         )
                         Text(
                             text = "${localization["incident_address_subtext"]!!} ${info.address}",
                             fontSize = 20.sp,
-                            fontFamily = RubikFont
+                            fontFamily = RubikFont,
+                            color = theme["text"]!!
                         )
                         HorizontalDivider(
                             thickness = 1.dp,
-                            color = Color(0xFFADADAD)
+                            color = theme["accent"]!!
                         )
                         Text(
                             text = "${localization["incident_description_subtext"]!!} ${info.description}",
                             fontSize = 20.sp,
-                            fontFamily = RubikFont
+                            fontFamily = RubikFont,
+                            color = theme["text"]!!
                         )
                         HorizontalDivider(
                             thickness = 1.dp,
-                            color = Color(0xFFADADAD)
+                            color = theme["accent"]!!
                         )
 
                         if (info.photos.isNotEmpty()) {
@@ -152,13 +180,14 @@ fun IncidentPage(
                             }
                             HorizontalDivider(
                                 thickness = 1.dp,
-                                color = Color(0xFFADADAD)
+                                color = theme["accent"]!!
                             )
                         }
                         Text(
                             text = "${localization["incident_created_by_subtext"]!!} ${info.createdBy}",
                             fontSize = 20.sp,
-                            fontFamily = RubikFont
+                            fontFamily = RubikFont,
+                            color = theme["text"]!!
                         )
                         Spacer(modifier = modifier)
                     }

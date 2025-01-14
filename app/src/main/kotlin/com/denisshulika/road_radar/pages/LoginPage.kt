@@ -1,8 +1,10 @@
 package com.denisshulika.road_radar.pages
 
+import android.graphics.Paint
 import android.util.Patterns
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -48,6 +50,7 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -56,6 +59,7 @@ import com.denisshulika.road_radar.AuthViewModel
 import com.denisshulika.road_radar.R
 import com.denisshulika.road_radar.Routes
 import com.denisshulika.road_radar.SettingsViewModel
+import com.denisshulika.road_radar.model.ThemeState
 import com.denisshulika.road_radar.ui.components.StyledBasicTextField
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
@@ -77,19 +81,19 @@ fun LoginPage(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
+    val localization = settingsViewModel.localization.observeAsState().value!!
+    val theme = settingsViewModel.themeColors.observeAsState().value!!
+
     val systemUiController = rememberSystemUiController()
 
     systemUiController.setStatusBarColor(
         color = Color.Transparent,
-        darkIcons = false
+        darkIcons = settingsViewModel.getTheme() != ThemeState.DARK || !isSystemInDarkTheme()
     )
     systemUiController.setNavigationBarColor(
-        color = Color.Transparent,
-        darkIcons = false
+        color = theme["background"]!!,
+        darkIcons = settingsViewModel.getTheme() != ThemeState.DARK || !isSystemInDarkTheme()
     )
-
-
-    val localization = settingsViewModel.localization.observeAsState().value!!
 
     var email by remember { mutableStateOf("") }
     var emailError by remember { mutableStateOf(false) }
@@ -118,7 +122,7 @@ fun LoginPage(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .paint(painterResource(R.drawable.auth_background), contentScale = ContentScale.Crop)
+            .paint(painterResource(id = if (settingsViewModel.getTheme() == ThemeState.DARK) R.drawable.auth_dark_background else R.drawable.auth_light_background), contentScale = ContentScale.Crop)
     ) {
         Column(
             modifier = Modifier
@@ -135,8 +139,8 @@ fun LoginPage(
             ) {
                 Text(
                     text = localization["login_title"]!!,
-                    fontSize = 60.sp,
-                    color = Color.White,
+                    fontSize = 72.sp,
+                    color = theme["text"]!!,
                     fontFamily = RubikFont,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -145,7 +149,7 @@ fun LoginPage(
                 modifier = Modifier
                     .weight(2f)
                     .clip(RoundedCornerShape(topStart = 25.dp, topEnd = 25.dp))
-                    .background(Color.White),
+                    .background(theme["background"]!!),
                 verticalArrangement = Arrangement.Top
             ) {
                 Column(
@@ -160,7 +164,8 @@ fun LoginPage(
                             text = localization["email_title"]!!,
                             fontSize = 24.sp,
                             fontFamily = RubikFont,
-                            fontWeight = FontWeight.Normal
+                            fontWeight = FontWeight.Normal,
+                            color = theme["text"]!!
                         )
                         StyledBasicTextField(
                             value = email,
@@ -170,22 +175,27 @@ fun LoginPage(
                                 isEmailEmpty = email.isEmpty()
                             },
                             placeholder = localization["email_placeholder_login"]!!,
-                            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Email)
+                            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Email),
+                            theme = theme
                         )
                     }
                     if (isEmailEmpty) {
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             localization["email_empty"]!!,
-                            color = Color(0xFFB71C1C),
-                            style = MaterialTheme.typography.bodySmall
+                            color = theme["error"]!!,
+                            fontSize = 12.sp,
+                            fontFamily = RubikFont,
+                            fontWeight = FontWeight.Normal
                         )
                     } else if (emailError) {
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             localization["email_invalid"]!!,
-                            color = Color(0xFFB71C1C),
-                            style = MaterialTheme.typography.bodySmall
+                            color = theme["error"]!!,
+                            fontSize = 12.sp,
+                            fontFamily = RubikFont,
+                            fontWeight = FontWeight.Normal
                         )
                     }
                     Spacer(modifier = Modifier.size(32.dp))
@@ -202,7 +212,8 @@ fun LoginPage(
                                 text = localization["password_title"]!!,
                                 fontSize = 24.sp,
                                 fontFamily = RubikFont,
-                                fontWeight = FontWeight.Normal
+                                fontWeight = FontWeight.Normal,
+                                color = theme["text"]!!
                             )
 
                             IconButton(
@@ -220,7 +231,7 @@ fun LoginPage(
                                     } else {
                                         ImageVector.vectorResource(R.drawable.visibility_off)
                                     },
-                                    tint = Color(0xFFADADAD)
+                                    tint = theme["accent"]!!
                                 )
                             }
                         }
@@ -231,7 +242,8 @@ fun LoginPage(
                                 isPasswordEmpty = password.isEmpty()
                             },
                             placeholder = localization["password_placeholder_login"]!!,
-                            isVisible = isPasswordVisible
+                            isVisible = isPasswordVisible,
+                            theme = theme
                         )
                     }
                     Row(
@@ -249,8 +261,10 @@ fun LoginPage(
                         if (isPasswordEmpty) {
                             Text(
                                 localization["password_empty"]!!,
-                                color = Color(0xFFB71C1C),
-                                style = MaterialTheme.typography.bodySmall
+                                color = theme["error"]!!,
+                                fontSize = 12.sp,
+                                fontFamily = RubikFont,
+                                fontWeight = FontWeight.Normal
                             )
                         }
                         TextButton(
@@ -262,9 +276,9 @@ fun LoginPage(
                             Text(
                                 text = localization["forgot_password_button"]!!,
                                 fontSize = 14.sp,
-                                color = Color(0xFF6369FF),
+                                color = theme["primary"]!!,
                                 fontFamily = RubikFont,
-                                fontWeight = FontWeight.Normal
+                                fontWeight = FontWeight.Medium
                             )
                         }
                     }
@@ -291,7 +305,10 @@ fun LoginPage(
                             }
                             authViewModel.login(email, password, context, coroutineScope, localization)
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF474EFF)),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = theme["primary"]!!,
+                            disabledContainerColor = theme["drawer_background"]!!
+                        ),
                         enabled = authState.value != AuthState.Loading
                     ) {
                         if (authState.value is AuthState.Loading) {
@@ -302,7 +319,7 @@ fun LoginPage(
                                 CircularProgressIndicator(
                                     modifier = Modifier
                                         .align(Alignment.Center),
-                                    color = Color(0xFF474EFF)
+                                    color = theme["primary"]!!
                                 )
                             }
                         } else {
@@ -310,7 +327,7 @@ fun LoginPage(
                                 text = localization["login_button"]!!,
                                 fontSize = 24.sp,
                                 fontFamily = RubikFont,
-                                fontWeight = FontWeight.Normal
+                                fontWeight = FontWeight.Medium
                             )
                         }
                     }
@@ -328,10 +345,11 @@ fun LoginPage(
                         ) {
                             Text(
                                 text = localization["register_here_button"]!!,
+                                textAlign = TextAlign.Center,
                                 fontSize = 14.sp,
-                                color = Color(0xFF6369FF),
+                                color = theme["primary"]!!,
                                 fontFamily = RubikFont,
-                                fontWeight = FontWeight.Normal
+                                fontWeight = FontWeight.Medium
                             )
                         }
                     }
@@ -340,7 +358,7 @@ fun LoginPage(
                             modifier = Modifier
                                 .padding(top = 8.dp),
                             thickness = 1.dp,
-                            color = Color(0xFFADADAD)
+                            color = theme["accent"]!!
                         )
                         Row(
                             modifier = Modifier
@@ -349,10 +367,10 @@ fun LoginPage(
                         ) {
                             Text(
                                 modifier = Modifier
-                                    .background(Color.White)
+                                    .background(theme["background"]!!)
                                     .padding(start = 4.dp, end = 4.dp),
                                 text = localization["or_sign_in_with"]!!,
-                                color = Color(0xFF707070),
+                                color = theme["placeholder"]!!,
                                 fontFamily = RubikFont,
                                 fontWeight = FontWeight.Normal
                             )

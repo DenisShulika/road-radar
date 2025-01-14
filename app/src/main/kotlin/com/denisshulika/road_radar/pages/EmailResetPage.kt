@@ -2,6 +2,7 @@ package com.denisshulika.road_radar.pages
 
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -52,6 +53,7 @@ import com.denisshulika.road_radar.ResetEmailState
 import com.denisshulika.road_radar.Routes
 import com.denisshulika.road_radar.SettingsViewModel
 import com.denisshulika.road_radar.local.UserLocalStorage
+import com.denisshulika.road_radar.model.ThemeState
 import com.denisshulika.road_radar.ui.components.StyledBasicTextField
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
@@ -66,15 +68,18 @@ fun EmailResetPage(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
+    val localization = settingsViewModel.localization.observeAsState().value!!
+    val theme = settingsViewModel.themeColors.observeAsState().value!!
+
     val systemUiController = rememberSystemUiController()
 
     systemUiController.setStatusBarColor(
         color = Color.Transparent,
-        darkIcons = false
+        darkIcons = settingsViewModel.getTheme() != ThemeState.DARK || !isSystemInDarkTheme()
     )
     systemUiController.setNavigationBarColor(
-        color = Color.Transparent,
-        darkIcons = false
+        color = theme["background"]!!,
+        darkIcons = settingsViewModel.getTheme() != ThemeState.DARK || !isSystemInDarkTheme()
     )
 
     val resetEmailState = authViewModel.resetEmailState.observeAsState()
@@ -96,8 +101,6 @@ fun EmailResetPage(
         }
     }
 
-    val localization = settingsViewModel.localization.observeAsState().value!!
-
     var newEmail by remember { mutableStateOf("") }
     var newEmailError by remember { mutableStateOf(false) }
     var isNewEmailEmpty by remember { mutableStateOf(false) }
@@ -114,7 +117,7 @@ fun EmailResetPage(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .paint(painterResource(R.drawable.auth_background), contentScale = ContentScale.Crop)
+            .paint(painterResource(id = if (settingsViewModel.getTheme() == ThemeState.DARK) R.drawable.auth_dark_background else R.drawable.auth_light_background), contentScale = ContentScale.Crop)
     ) {
         Column(
             modifier = Modifier
@@ -132,14 +135,14 @@ fun EmailResetPage(
                 Text(
                     text = localization["reset_email_title_1"]!!,
                     fontSize = 64.sp,
-                    color = Color.White,
+                    color = theme["text"]!!,
                     fontFamily = RubikFont,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
                     text = localization["reset_email_title_2"]!!,
                     fontSize = 64.sp,
-                    color = Color.White,
+                    color = theme["text"]!!,
                     fontFamily = RubikFont,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -148,7 +151,7 @@ fun EmailResetPage(
                 modifier = Modifier
                     .weight(1f)
                     .clip(RoundedCornerShape(topStart = 25.dp, topEnd = 25.dp))
-                    .background(Color.White),
+                    .background(theme["background"]!!),
                 verticalArrangement = Arrangement.Top
             ) {
                 Column(
@@ -165,7 +168,8 @@ fun EmailResetPage(
                             text = localization["new_email_title"]!!,
                             fontSize = 24.sp,
                             fontFamily = RubikFont,
-                            fontWeight = FontWeight.Normal
+                            fontWeight = FontWeight.Normal,
+                            color = theme["text"]!!
                         )
                         StyledBasicTextField(
                             value = newEmail,
@@ -175,22 +179,27 @@ fun EmailResetPage(
                                 isNewEmailEmpty = newEmail.isEmpty()
                             },
                             placeholder = localization["new_email_placeholder"]!!,
-                            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Email)
+                            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Email),
+                            theme = theme
                         )
                     }
                     if (isNewEmailEmpty) {
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             localization["email_empty"]!!,
-                            color = Color(0xFFB71C1C),
-                            style = MaterialTheme.typography.bodySmall
+                            color = theme["error"]!!,
+                            fontSize = 12.sp,
+                            fontFamily = RubikFont,
+                            fontWeight = FontWeight.Normal
                         )
                     } else if (newEmailError) {
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             localization["email_invalid"]!!,
-                            color = Color(0xFFB71C1C),
-                            style = MaterialTheme.typography.bodySmall
+                            color = theme["error"]!!,
+                            fontSize = 12.sp,
+                            fontFamily = RubikFont,
+                            fontWeight = FontWeight.Normal
                         )
                     }
                     Spacer(modifier = Modifier.size(32.dp))
@@ -219,7 +228,10 @@ fun EmailResetPage(
                                 localization = localization
                             )
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF474EFF)),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = theme["primary"]!!,
+                            disabledContainerColor = theme["drawer_background"]!!
+                        ),
                         enabled = resetEmailState.value != ResetEmailState.Loading
                     ) {
                         if (resetEmailState.value is ResetEmailState.Loading) {
@@ -230,7 +242,7 @@ fun EmailResetPage(
                                 CircularProgressIndicator(
                                     modifier = Modifier
                                         .align(Alignment.Center),
-                                    color = Color(0xFF474EFF)
+                                    color = theme["primary"]!!
                                 )
                             }
                         } else {
@@ -238,7 +250,7 @@ fun EmailResetPage(
                                 text = localization["reset_email_button"]!!,
                                 fontSize = 24.sp,
                                 fontFamily = RubikFont,
-                                fontWeight = FontWeight.Normal
+                                fontWeight = FontWeight.Medium
                             )
                         }
                     }
@@ -257,9 +269,9 @@ fun EmailResetPage(
                             Text(
                                 text = localization["go_back_button"]!!,
                                 fontSize = 16.sp,
-                                color = Color(0xFF6369FF),
+                                color = theme["primary"]!!,
                                 fontFamily = RubikFont,
-                                fontWeight = FontWeight.Normal
+                                fontWeight = FontWeight.Medium
                             )
                         }
                     }

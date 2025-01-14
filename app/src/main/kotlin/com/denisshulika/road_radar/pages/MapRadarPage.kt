@@ -10,8 +10,10 @@ import androidx.activity.compose.BackHandler
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -65,6 +67,7 @@ import com.denisshulika.road_radar.SettingsViewModel
 import com.denisshulika.road_radar.model.CustomDrawerState
 import com.denisshulika.road_radar.model.IncidentInfo
 import com.denisshulika.road_radar.model.NavigationItem
+import com.denisshulika.road_radar.model.ThemeState
 import com.denisshulika.road_radar.model.isOpened
 import com.denisshulika.road_radar.model.opposite
 import com.denisshulika.road_radar.ui.components.CustomDrawer
@@ -73,6 +76,7 @@ import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.ComposeMapColorScheme
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.rememberCameraPositionState
@@ -101,6 +105,7 @@ fun MapRadarPage(
     }
 
     val localization = settingsViewModel.localization.observeAsState().value!!
+    val theme = settingsViewModel.themeColors.observeAsState().value!!
 
     val dateFormat = SimpleDateFormat(
         "EEEE, dd MMMM".trimIndent(),
@@ -137,14 +142,14 @@ fun MapRadarPage(
     val systemUiController = rememberSystemUiController()
 
     systemUiController.setStatusBarColor(
-        color = if (drawerState == CustomDrawerState.Closed) Color(0xFFFEF9FE) else  Color(0xFFECE7EB),
-        darkIcons = true
+        color = if (drawerState == CustomDrawerState.Closed) theme["top_bar_background"]!! else theme["drawer_background"]!!,
+        darkIcons = settingsViewModel.getTheme() != ThemeState.DARK || !isSystemInDarkTheme()
     )
     systemUiController.setNavigationBarColor(
-        color = if (drawerState == CustomDrawerState.Closed) Color(0xFFFEF9FE) else  Color(0xFFECE7EB),
-        darkIcons = true
+        color = if (drawerState == CustomDrawerState.Closed) theme["background"]!! else theme["drawer_background"]!!,
+        darkIcons = settingsViewModel.getTheme() != ThemeState.DARK || !isSystemInDarkTheme()
     )
-    //TODO
+
     val loadingState by incidentManager.loadingDocumentsState.observeAsState()
     val incidents = incidentManager.documentsList.observeAsState(emptyList())
 
@@ -173,7 +178,7 @@ fun MapRadarPage(
 
     val latLngByRegion = RegionLoader.loadRegionsFromJson(context)
 
-    val regionLatLng = latLngByRegion[region]!!
+    val regionLatLng = latLngByRegion[region ?: ""]!!
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(regionLatLng, if (region!!.contains("місто")) 9.5f else 7f)
     }
@@ -183,6 +188,7 @@ fun MapRadarPage(
             .fillMaxSize()
             .statusBarsPadding()
             .navigationBarsPadding()
+            .background(theme["drawer_background"]!!)
             .then(
                 if (drawerState.isOpened()) {
                     Modifier.pointerInput(Unit) {
@@ -214,14 +220,15 @@ fun MapRadarPage(
                 .offset { IntOffset(animatedOffset.roundToPx(), 0) }
                 .scale(scale = animatedScale)
                 .coloredShadow(
-                    color = Color.Black,
+                    color = theme["shadow"]!!,
                     alpha = 0.1f,
-                    shadowRadius = 50.dp
+                    shadowRadius = 30.dp
                 )
         ) { innerPadding ->
             Box(
                 modifier = Modifier
                     .fillMaxSize()
+                    .background(theme["background"]!!)
                     .padding(innerPadding),
                 contentAlignment = Alignment.Center
             ) {
@@ -236,11 +243,12 @@ fun MapRadarPage(
                             Text(
                                 text = localization["loading_map"]!!,
                                 fontSize = 20.sp,
-                                fontFamily = RubikFont
+                                fontFamily = RubikFont,
+                                color = theme["text"]!!
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             CircularProgressIndicator(
-                                color = Color(0xFF474EFF)
+                                color = theme["primary"]!!
                             )
                         }
                     }
@@ -254,14 +262,14 @@ fun MapRadarPage(
                                 text = (loadingState as LoadingDocumentsState.Error).message,
                                 fontSize = 16.sp,
                                 fontFamily = RubikFont,
-                                color = Color.Red
+                                color = theme["error"]!!
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
                                 text = localization["loading_map_error_text"]!!,
                                 fontSize = 16.sp,
                                 fontFamily = RubikFont,
-                                color = Color.Red
+                                color = theme["error"]!!
                             )
                         }
                         FloatingActionButton(
@@ -271,14 +279,14 @@ fun MapRadarPage(
                             modifier = Modifier
                                 .align(Alignment.TopStart)
                                 .padding(16.dp),
-                            containerColor = Color(0xFF474EFF),
+                            containerColor = theme["primary"]!!,
                             shape = RoundedCornerShape(50)
                         ) {
                             Icon(
                                 modifier = Modifier.size(32.dp),
                                 imageVector = Icons.Default.Menu,
                                 contentDescription = "",
-                                tint = Color(0xFFFFFFFF)
+                                tint = theme["icon"]!!
                             )
                         }
                     }
@@ -286,7 +294,8 @@ fun MapRadarPage(
                         GoogleMap(
                             modifier = Modifier
                                 .fillMaxSize(),
-                            cameraPositionState = cameraPositionState
+                            cameraPositionState = cameraPositionState,
+                            mapColorScheme = if (settingsViewModel.getTheme() == ThemeState.DARK) ComposeMapColorScheme.DARK else ComposeMapColorScheme.LIGHT
                         ) {
                             incidents.value.forEach { incident ->
                                 val markerLatLng = LatLng(incident.getString("latitude")!!.toDouble(), incident.getString("longitude")!!.toDouble())
@@ -364,14 +373,14 @@ fun MapRadarPage(
                             modifier = Modifier
                                 .align(Alignment.BottomStart)
                                 .padding(16.dp),
-                            containerColor = Color(0xFF474EFF),
+                            containerColor = theme["primary"]!!,
                             shape = RoundedCornerShape(50)
                         ) {
                             Icon(
                                 modifier = Modifier.size(32.dp),
                                 imageVector = Icons.Default.Menu,
                                 contentDescription = "",
-                                tint = Color(0xFFFFFFFF)
+                                tint = theme["icon"]!!
                             )
                         }
                         FloatingActionButton(
@@ -381,14 +390,14 @@ fun MapRadarPage(
                             modifier = Modifier
                                 .align(Alignment.TopEnd)
                                 .padding(16.dp),
-                            containerColor = Color(0xFF474EFF),
+                            containerColor = theme["primary"]!!,
                             shape = RoundedCornerShape(50)
                         ) {
                             Icon(
                                 modifier = Modifier.size(32.dp),
                                 imageVector = ImageVector.vectorResource(R.drawable.refresh),
                                 contentDescription = "",
-                                tint = Color(0xFFFFFFFF)
+                                tint = theme["icon"]!!
                             )
                         }
                     }

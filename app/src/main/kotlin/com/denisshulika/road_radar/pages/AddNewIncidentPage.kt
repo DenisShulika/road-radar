@@ -9,6 +9,7 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,6 +45,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -68,10 +70,13 @@ import com.denisshulika.road_radar.IncidentCreationState
 import com.denisshulika.road_radar.IncidentManager
 import com.denisshulika.road_radar.Routes
 import com.denisshulika.road_radar.SettingsViewModel
+import com.denisshulika.road_radar.model.CustomDrawerState
 import com.denisshulika.road_radar.model.IncidentType
+import com.denisshulika.road_radar.model.ThemeState
 import com.denisshulika.road_radar.ui.components.AutocompleteTextFieldForAddress
 import com.denisshulika.road_radar.ui.components.AutocompleteTextFieldForRegion
 import com.denisshulika.road_radar.ui.components.StyledBasicTextField
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.android.libraries.places.api.net.PlacesClient
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -87,6 +92,7 @@ fun AddNewIncidentPage(
     val context = LocalContext.current
 
     val localization = settingsViewModel.localization.observeAsState().value!!
+    val theme = settingsViewModel.themeColors.observeAsState().value!!
 
     val incidentTypes = listOf(
         localization["incident_type_car_accident"]!!,
@@ -153,6 +159,17 @@ fun AddNewIncidentPage(
         }
     )
 
+    val systemUiController = rememberSystemUiController()
+
+    systemUiController.setStatusBarColor(
+        color = theme["top_bar_background"]!!,
+        darkIcons = settingsViewModel.getTheme() != ThemeState.DARK || !isSystemInDarkTheme()
+    )
+    systemUiController.setNavigationBarColor(
+        color = theme["background"]!!,
+        darkIcons = settingsViewModel.getTheme() != ThemeState.DARK || !isSystemInDarkTheme()
+    )
+
     Box(
         modifier = Modifier
             .statusBarsPadding()
@@ -163,16 +180,29 @@ fun AddNewIncidentPage(
             modifier = Modifier.fillMaxSize(),
             topBar = {
                 CenterAlignedTopAppBar(
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = theme["top_bar_background"]!!,
+                        titleContentColor = theme["text"]!!,
+                        navigationIconContentColor = theme["icon"]!!
+                    ),
                     title = {
                         Text(
                             text = localization["add_new_incident_title"]!!,
                             textAlign = TextAlign.Center,
-                            fontFamily = RubikFont
+                            fontFamily = RubikFont,
+                            fontWeight = FontWeight.Bold
                         )
                     },
                     navigationIcon = {
-                        IconButton(onClick = { navController.popBackStack() }) {
-                            Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "")
+                        IconButton(
+                            onClick = {
+                                navController.popBackStack()
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = ""
+                            )
                         }
                     }
                 )
@@ -181,6 +211,7 @@ fun AddNewIncidentPage(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
+                    .background(theme["background"]!!)
                     .padding(innerPadding)
             ) {
                 Column(
@@ -189,14 +220,15 @@ fun AddNewIncidentPage(
                         .padding(start = 20.dp, end = 20.dp, bottom = 20.dp)
                         .verticalScroll(rememberScrollState())
                 ) {
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
                     Column(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Text(
                             text = localization["incident_type_title"]!!,
                             fontSize = 24.sp,
-                            fontFamily = RubikFont
+                            fontFamily = RubikFont,
+                            color = theme["text"]!!
                         )
                         Column(
                             modifier = Modifier
@@ -204,7 +236,7 @@ fun AddNewIncidentPage(
                                     val strokeWidth = 1.dp.toPx()
                                     val y = size.height - strokeWidth / 2
                                     drawLine(
-                                        color = Color(0xFFD3D3D3),
+                                        color = theme["placeholder"]!!,
                                         start = Offset(0f, 0.75f * y),
                                         end = Offset(size.width, 0.75f * y),
                                         strokeWidth = strokeWidth
@@ -230,14 +262,14 @@ fun AddNewIncidentPage(
                                             IncidentType.TRAFFIC_JAM -> localization["incident_type_traffic_jam"]!!
                                             IncidentType.OTHER -> localization["incident_type_other"]!!
                                         },
-                                        color = if (selectedIncidentType != null) Color(0xFF000000) else Color(0xFFADADAD),
+                                        color = if (selectedIncidentType != null) theme["text"]!! else theme["placeholder"]!!,
                                         fontSize = 22.sp,
                                         fontFamily = RubikFont
                                     )
                                     Icon(imageVector = Icons.Default.ArrowDropDown, contentDescription = "")
                                 }
                                 DropdownMenu(
-                                    modifier = Modifier.background(Color(0xFF474EFF)),
+                                    modifier = Modifier.background(theme["primary"]!!),
                                     expanded = isIncidentTypeDropdownExpanded,
                                     onDismissRequest = { isIncidentTypeDropdownExpanded = false }
                                 ) {
@@ -275,7 +307,8 @@ fun AddNewIncidentPage(
                         Text(
                             text = localization["description_title"]!!,
                             fontSize = 24.sp,
-                            fontFamily = RubikFont
+                            fontFamily = RubikFont,
+                            color = theme["text"]!!
                         )
                         StyledBasicTextField(
                             value = incidentDescription,
@@ -284,15 +317,18 @@ fun AddNewIncidentPage(
                                 isIncidentDescriptionEmpty = incidentDescription.isEmpty()
                             },
                             placeholder = localization["description_placeholder"]!!,
-                            singleLine = false
+                            singleLine = false,
+                            theme = theme
                         )
                     }
                     if (isIncidentDescriptionEmpty) {
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             localization["description_empty_text"]!!,
-                            color = Color(0xFFB71C1C),
-                            style = MaterialTheme.typography.bodySmall
+                            color = theme["error"]!!,
+                            fontSize = 12.sp,
+                            fontFamily = RubikFont,
+                            fontWeight = FontWeight.Normal
                         )
                     }
                     Spacer(modifier = Modifier.height(32.dp))
@@ -304,7 +340,8 @@ fun AddNewIncidentPage(
                                 text = localization["region_title"]!!,
                                 fontSize = 24.sp,
                                 fontFamily = RubikFont,
-                                fontWeight = FontWeight.Normal
+                                fontWeight = FontWeight.Normal,
+                                color = theme["text"]!!
                             )
                             AutocompleteTextFieldForRegion(
                                 modifier = Modifier.heightIn(min = 0.dp, max = 300.dp),
@@ -323,15 +360,18 @@ fun AddNewIncidentPage(
                                     isAddressSelected = false
                                     isSelectedAddressEmpty = false
                                 },
-                                placeholder = localization["region_placeholder"]!!
+                                placeholder = localization["region_placeholder"]!!,
+                                settingsViewModel = settingsViewModel
                             )
                         }
                         if (isSelectedRegionEmpty) {
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 localization["region_empty"]!!,
-                                color = Color(0xFFB71C1C),
-                                style = MaterialTheme.typography.bodySmall
+                                color = theme["error"]!!,
+                                fontSize = 12.sp,
+                                fontFamily = RubikFont,
+                                fontWeight = FontWeight.Normal
                             )
                         }
                     }
@@ -344,7 +384,8 @@ fun AddNewIncidentPage(
                                 text = localization["address_title"]!!,
                                 fontSize = 24.sp,
                                 fontFamily = RubikFont,
-                                fontWeight = FontWeight.Normal
+                                fontWeight = FontWeight.Normal,
+                                color = theme["text"]!!
                             )
                             if (!isRegionSelected) {
                                 Text(
@@ -352,7 +393,7 @@ fun AddNewIncidentPage(
                                     fontSize = 20.sp,
                                     fontFamily = RubikFont,
                                     fontWeight = FontWeight.Normal,
-                                    color = Color(0xFFD3D3D3)
+                                    color = theme["placeholder"]!!
                                 )
                             } else {
                                 AutocompleteTextFieldForAddress(
@@ -373,7 +414,8 @@ fun AddNewIncidentPage(
                                     },
                                     placeholder = localization["address_placeholder"]!!,
                                     region = selectedRegion,
-                                    context = context
+                                    context = context,
+                                    settingsViewModel = settingsViewModel
                                 )
                             }
                         }
@@ -381,8 +423,10 @@ fun AddNewIncidentPage(
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 localization["address_empty"]!!,
-                                color = Color(0xFFB71C1C),
-                                style = MaterialTheme.typography.bodySmall
+                                color = theme["error"]!!,
+                                fontSize = 12.sp,
+                                fontFamily = RubikFont,
+                                fontWeight = FontWeight.Normal
                             )
                         }
                     }
@@ -394,7 +438,8 @@ fun AddNewIncidentPage(
                         Text(
                             text = localization["photos_title"]!!,
                             fontSize = 24.sp,
-                            fontFamily = RubikFont
+                            fontFamily = RubikFont,
+                            color = theme["text"]!!
                         )
                         Column {
                             if (incidentPhotos.isEmpty()) {
@@ -408,7 +453,7 @@ fun AddNewIncidentPage(
                                         text = localization["no_photos_selected"]!!,
                                         fontSize = 16.sp,
                                         fontFamily = RubikFont,
-                                        color = Color(0xFFADADAD)
+                                        color = theme["placeholder"]!!
                                     )
                                 }
                             }
@@ -438,7 +483,7 @@ fun AddNewIncidentPage(
                                                 text = fileName,
                                                 fontSize = 18.sp,
                                                 fontFamily = RubikFont,
-                                                color = Color.Black
+                                                color = theme["text"]!!
                                             )
                                         }
                                         IconButton(
@@ -449,7 +494,7 @@ fun AddNewIncidentPage(
                                             Icon(
                                                 imageVector = Icons.Filled.Delete,
                                                 contentDescription = "",
-                                                tint = Color.Red
+                                                tint = theme["error"]!!
                                             )
                                         }
                                     }
@@ -458,7 +503,7 @@ fun AddNewIncidentPage(
                                             modifier = Modifier
                                                 .padding(vertical = 8.dp, horizontal = 36.dp),
                                             thickness = 1.dp,
-                                            color = Color(0xFFADADAD)
+                                            color = theme["accent"]!!
                                         )
                                     }
                                 }
@@ -484,14 +529,14 @@ fun AddNewIncidentPage(
                                 Text(
                                     text = localization["add_photos_button"]!!,
                                     fontSize = 20.sp,
-                                    color = Color(0xFF6369FF),
+                                    color = theme["primary"]!!,
                                     fontFamily = RubikFont
                                 )
                                 Spacer(modifier = Modifier.size(4.dp))
                                 Icon(
                                     imageVector = Icons.Default.Add,
                                     contentDescription = "",
-                                    tint = Color(0xFF6369FF)
+                                    tint = theme["primary"]!!
                                 )
                             }
                         }
@@ -545,7 +590,10 @@ fun AddNewIncidentPage(
                                 localization = localization
                             )
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF474EFF)),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = theme["primary"]!!,
+                            disabledContainerColor = theme["drawer_background"]!!
+                        ),
                         enabled = incidentCreationState.value != IncidentCreationState.Loading && incidentCreationState.value != IncidentCreationState.UploadingPhotos && incidentCreationState.value != IncidentCreationState.CreatingIncident
                     ) {
                         when (incidentCreationState.value) {
@@ -559,11 +607,13 @@ fun AddNewIncidentPage(
                                     Text(
                                         text = localization["loading"]!!,
                                         fontSize = 24.sp,
-                                        fontFamily = RubikFont
+                                        fontFamily = RubikFont,
+                                        fontWeight = FontWeight.Medium,
+                                        color = theme["text"]!!
                                     )
                                     Spacer(modifier = Modifier.width(12.dp))
                                     CircularProgressIndicator(
-                                        color = Color(0xFF474EFF)
+                                        color = theme["icon"]!!
                                     )
                                 }
                             }
@@ -577,11 +627,13 @@ fun AddNewIncidentPage(
                                     Text(
                                         text = localization["uploading_photos"]!!,
                                         fontSize = 24.sp,
-                                        fontFamily = RubikFont
+                                        fontFamily = RubikFont,
+                                        fontWeight = FontWeight.Medium,
+                                        color = theme["text"]!!
                                     )
                                     Spacer(modifier = Modifier.width(12.dp))
                                     CircularProgressIndicator(
-                                        color = Color(0xFF474EFF)
+                                        color = theme["icon"]!!
                                     )
                                 }
                             }
@@ -595,11 +647,13 @@ fun AddNewIncidentPage(
                                     Text(
                                         text = localization["creating_incident"]!!,
                                         fontSize = 24.sp,
-                                        fontFamily = RubikFont
+                                        fontFamily = RubikFont,
+                                        fontWeight = FontWeight.Medium,
+                                        color = theme["text"]!!
                                     )
                                     Spacer(modifier = Modifier.width(12.dp))
                                     CircularProgressIndicator(
-                                        color = Color(0xFF474EFF)
+                                        color = theme["icon"]!!
                                     )
                                 }
                             }
@@ -607,7 +661,8 @@ fun AddNewIncidentPage(
                                 Text(
                                     text = localization["publish_incident_button"]!!,
                                     fontSize = 24.sp,
-                                    fontFamily = RubikFont
+                                    fontFamily = RubikFont,
+                                    color = theme["text"]!!
                                 )
                             }
                         }

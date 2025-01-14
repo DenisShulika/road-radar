@@ -1,6 +1,7 @@
 package com.denisshulika.road_radar.ui.components
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,8 +26,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -57,6 +60,7 @@ fun CustomDrawer (
     val coroutineScope = rememberCoroutineScope()
 
     val localization = settingsViewModel.localization.observeAsState().value!!
+    val theme = settingsViewModel.themeColors.observeAsState().value!!
 
     val userName = remember { mutableStateOf("") }
     val userPhotoUrl = remember { mutableStateOf<String?>(null) }
@@ -87,7 +91,7 @@ fun CustomDrawer (
                 Icon(
                     imageVector = Icons.Default.Clear,
                     contentDescription = "",
-                    tint = Color(0xFF000000)
+                    tint = theme["icon"]!!
                 )
             }
         }
@@ -112,21 +116,27 @@ fun CustomDrawer (
                         contentDescription = ""
                     )
                 } else {
-                    Image(
+                    Box(
                         modifier = Modifier
                             .size(100.dp)
-                            .clip(RoundedCornerShape(10.dp)),
-                        painter = painterResource(id = R.drawable.ic_launcher_background),
-                        contentDescription = ""
-                    )
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(theme["background"]!!),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = ImageVector.vectorResource(R.drawable.image_load_fail),
+                            contentDescription = "",
+                            tint = theme["icon"]!!
+                        )
+                    }
                 }
                 Spacer(modifier = Modifier.size(8.dp))
                 Text(
                     text = userName.value,
                     fontSize = 20.sp,
-                    color = Color(0xFF000000),
+                    color = theme["text"]!!,
                     fontFamily = RubikFont,
-                    fontWeight = FontWeight.Normal,
+                    fontWeight = FontWeight.Medium,
                     lineHeight = 20.sp,
                     textAlign = TextAlign.Center
                 )
@@ -160,7 +170,8 @@ fun CustomDrawer (
                         }
                         else -> {}
                     }
-                }
+                },
+                theme = theme
             )
             Spacer(modifier = Modifier.size(8.dp))
         }
@@ -189,7 +200,8 @@ fun CustomDrawer (
                         }
                         else -> {}
                     }
-                }
+                },
+                theme = theme
             )
             Spacer(modifier = Modifier.size(8.dp))
         }

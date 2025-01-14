@@ -116,10 +116,10 @@
 
   "loading": "Завантаження...",
   "uploading_photos": "Завантаження фото...",
-  "creating_incident": "Створення інциденту...",
+  "creating_incident": "Створення...",
   "loading_incidents": "Завантаження інцидетів...",
 
-  "publish_incident_button": "Опублікувати інцидент",
+  "publish_incident_button": "Опублікувати",
 
   "unknown_file_name": "Невідоме ім'я файлу",
 
