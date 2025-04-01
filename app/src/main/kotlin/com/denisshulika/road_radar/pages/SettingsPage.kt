@@ -292,12 +292,12 @@ fun SettingsPage(
                         ) {
                             RadioButton(
                                 onClick = {
-                                    themeState = ThemeState.SYSTEM
+                                    themeState = ThemeState.DARK
                                     CoroutineScope(Dispatchers.Main).launch {
                                         settingsLocalStorage.saveTheme(themeState, isSystemInDarkTheme)
                                     }
                                 },
-                                selected = themeState == ThemeState.SYSTEM,
+                                selected = themeState == ThemeState.DARK,
                                 colors = RadioButtonColors(
                                     selectedColor = theme["primary"]!!,
                                     unselectedColor = theme["placeholder"]!!,
@@ -307,7 +307,7 @@ fun SettingsPage(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = localization["theme_system"]!!,
+                                text = localization["theme_dark"]!!,
                                 fontSize = 20.sp,
                                 fontFamily = RubikFont,
                                 fontWeight = FontWeight.Normal,
@@ -344,42 +344,6 @@ fun SettingsPage(
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = localization["theme_light"]!!,
-                                fontSize = 20.sp,
-                                fontFamily = RubikFont,
-                                fontWeight = FontWeight.Normal,
-                                color = theme["text"]!!
-                            )
-                        }
-                        HorizontalDivider(
-                            modifier = Modifier
-                                .padding(top = 4.dp, bottom = 4.dp, start = 12.dp, end = 12.dp),
-                            thickness = 1.dp,
-                            color = Color(0xFFADADAD)
-                        )
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 8.dp, vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            RadioButton(
-                                onClick = {
-                                    themeState = ThemeState.DARK
-                                    CoroutineScope(Dispatchers.Main).launch {
-                                        settingsLocalStorage.saveTheme(themeState, isSystemInDarkTheme)
-                                    }
-                                },
-                                selected = themeState == ThemeState.DARK,
-                                colors = RadioButtonColors(
-                                    selectedColor = theme["primary"]!!,
-                                    unselectedColor = theme["placeholder"]!!,
-                                    disabledSelectedColor = theme["primary"]!!,
-                                    disabledUnselectedColor = theme["placeholder"]!!,
-                                )
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = localization["theme_dark"]!!,
                                 fontSize = 20.sp,
                                 fontFamily = RubikFont,
                                 fontWeight = FontWeight.Normal,

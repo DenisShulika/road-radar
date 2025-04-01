@@ -1,6 +1,8 @@
 package com.denisshulika.road_radar.local
 
 import android.content.Context
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -32,14 +34,14 @@ class SettingsLocalStorage(
             .firstOrNull() == null
 
         if (isFirstLaunch) {
-            saveTheme(ThemeState.SYSTEM, isSystemInDarkTheme)
+            saveTheme(ThemeState.DARK, isSystemInDarkTheme)
             saveLanguage(LanguageState.UKRAINIAN, context)
 
             context.settingsDataStore.edit { prefs ->
                 prefs[FIRST_LAUNCH_KEY] = "false"
             }
 
-            settingsViewModel.setTheme(ThemeState.SYSTEM)
+            settingsViewModel.setTheme(ThemeState.DARK)
             settingsViewModel.setLanguage(LanguageState.UKRAINIAN)
         }
 

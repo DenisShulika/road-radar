@@ -261,5 +261,21 @@
   "login_here_button": "Already have an account? Login here",
 
   "wrong_email_or_password": "Incorrect email or password",
-  "email_in_use": "This email address is already in use by another account"
+  "email_in_use": "This email address is already in use by another account",
+
+  "unknown_location": "Unknown location",
+  "unknown_street": "Unknown street",
+  "unknown_region": "Unknown region",
+  "unknown_number": "Unknown number",
+  "get_address_fail": "Failed to get your address",
+  "get_location_fail": "Turn on your GPS",
+  "location_error": "Please, give us your location",
+  "permission_needed": "Location permission is needed to get your location.",
+  "permission_title": "Permission Required",
+  "permission_message": "Location permission is required to publish an incident. Do you want to go to settings to grant permission?",
+  "permission_positive_button": "Go to Settings",
+  "permission_negative_button": "Cancel",
+  "location": "Location",
+  "location_button": "Provide your location",
+  "location_empty": "You must provide your location"
 }

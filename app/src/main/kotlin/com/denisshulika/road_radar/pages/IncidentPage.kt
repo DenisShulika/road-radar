@@ -155,17 +155,18 @@ fun IncidentPage(
                             thickness = 1.dp,
                             color = theme["accent"]!!
                         )
-                        Text(
-                            text = "${localization["incident_description_subtext"]!!} ${info.description}",
-                            fontSize = 20.sp,
-                            fontFamily = RubikFont,
-                            color = theme["text"]!!
-                        )
-                        HorizontalDivider(
-                            thickness = 1.dp,
-                            color = theme["accent"]!!
-                        )
-
+                        if(info.description.isNotEmpty()){
+                            Text(
+                                text = "${localization["incident_description_subtext"]!!} ${info.description}",
+                                fontSize = 20.sp,
+                                fontFamily = RubikFont,
+                                color = theme["text"]!!
+                            )
+                            HorizontalDivider(
+                                thickness = 1.dp,
+                                color = theme["accent"]!!
+                            )
+                        }
                         if (info.photos.isNotEmpty()) {
                             info.photos.forEachIndexed { _, photoUrl ->
                                 Image(

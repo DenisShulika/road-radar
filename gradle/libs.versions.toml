@@ -7,6 +7,7 @@ agp = "8.7.3"
 appcompat = "1.7.0"
 coilCompose = "2.5.0"
 coilSvg = "2.2.2"
+converterMoshi = "2.9.0"
 datastorePreferences = "1.1.1"
 firebaseAuthKtx = "23.1.0"
 firebaseFirestoreKtx = "25.1.1"
@@ -22,6 +23,8 @@ mapsKtx = "5.1.1"
 mapsUtilsKtx = "5.1.1"
 material3 = "1.3.1"
 materialIconsExtended = "1.7.6"
+moshi = "1.15.0"
+moshiKotlin = "1.15.0"
 navigationCompose = "2.8.5"
 places = "4.1.0"
 playServicesIdentityVersion = "20.3.0"
@@ -50,6 +53,7 @@ androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecyc
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
 coil-svg = { module = "io.coil-kt:coil-svg", version.ref = "coilSvg" }
+converter-moshi = { module = "com.squareup.retrofit2:converter-moshi", version.ref = "converterMoshi" }
 firebase-auth = { module = "com.google.firebase:firebase-auth", version.ref = "firebaseAuthKtx" }
 firebase-auth-ktx = { module = "com.google.firebase:firebase-auth-ktx", version.ref = "firebaseAuthKtx" }
 firebase-firestore = { module = "com.google.firebase:firebase-firestore", version.ref = "firebaseFirestoreKtx" }
@@ -63,6 +67,8 @@ maps-compose = { module = "com.google.maps.android:maps-compose", version.ref = 
 maps-ktx = { module = "com.google.maps.android:maps-ktx", version.ref = "mapsKtx" }
 maps-utils-ktx = { module = "com.google.maps.android:maps-utils-ktx", version.ref = "mapsUtilsKtx" }
 material3 = { module = "androidx.compose.material3:material3", version.ref = "material3" }
+moshi = { module = "com.squareup.moshi:moshi", version.ref = "moshi" }
+moshi-kotlin = { module = "com.squareup.moshi:moshi-kotlin", version.ref = "moshiKotlin" }
 places = { module = "com.google.android.libraries.places:places", version.ref = "places" }
 play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "playServicesLocation" }
 play-services-identity = { module = "com.google.android.gms:play-services-identity" }
