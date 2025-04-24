@@ -2,6 +2,7 @@ package com.denisshulika.road_radar.pages
 
 import android.content.Intent
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
@@ -9,11 +10,13 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -24,12 +27,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -55,10 +60,13 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.FileProvider
 import androidx.navigation.NavController
 import com.denisshulika.road_radar.AuthState
 import com.denisshulika.road_radar.AuthViewModel
-import com.denisshulika.road_radar.IncidentManager
+import com.denisshulika.road_radar.IncidentCreationState
+import com.denisshulika.road_radar.IncidentsManager
+import com.denisshulika.road_radar.R
 import com.denisshulika.road_radar.Routes
 import com.denisshulika.road_radar.SettingsViewModel
 import com.denisshulika.road_radar.model.CustomDrawerState
@@ -69,16 +77,16 @@ import com.denisshulika.road_radar.model.opposite
 import com.denisshulika.road_radar.ui.components.CustomDrawer
 import com.denisshulika.road_radar.util.coloredShadow
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import java.io.File
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AboutPage(
-    @Suppress("UNUSED_PARAMETER") modifier: Modifier = Modifier,
     navController: NavController,
     authViewModel: AuthViewModel,
     settingsViewModel: SettingsViewModel,
-    incidentManager: IncidentManager
+    incidentsManager: IncidentsManager
 ) {
     val context = LocalContext.current
 
@@ -88,6 +96,10 @@ fun AboutPage(
         authViewModel.checkAuthStatus()
         when (authState.value) {
             is AuthState.Unauthenticated -> navController.navigate(Routes.LOGIN)
+            is AuthState.Error -> {
+                Toast.makeText(context, (authState.value as AuthState.Error).message, Toast.LENGTH_LONG).show()
+                incidentsManager.setIncidentCreationState(IncidentCreationState.Idle)
+            }
             else -> Unit
         }
     }
@@ -151,7 +163,7 @@ fun AboutPage(
             authViewModel = authViewModel,
             settingsViewModel = settingsViewModel,
             navController = navController,
-            incidentManager = incidentManager
+            incidentsManager = incidentsManager
         )
 
         Scaffold(
@@ -267,7 +279,6 @@ fun AboutPage(
                     val contactInfo = listOf(
                         localization["developer_name"]!!,
                         localization["developer_email"]!!,
-                        localization["developer_phone"]!!,
                         localization["developer_telegram"]!!,
                         localization["developer_github"]!!
                     )
@@ -275,7 +286,7 @@ fun AboutPage(
                     Column {
                         contactInfo.forEach { contact ->
                             when {
-                                contact.contains(localization["developer_email_title"].toString()) -> {
+                                contact.contains(localization["developer_email_title"]!!) -> {
                                     val email = "denisshulika31@gmail.com"
                                     Text(
                                         text = buildAnnotatedString {
@@ -294,7 +305,10 @@ fun AboutPage(
                                         fontWeight = FontWeight.Normal,
                                         color = theme["placeholder"]!!,
                                         modifier = Modifier
-                                            .clickable {
+                                            .clickable(
+                                                indication = null,
+                                                interactionSource = remember { MutableInteractionSource() }
+                                            ) {
                                                 val intent = Intent(
                                                     Intent.ACTION_SENDTO,
                                                     Uri.parse("mailto:$email")
@@ -304,7 +318,7 @@ fun AboutPage(
                                             .padding(bottom = 4.dp)
                                     )
                                 }
-                                contact.contains(localization["developer_telegram_title"].toString()) -> {
+                                contact.contains(localization["developer_telegram_title"]!!) -> {
                                     val telegramLink = "t.me/denisshulika"
                                     Text(
                                         text = buildAnnotatedString {
@@ -323,7 +337,10 @@ fun AboutPage(
                                         fontWeight = FontWeight.Normal,
                                         color = theme["placeholder"]!!,
                                         modifier = Modifier
-                                            .clickable {
+                                            .clickable(
+                                                indication = null,
+                                                interactionSource = remember { MutableInteractionSource() }
+                                            ) {
                                                 val intent = Intent(
                                                     Intent.ACTION_VIEW,
                                                     Uri.parse("https://$telegramLink")
@@ -333,7 +350,7 @@ fun AboutPage(
                                             .padding(bottom = 4.dp)
                                     )
                                 }
-                                contact.contains(localization["developer_github_title"].toString()) -> {
+                                contact.contains(localization["developer_github_title"]!!) -> {
                                     val githubLink = "github.com/DenisShulika"
                                     Text(
                                         text = buildAnnotatedString {
@@ -352,7 +369,10 @@ fun AboutPage(
                                         fontWeight = FontWeight.Normal,
                                         color = theme["placeholder"]!!,
                                         modifier = Modifier
-                                            .clickable {
+                                            .clickable(
+                                                indication = null,
+                                                interactionSource = remember { MutableInteractionSource() }
+                                            ) {
                                                 val intent = Intent(
                                                     Intent.ACTION_VIEW,
                                                     Uri.parse("https://$githubLink")
@@ -375,6 +395,36 @@ fun AboutPage(
                             }
                         }
                     }
+                    Text(
+                        modifier = Modifier
+                            .padding(bottom = 8.dp, top = 8.dp),
+                        text = localization["privacy_policy_title"]!!,
+                        fontSize = 20.sp,
+                        fontFamily = RubikFont,
+                        fontWeight = FontWeight.Bold,
+                        color = theme["text"]!!
+                    )
+
+                    Text(
+                        text = localization["privacy_policy_text_button"]!!,
+                        fontSize = 18.sp,
+                        fontFamily = RubikFont,
+                        fontWeight = FontWeight.Normal,
+                        color = theme["primary"]!!,
+                        textDecoration = TextDecoration.Underline,
+                        modifier = Modifier
+                            .clickable(
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() }
+                            ) {
+                                val intent = Intent(
+                                    Intent.ACTION_VIEW,
+                                    Uri.parse("https://www.freeprivacypolicy.com/live/a692d1a7-d3be-4b3d-b598-991fffee6e7b")
+                                )
+                                context.startActivity(intent)
+                            }
+                            .padding(bottom = 4.dp)
+                    )
                     Spacer(modifier = Modifier.height(12.dp))
                 }
             }
@@ -402,7 +452,12 @@ fun FaqItem(
         Text(
             modifier = Modifier
                 .padding(bottom = 4.dp)
-                .clickable { isExpanded = !isExpanded },
+                .clickable(
+                    indication = null,
+                    interactionSource = remember { MutableInteractionSource() }
+                ) {
+                    isExpanded = !isExpanded
+                },
             text = "● $question",
             fontSize = 18.sp,
             fontFamily = RubikFont,

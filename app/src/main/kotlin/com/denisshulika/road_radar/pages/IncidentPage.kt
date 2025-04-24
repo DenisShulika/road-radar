@@ -1,8 +1,10 @@
 package com.denisshulika.road_radar.pages
 
+import android.icu.text.SimpleDateFormat
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,31 +13,40 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -43,24 +54,24 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import coil.compose.AsyncImagePainter
 import coil.compose.rememberAsyncImagePainter
-import com.denisshulika.road_radar.IncidentManager
+import com.denisshulika.road_radar.IncidentsManager
 import com.denisshulika.road_radar.SettingsViewModel
 import com.denisshulika.road_radar.model.ThemeState
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun IncidentPage(
-    modifier: Modifier = Modifier,
     navController: NavController,
     settingsViewModel: SettingsViewModel,
-    incidentManager: IncidentManager
+    incidentsManager: IncidentsManager
 ) {
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
 
-    val incidentInfo by incidentManager.selectedDocumentInfo.observeAsState()
+    val incidentInfo by incidentsManager.selectedDocumentInfo.observeAsState()
 
     val localization = settingsViewModel.localization.observeAsState().value!!
     val theme = settingsViewModel.themeColors.observeAsState().value!!
@@ -75,6 +86,20 @@ fun IncidentPage(
         color = theme["background"]!!,
         darkIcons = settingsViewModel.getTheme() != ThemeState.DARK || !isSystemInDarkTheme()
     )
+
+    val dateFormat = SimpleDateFormat(
+        "EEEE, dd MMMM".trimIndent(),
+        Locale(localization["date_format_language"]!!, localization["date_format_country"]!!)
+    )
+    val timeFormat = SimpleDateFormat(
+        "'at' HH:mm:ss".trimIndent(),
+        Locale(localization["date_format_language"]!!, localization["date_format_country"]!!)
+    )
+
+    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    var showBottomSheet by remember { mutableStateOf(false) }
+    var selectedImageUrl by remember { mutableStateOf("") }
 
     Box(
         modifier = Modifier
@@ -117,6 +142,53 @@ fun IncidentPage(
                     .padding(innerPadding)
             ) {
                 incidentInfo?.let { info ->
+                    val creationDate = info.creationDate.toDate()
+                    val formatedDate = dateFormat.format(creationDate)
+                    val formatedTime = timeFormat.format(creationDate)
+
+                    if (showBottomSheet) {
+                        ModalBottomSheet(
+                            onDismissRequest = { showBottomSheet = false },
+                            sheetState = bottomSheetState,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .statusBarsPadding()
+                                .navigationBarsPadding(),
+                            dragHandle = {},
+                            shape = RectangleShape,
+                            containerColor = theme["background"]!!
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                ZoomableImage(selectedImageUrl, theme)
+
+                                IconButton(
+                                    onClick = {
+                                        showBottomSheet = false
+                                    },
+                                    modifier = Modifier
+                                        .align(Alignment.TopEnd)
+                                        .wrapContentSize()
+                                        .padding(12.dp)
+                                        .background(
+                                            color = Color.Black.copy(alpha = 0.4f),
+                                            shape = RoundedCornerShape(50)
+                                        ),
+                                ) {
+                                    Icon(
+                                        modifier = Modifier.size(24.dp),
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "",
+                                        tint = theme["icon"]!!
+                                    )
+                                }
+                            }
+                        }
+                    }
+
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -136,7 +208,7 @@ fun IncidentPage(
                             color = theme["accent"]!!
                         )
                         Text(
-                            text = "${localization["incident_date_subtext"]!!} ${info.date}",
+                            text = "${localization["incident_date_subtext"]!!} $formatedDate $formatedTime",
                             fontSize = 20.sp,
                             fontFamily = RubikFont,
                             color = theme["text"]!!
@@ -168,29 +240,61 @@ fun IncidentPage(
                             )
                         }
                         if (info.photos.isNotEmpty()) {
-                            info.photos.forEachIndexed { _, photoUrl ->
-                                Image(
-                                    painter = rememberAsyncImagePainter(photoUrl),
-                                    contentDescription = "",
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .heightIn(0.dp, 800.dp)
-                                        .clip(RoundedCornerShape(8.dp)),
-                                    contentScale = ContentScale.FillWidth
-                                )
+                            LazyRow(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                items(info.photos.size) { index ->
+                                    val imageUrl = info.photos[index]
+                                    val painter = rememberAsyncImagePainter(imageUrl)
+                                    val painterState = painter.state
+                                    Box(
+                                        modifier = Modifier
+                                            .size(180.dp)
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(Color.Gray.copy(alpha = 0.2f))
+                                    ) {
+                                        Image(
+                                            painter = painter,
+                                            contentDescription = "",
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .matchParentSize()
+                                                .clickable {
+                                                    selectedImageUrl = imageUrl
+                                                    showBottomSheet = true
+                                                },
+                                            contentScale = ContentScale.Crop
+                                        )
+                                        if (painterState is AsyncImagePainter.State.Loading) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxSize(),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                CircularProgressIndicator(
+                                                    modifier = Modifier
+                                                        .size(48.dp),
+                                                    color = theme["icon"]!!
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
                             }
                             HorizontalDivider(
                                 thickness = 1.dp,
                                 color = theme["accent"]!!
                             )
                         }
+                        Toast.makeText(context, info.createdBy, Toast.LENGTH_LONG).show()
                         Text(
                             text = "${localization["incident_created_by_subtext"]!!} ${info.createdBy}",
                             fontSize = 20.sp,
                             fontFamily = RubikFont,
                             color = theme["text"]!!
                         )
-                        Spacer(modifier = modifier)
+                        Spacer(modifier = Modifier)
                     }
                 }
             }

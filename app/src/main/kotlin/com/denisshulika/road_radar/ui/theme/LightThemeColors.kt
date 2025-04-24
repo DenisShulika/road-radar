@@ -8,6 +8,7 @@ val lightThemeColors : Map<String, Color> = mapOf(
     "background" to Color(0xFFFFFFFF),
     "drawer_background" to Color(0xFFF5F5F5),
     "top_bar_background" to Color(0xFFEEEEEE),
+    "input_background" to Color(0xFFF2F2F2),
     "text" to Color(0xFF0C0C0C),
     "placeholder" to Color(0xFF888888),
     "icon" to Color(0xFF000000),

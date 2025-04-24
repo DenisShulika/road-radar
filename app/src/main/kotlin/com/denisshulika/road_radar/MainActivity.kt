@@ -25,9 +25,7 @@ import androidx.lifecycle.lifecycleScope
 import com.denisshulika.road_radar.local.SettingsLocalStorage
 import com.denisshulika.road_radar.model.ThemeState
 import com.denisshulika.road_radar.util.readValueFromJsonFile
-import com.google.android.libraries.places.api.Places
 import kotlinx.coroutines.launch
-import java.util.Locale
 
 @ExperimentalMaterial3Api
 class MainActivity : ComponentActivity() {
@@ -38,16 +36,14 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         val authViewModel: AuthViewModel by viewModels()
-        val incidentManager: IncidentManager by viewModels()
+        val incidentsManager: IncidentsManager by viewModels()
         val settingsViewModel: SettingsViewModel by viewModels()
+        val locationHandler: LocationHandler by viewModels()
+        val commentManager: CommentManager by viewModels()
 
         val settingsStorage = SettingsLocalStorage(this, settingsViewModel)
 
-        incidentManager.deleteOldIncidents()
-
-        if (!Places.isInitialized()) {
-            Places.initialize(applicationContext, BuildConfig.PLACES_API_KEY, Locale("uk"))
-        }
+        incidentsManager.deleteOldIncidents(this)
 
         var isSystemInDarkTheme = false
         setContent {
@@ -64,7 +60,7 @@ class MainActivity : ComponentActivity() {
                 ) {
                     Image(
                         modifier = Modifier
-                            .size(300.dp)
+                            .size(200.dp)
                             .clip(RoundedCornerShape(25.dp)),
                         painter = painterResource(R.drawable.logo_icon),
                         contentDescription = ""
@@ -92,11 +88,11 @@ class MainActivity : ComponentActivity() {
                     settingsViewModel.setLocalisation(readValueFromJsonFile(language.value, this@MainActivity)!!)
 
                     RoadRadarNavigation(
-                        modifier = Modifier,
                         authViewModel = authViewModel,
-                        incidentManager = incidentManager,
-                        placesClient = Places.createClient(this@MainActivity),
-                        settingsViewModel = settingsViewModel
+                        incidentsManager = incidentsManager,
+                        settingsViewModel = settingsViewModel,
+                        locationHandler = locationHandler,
+                        commentManager = commentManager
                     )
                 }
             }

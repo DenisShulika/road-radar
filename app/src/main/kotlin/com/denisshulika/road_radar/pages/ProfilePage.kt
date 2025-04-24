@@ -1,5 +1,7 @@
 package com.denisshulika.road_radar.pages
 
+import android.graphics.Bitmap
+import android.graphics.ImageDecoder
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
@@ -11,6 +13,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,13 +24,11 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -39,16 +40,10 @@ import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RichTooltip
-import androidx.compose.material3.RichTooltipColors
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TooltipBox
-import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -56,13 +51,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
@@ -76,9 +70,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
+import com.canhub.cropper.CropImageContract
+import com.canhub.cropper.CropImageContractOptions
+import com.canhub.cropper.CropImageOptions
+import com.canhub.cropper.CropImageView
 import com.denisshulika.road_radar.AuthState
 import com.denisshulika.road_radar.AuthViewModel
-import com.denisshulika.road_radar.IncidentManager
+import com.denisshulika.road_radar.IncidentsManager
 import com.denisshulika.road_radar.R
 import com.denisshulika.road_radar.Routes
 import com.denisshulika.road_radar.SettingsViewModel
@@ -90,12 +88,10 @@ import com.denisshulika.road_radar.model.ThemeState
 import com.denisshulika.road_radar.model.UserData
 import com.denisshulika.road_radar.model.isOpened
 import com.denisshulika.road_radar.model.opposite
-import com.denisshulika.road_radar.ui.components.AutocompleteTextFieldForRegion
 import com.denisshulika.road_radar.ui.components.CustomDrawer
 import com.denisshulika.road_radar.ui.components.StyledBasicTextField
 import com.denisshulika.road_radar.util.coloredShadow
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.google.android.libraries.places.api.net.PlacesClient
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -105,12 +101,10 @@ import kotlin.math.roundToInt
 @ExperimentalMaterial3Api
 @Composable
 fun ProfilePage(
-    @Suppress("UNUSED_PARAMETER") modifier: Modifier = Modifier,
     navController: NavController,
     authViewModel: AuthViewModel,
     settingsViewModel: SettingsViewModel,
-    placesClient: PlacesClient,
-    incidentManager: IncidentManager
+    incidentsManager: IncidentsManager
 ) {
     val context = LocalContext.current
 
@@ -170,15 +164,9 @@ fun ProfilePage(
 
     var userEmail by remember { mutableStateOf("") }
 
-
     var userPhoneNumber by remember { mutableStateOf("") }
     var phoneNumberError by remember { mutableStateOf(false) }
     var isPhoneNumberEmpty by remember { mutableStateOf(false) }
-
-
-    var selectedRegion by remember { mutableStateOf("") }
-    var isRegionSelected by remember { mutableStateOf(true) }
-    var isSelectedRegionEmpty by remember { mutableStateOf(false) }
 
     var userPhoto by remember { mutableStateOf("") }
 
@@ -188,25 +176,49 @@ fun ProfilePage(
         userName = userLocalStorage.getUserName().toString()
         userEmail = userLocalStorage.getUserEmail().toString()
         userPhoneNumber = userLocalStorage.getUserPhoneNumber().toString()
-        selectedRegion = userLocalStorage.getUserRegion().toString()
         userPhoto = userLocalStorage.getUserPhotoUrl().toString()
     }
 
-    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
-    var croppedImageUri by remember { mutableStateOf<Uri?>(null) }
-    val getContent = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-        uri?.let {
-            selectedImageUri = it
+    var bitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var imageUri by remember { mutableStateOf<Uri?>(null) }
+    var isImageSelected by remember { mutableStateOf(false) }
 
-            val croppedBitmap = cropImageToSquare(it, context.contentResolver)
-            croppedImageUri = if (croppedBitmap != null) bitmapToUri(context, croppedBitmap) else null
-
-            userPhoto = croppedImageUri.toString()
+    val imageCropLauncher = rememberLauncherForActivityResult(CropImageContract()) { result ->
+        if (result.isSuccessful) {
+            imageUri = result.uriContent
+            isImageSelected = true
+        } else {
+            val exception = result.error
+            if (exception != null) {
+                Toast.makeText(context, exception.message, Toast.LENGTH_LONG).show()
+            } else {
+                Toast.makeText(context, localization["image_cropping_error"], Toast.LENGTH_LONG).show()
+            }
         }
     }
 
-    val tooltipState = rememberTooltipState()
-    val scope = rememberCoroutineScope()
+    if (imageUri != null) {
+        val source = ImageDecoder.createSource(context.contentResolver, imageUri!!)
+        bitmap = ImageDecoder.decodeBitmap(source)
+    }
+
+    val imagePickerLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+            isImageSelected = false
+            val cropOption = CropImageContractOptions(
+                uri,
+                CropImageOptions().apply {
+                    guidelines = CropImageView.Guidelines.ON
+                    aspectRatioX = 1
+                    aspectRatioY = 1
+                    fixAspectRatio = true
+                    cropShape = CropImageView.CropShape.RECTANGLE
+                    showCropOverlay = true
+                    autoZoomEnabled = true
+                }
+            )
+            imageCropLauncher.launch(cropOption)
+        }
 
     Box(
         modifier = Modifier
@@ -230,7 +242,7 @@ fun ProfilePage(
             authViewModel = authViewModel,
             settingsViewModel = settingsViewModel,
             navController = navController,
-            incidentManager = incidentManager
+            incidentsManager = incidentsManager
         )
 
         Scaffold(
@@ -342,24 +354,6 @@ fun ProfilePage(
                                         color = theme["text"]!!
                                     )
                                 }
-                                Column(
-                                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                                ) {
-                                    Text(
-                                        text = localization["region_title"]!!,
-                                        fontSize = 24.sp,
-                                        fontFamily = RubikFont,
-                                        fontWeight = FontWeight.Normal,
-                                        color = theme["placeholder"]!!
-                                    )
-                                    Text(
-                                        text = selectedRegion,
-                                        fontSize = 22.sp,
-                                        fontFamily = RubikFont,
-                                        fontWeight = FontWeight.Normal,
-                                        color = theme["text"]!!
-                                    )
-                                }
                                 if (authViewModel.isUserLoggedInWithEmailPassword()) {
                                     Column(
                                         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -437,24 +431,56 @@ fun ProfilePage(
                                         .fillMaxWidth(),
                                     horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
-                                    Column(
+                                    Box(
                                         modifier = Modifier
-                                            .clip(RoundedCornerShape(10.dp))
-                                            .background(theme["drawer_background"]!!)
                                             .size(125.dp)
-                                            .clickable {
-                                                getContent.launch("image/*")
-                                            },
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        verticalArrangement = Arrangement.Center
                                     ) {
-                                        Image(
-                                            painter = rememberAsyncImagePainter(userPhoto),
-                                            contentDescription = "",
+                                        Column(
                                             modifier = Modifier
-                                                .size(100.dp)
                                                 .clip(RoundedCornerShape(10.dp))
-                                        )
+                                                .background(theme["drawer_background"]!!)
+                                                .size(125.dp)
+                                                .clickable(
+                                                    indication = null,
+                                                    interactionSource = remember { MutableInteractionSource() }
+                                                ) {
+                                                    imagePickerLauncher.launch("image/*")
+                                                },
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            verticalArrangement = Arrangement.Center
+                                        ) {
+                                            if (bitmap != null) {
+                                                Image(
+                                                    bitmap = bitmap!!.asImageBitmap(),
+                                                    contentDescription = "",
+                                                    modifier = Modifier
+                                                        .size(100.dp)
+                                                        .clip(RoundedCornerShape(10.dp))
+                                                )
+                                            } else {
+                                                Image(
+                                                    painter = rememberAsyncImagePainter(userPhoto),
+                                                    contentDescription = "",
+                                                    modifier = Modifier
+                                                        .size(100.dp)
+                                                        .clip(RoundedCornerShape(10.dp))
+                                                )
+                                            }
+                                        }
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                        ) {
+                                            Icon(
+                                                imageVector = ImageVector.vectorResource(R.drawable.add_photo_alternate),
+                                                contentDescription = "",
+                                                tint = theme["icon"]!!,
+                                                modifier = Modifier
+                                                    .align(Alignment.BottomEnd)
+                                                    .offset(x = 12.dp, y = (-12).dp)
+                                                    .size(36.dp)
+                                            )
+                                        }
                                     }
                                 }
                                 Spacer(modifier = Modifier.size(24.dp))
@@ -489,94 +515,6 @@ fun ProfilePage(
                                         Spacer(modifier = Modifier.height(4.dp))
                                         Text(
                                             localization["name_empty"]!!,
-                                            color = theme["error"]!!,
-                                            fontSize = 12.sp,
-                                            fontFamily = RubikFont,
-                                            fontWeight = FontWeight.Normal
-                                        )
-                                    }
-                                }
-                                Column {
-                                    Column(
-                                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                                    ) {
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Text(
-                                                text = localization["region_title"]!!,
-                                                fontSize = 24.sp,
-                                                fontFamily = RubikFont,
-                                                fontWeight = FontWeight.Normal,
-                                                color = theme["placeholder"]!!
-                                            )
-                                            Spacer(modifier = Modifier.width(8.dp))
-
-                                            TooltipBox(
-                                                positionProvider = TooltipDefaults.rememberRichTooltipPositionProvider(),
-                                                tooltip = {
-                                                    RichTooltip(
-                                                        modifier = Modifier.padding(20.dp),
-                                                        title = {
-                                                            Text(
-                                                                text = localization["region_tip_title"]!!,
-                                                                fontSize = 20.sp,
-                                                                fontFamily = RubikFont,
-                                                                fontWeight = FontWeight.SemiBold
-                                                            )
-                                                        },
-                                                        text = {
-                                                            Text(
-                                                                text = localization["region_tip_text"]!!,
-                                                                fontSize = 16.sp,
-                                                                fontFamily = RubikFont,
-                                                                fontWeight = FontWeight.Normal
-                                                            )
-                                                        },
-                                                        colors = RichTooltipColors(
-                                                            containerColor = theme["primary"]!!,
-                                                            contentColor = theme["text"]!!,
-                                                            titleContentColor = theme["text"]!!,
-                                                            actionContentColor = theme["text"]!!
-                                                        )
-                                                    )
-                                                },
-                                                state = tooltipState
-                                            ) {
-                                                IconButton(
-                                                    onClick = { scope.launch { tooltipState.show() } },
-                                                    modifier = Modifier
-                                                        .size(20.dp)
-                                                ) {
-                                                    Icon(
-                                                        imageVector = ImageVector.vectorResource(R.drawable.info),
-                                                        contentDescription = "",
-                                                        tint = Color(0xFFADADAD)
-                                                    )
-                                                }
-                                            }
-                                        }
-                                        AutocompleteTextFieldForRegion(
-                                            modifier = Modifier.heightIn(min = 0.dp, max = 300.dp),
-                                            value = selectedRegion,
-                                            placesClient = placesClient,
-                                            onPlaceSelected = { value ->
-                                                selectedRegion = value
-                                                isRegionSelected = true
-                                            },
-                                            onValueChange = { value ->
-                                                selectedRegion = value
-                                                isRegionSelected = false
-                                                isSelectedRegionEmpty = selectedRegion.isEmpty()
-                                            },
-                                            placeholder = localization["region_placeholder"]!!,
-                                            settingsViewModel = settingsViewModel
-                                        )
-                                    }
-                                    if (isSelectedRegionEmpty) {
-                                        Spacer(modifier = Modifier.height(4.dp))
-                                        Text(
-                                            localization["region_empty"]!!,
                                             color = theme["error"]!!,
                                             fontSize = 12.sp,
                                             fontFamily = RubikFont,
@@ -664,14 +602,11 @@ fun ProfilePage(
                                             userName = userLocalStorage.getUserName().toString()
                                             userEmail = userLocalStorage.getUserEmail().toString()
                                             userPhoneNumber = userLocalStorage.getUserPhoneNumber().toString()
-                                            selectedRegion = userLocalStorage.getUserRegion().toString()
                                             userPhoto = userLocalStorage.getUserPhotoUrl().toString()
                                         }
                                         isNameEmpty = false
                                         isPhoneNumberEmpty = false
                                         phoneNumberError = false
-                                        isSelectedRegionEmpty = false
-                                        isRegionSelected = true
                                         isEditingState = !isEditingState
                                     }
                                 ) {
@@ -702,48 +637,45 @@ fun ProfilePage(
                                             Toast.makeText(context, localization["phone_invalid_error"]!!, Toast.LENGTH_LONG).show()
                                             return@Button
                                         }
-                                        isSelectedRegionEmpty = selectedRegion.isEmpty()
-                                        if(isSelectedRegionEmpty) {
-                                            Toast.makeText(context, localization["region_enter_error"]!!, Toast.LENGTH_LONG).show()
-                                            return@Button
-                                        }
-                                        if(!isRegionSelected) {
-                                            Toast.makeText(context, localization["region_select_error"]!!, Toast.LENGTH_LONG).show()
-                                            return@Button
+
+                                        var photoUri = ""
+                                        if (bitmap != null) {
+                                            photoUri = bitmapToUri(context, bitmap!!).toString()
+                                        } else {
+                                            photoUri = userPhoto
                                         }
 
+
                                         val userData = hashMapOf(
-                                            "phoneNumber" to userPhoneNumber,
-                                            "region" to selectedRegion
+                                            "phoneNumber" to userPhoneNumber
                                         )
 
                                         val uid = currentUser!!.uid
                                         val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
+
                                         firestore.collection("users")
                                             .document(uid)
                                             .set(userData)
                                             .addOnSuccessListener {
                                                 authViewModel.updateUserProfile(
                                                     name = userName,
-                                                    photo = userPhoto,
+                                                    photo = photoUri,
                                                     context = context,
                                                     localization = localization
                                                 )
-                                                var userPassword = ""
+
                                                 CoroutineScope(Dispatchers.Main).launch {
-                                                    userPassword = userLocalStorage.getUserPassword().toString()
-                                                }
-                                                val userLocalData = UserData(
-                                                    uid = uid,
-                                                    email = userEmail,
-                                                    password = userPassword,
-                                                    name = userName,
-                                                    phoneNumber = userPhoneNumber,
-                                                    region = selectedRegion,
-                                                    photoUrl = userPhoto
-                                                )
-                                                CoroutineScope(Dispatchers.Main).launch {
-                                                    incidentManager.setUserRegion(selectedRegion)
+                                                    val userPassword =
+                                                        userLocalStorage.getUserPassword()
+                                                            .toString()
+                                                    val userLocalData = UserData(
+                                                        uid = uid,
+                                                        email = userEmail,
+                                                        password = userPassword,
+                                                        name = userName,
+                                                        phoneNumber = userPhoneNumber,
+                                                        photoUrl = photoUri
+                                                    )
                                                     userLocalStorage.saveUser(userLocalData)
                                                     navController.navigate(Routes.PROFILE)
                                                 }

@@ -1,19 +1,11 @@
 package com.denisshulika.road_radar.pages
 
 import android.Manifest
-import android.app.Activity
-import android.app.AlertDialog
 import android.content.Context
-import android.content.Intent
-import android.content.pm.PackageManager
-import android.location.Geocoder
-import android.location.Location
 import android.net.Uri
 import android.provider.OpenableColumns
-import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -56,6 +48,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -69,39 +62,35 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.denisshulika.road_radar.AuthViewModel
-import com.denisshulika.road_radar.BuildConfig
+import com.denisshulika.road_radar.CommentManager
 import com.denisshulika.road_radar.IncidentCreationState
-import com.denisshulika.road_radar.IncidentManager
+import com.denisshulika.road_radar.IncidentsManager
+import com.denisshulika.road_radar.LocationHandler
+import com.denisshulika.road_radar.LocationRequestState
 import com.denisshulika.road_radar.Routes
 import com.denisshulika.road_radar.SettingsViewModel
 import com.denisshulika.road_radar.model.IncidentType
 import com.denisshulika.road_radar.model.ThemeState
 import com.denisshulika.road_radar.ui.components.StyledBasicTextField
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.google.android.gms.location.LocationServices
 import com.google.android.libraries.places.api.model.AddressComponent
-import com.google.android.libraries.places.api.net.PlacesClient
 import com.squareup.moshi.Json
-import com.squareup.moshi.Moshi
-import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import java.util.Locale
+import java.io.File
+import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddNewIncidentPage(
-    @Suppress("UNUSED_PARAMETER") modifier: Modifier = Modifier,
     navController: NavController,
     authViewModel: AuthViewModel,
     settingsViewModel: SettingsViewModel,
-    incidentManager: IncidentManager,
-    placesClient: PlacesClient
+    incidentsManager: IncidentsManager,
+    locationHandler: LocationHandler,
+    commentManager: CommentManager
 ) {
     val context = LocalContext.current
 
@@ -116,17 +105,17 @@ fun AddNewIncidentPage(
         localization["incident_type_other"]!!
     )
 
-    val incidentCreationState = incidentManager.incidentCreationState.observeAsState()
+    val incidentCreationState = incidentsManager.incidentCreationState.observeAsState()
 
     LaunchedEffect(incidentCreationState.value) {
         when(incidentCreationState.value) {
             is IncidentCreationState.Success -> {
                 navController.navigate(Routes.INCIDENTS)
-                incidentManager.setIncidentCreationState(IncidentCreationState.Null)
+                incidentsManager.setIncidentCreationState(IncidentCreationState.Idle)
             }
             is IncidentCreationState.Error -> {
                 Toast.makeText(context, (incidentCreationState.value as IncidentCreationState.Error).message, Toast.LENGTH_LONG).show()
-                incidentManager.setIncidentCreationState(IncidentCreationState.Null)
+                incidentsManager.setIncidentCreationState(IncidentCreationState.Idle)
             }
             else -> Unit
         }
@@ -137,60 +126,76 @@ fun AddNewIncidentPage(
 
     var incidentDescription by remember { mutableStateOf("") }
 
-    var incidentPhotos by remember { mutableStateOf<List<Uri?>>(emptyList()) }
-
-    var selectedRegion by remember { mutableStateOf("") }
+    var incidentPhotos = remember { mutableStateListOf<Uri>() }
 
     var selectedAddress by remember { mutableStateOf("") }
 
-    var userGPS by remember { mutableStateOf<GPS?>(null) }
-    var isUserLocationTaken by remember { mutableStateOf<Boolean?>(null) }
+    val locationRequestState by locationHandler.locationRequestState.observeAsState()
+
+    val lastUpdateTime = locationHandler.lastUpdateTime.observeAsState().value!!
+
+    val userLocation = locationHandler.userLocation.observeAsState().value
 
     var latitude by remember { mutableStateOf<Double?>(null) }
     var longitude by remember { mutableStateOf<Double?>(null) }
 
-    val getContent = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickMultipleVisualMedia(
-            maxItems = 3
-        ),
-        onResult = { uriList ->
-            val imageUris = uriList.filter { uri ->
-                val mimeType = context.contentResolver.getType(uri)
-                if (mimeType?.startsWith("image/") == false) {
-                    Toast.makeText(context, localization["select_videos_error"], Toast.LENGTH_SHORT).show()
-                }
-                mimeType?.startsWith("image/") == true
+    var isUserLocationTaken by remember { mutableStateOf<Boolean?>(null) }
 
-            }
-
-            if (imageUris.size + incidentPhotos.size <= 3) {
-                incidentPhotos = incidentPhotos + imageUris
-            } else {
-                Toast.makeText(context, localization["photo_limit_error"], Toast.LENGTH_SHORT).show()
-            }
-        }
-    )
-
-    val locationPermissionRequest = rememberLauncherForActivityResult(
+    val locationLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
-        val fineLocationPermissionGranted = permissions.getOrDefault(Manifest.permission.ACCESS_FINE_LOCATION, false)
-        val coarseLocationPermissionGranted = permissions.getOrDefault(Manifest.permission.ACCESS_COARSE_LOCATION, false)
+        locationHandler.handlePermissionResult(
+            permissions = permissions,
+            onSuccess = { location ->
+                latitude = location.latitude
+                longitude = location.longitude
 
-        if (fineLocationPermissionGranted || coarseLocationPermissionGranted) {
-            getCurrentLocation(context, localization) { gps ->
-                userGPS = gps
-                latitude = gps?.latitude
-                longitude = gps?.longitude
+                locationHandler.getAddressFromCoordinates(
+                    context,
+                    localization,
+                    latitude!!,
+                    longitude!!
+                ) { address ->
+                    if (address != null) {
+                        isUserLocationTaken = true
+
+                        val parts = address.split(",")
+                            .map { it.trim() }
+
+                        val street = parts.getOrNull(0) ?: localization["unknown_street"]!!
+
+                        val buildingNumber = parts.getOrNull(1) ?: localization["unknown_number"]!!
+
+                        selectedAddress = "$street, $buildingNumber"
+
+                        locationHandler.setLocationRequestState(LocationRequestState.Success)
+                    } else {
+                        Toast.makeText(context, localization["get_address_fail"]!!, Toast.LENGTH_LONG).show()
+                        locationHandler.setLocationRequestState(LocationRequestState.NoLocation)
+                    }
+                }
             }
-        } else {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(context as Activity, Manifest.permission.ACCESS_FINE_LOCATION)) {
-                Toast.makeText(context, localization["permission_needed"]!!, Toast.LENGTH_LONG).show()
-            } else {
-                showLocationPermissionDialog(context, localization)
-            }
+        )
+    }
+
+    val cameraImageUri = remember { mutableStateOf<Uri?>(null) }
+
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetMultipleContents()
+    ) { uriList ->
+        val remaining = 3 - incidentPhotos.size
+        incidentPhotos.addAll(uriList.take(remaining))
+    }
+
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success && incidentPhotos.size < 3) {
+            incidentPhotos.add(cameraImageUri.value!!)
         }
     }
+
+    var showDialog by remember { mutableStateOf(false) }
 
     val systemUiController = rememberSystemUiController()
 
@@ -299,7 +304,11 @@ fun AddNewIncidentPage(
                                         fontSize = 22.sp,
                                         fontFamily = RubikFont
                                     )
-                                    Icon(imageVector = Icons.Default.ArrowDropDown, contentDescription = "")
+                                    Icon(
+                                        imageVector = Icons.Default.ArrowDropDown,
+                                        contentDescription = "",
+                                        tint = theme["icon"]!!
+                                    )
                                 }
                                 DropdownMenu(
                                     modifier = Modifier.background(theme["primary"]!!),
@@ -355,8 +364,8 @@ fun AddNewIncidentPage(
                     }
                     Spacer(modifier = Modifier.height(32.dp))
                     Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
                             text = localization["location"]!!,
@@ -364,56 +373,58 @@ fun AddNewIncidentPage(
                             fontFamily = RubikFont,
                             color = theme["text"]!!
                         )
-                        TextButton(
-                            onClick = {
-                                when {
-                                    ContextCompat.checkSelfPermission(
-                                        context,
-                                        Manifest.permission.ACCESS_FINE_LOCATION
-                                    ) == PackageManager.PERMISSION_GRANTED -> {
-                                        getCurrentLocation(context, localization) { gps ->
-                                            userGPS = gps
-                                            latitude = gps?.latitude
-                                            longitude = gps?.longitude
-                                            if (userGPS != null) {
-                                                isUserLocationTaken = true
-                                                getAddressFromCoordinates(context, localization, userGPS!!.latitude, userGPS!!.longitude) { address ->
-                                                    if (address != null) {
-                                                        val parts = address.split(",")
-                                                            .map { it.trim() }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            if (locationRequestState == LocationRequestState.Loading) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(40.dp),
+                                    color = theme["primary"]!!
+                                )
+                            } else if (isUserLocationTaken != true) {
+                                TextButton(
+                                    onClick = {
+                                        val currTime = System.currentTimeMillis()
+                                        if (currTime - lastUpdateTime > 5 * 60 * 1000 || userLocation == null) {
+                                            locationLauncher.launch(
+                                                arrayOf(
+                                                    Manifest.permission.ACCESS_FINE_LOCATION,
+                                                    Manifest.permission.ACCESS_COARSE_LOCATION
+                                                )
+                                            )
+                                        } else {
+                                            locationHandler.setLastUpdateTime(System.currentTimeMillis())
+                                            latitude = userLocation.latitude
+                                            longitude = userLocation.longitude
 
-                                                        val street = parts.getOrNull(0) ?: localization["unknown_street"]!!
-                                                        val region = parts.find { it.contains("область") || it.contains("місто") }
-                                                            ?: localization["unknown_region"]!!
-
-                                                        val buildingNumber = parts.getOrNull(1) ?: localization["unknown_number"]!!
-
-                                                        selectedAddress = "$street, $buildingNumber"
-                                                        selectedRegion = region
-                                                    } else {
-                                                        Toast.makeText(context, localization["get_address_fail"]!!, Toast.LENGTH_LONG).show()
-                                                    }
+                                            locationHandler.getAddressFromCoordinates(
+                                                context, localization,
+                                                latitude!!, longitude!!
+                                            ) { address ->
+                                                if (address != null) {
+                                                    val parts = address.split(",").map { it.trim() }
+                                                    val street = parts.getOrNull(0) ?: localization["unknown_street"]!!
+                                                    val buildingNumber = parts.getOrNull(1) ?: localization["unknown_number"]!!
+                                                    selectedAddress = "$street, $buildingNumber"
+                                                    isUserLocationTaken = true
+                                                } else {
+                                                    Toast.makeText(context, localization["get_address_fail"]!!, Toast.LENGTH_LONG).show()
                                                 }
                                             }
                                         }
-                                    }
-                                    else -> {
-                                        locationPermissionRequest.launch(
-                                            arrayOf(
-                                                Manifest.permission.ACCESS_FINE_LOCATION,
-                                                Manifest.permission.ACCESS_COARSE_LOCATION
-                                            )
-                                        )
-                                    }
+                                    },
+                                    enabled = true
+                                ) {
+                                    Text(
+                                        text = localization["location_button"]!!,
+                                        fontSize = 20.sp,
+                                        color = theme["primary"]!!,
+                                        fontFamily = RubikFont
+                                    )
                                 }
                             }
-                        ) {
-                            Text(
-                                text = localization["location_button"]!!,
-                                fontSize = 20.sp,
-                                color = theme["primary"]!!,
-                                fontFamily = RubikFont
-                            )
                         }
                     }
                     if (isUserLocationTaken == false) {
@@ -426,45 +437,36 @@ fun AddNewIncidentPage(
                             fontWeight = FontWeight.Normal
                         )
                     }
+                    if (locationRequestState == LocationRequestState.NoLocation) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = localization["location_not_available"]!!,
+                            color = theme["error"]!!,
+                            fontSize = 12.sp,
+                            fontFamily = RubikFont,
+                            fontWeight = FontWeight.Normal
+                        )
+                    }
+                    if (locationRequestState == LocationRequestState.NoPermission) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = localization["location_permission_denied"]!!,
+                            color = theme["error"]!!,
+                            fontSize = 12.sp,
+                            fontFamily = RubikFont,
+                            fontWeight = FontWeight.Normal
+                        )
+                    }
+                    if (isUserLocationTaken == true) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = selectedAddress,
+                            fontSize = 22.sp,
+                            fontFamily = RubikFont,
+                            color = theme["text"]!!
+                        )
+                    }
                     Spacer(modifier = Modifier.height(32.dp))
-                    if(selectedRegion.isNotEmpty()){
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            Text(
-                                text = localization["region_title"]!!,
-                                fontSize = 24.sp,
-                                fontFamily = RubikFont,
-                                color = theme["text"]!!
-                            )
-                            Text(
-                                text = selectedRegion,
-                                fontSize = 22.sp,
-                                fontFamily = RubikFont,
-                                color = theme["text"]!!
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(32.dp))
-                    }
-                    if(selectedAddress.isNotEmpty()) {
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            Text(
-                                text = localization["address_title"]!!,
-                                fontSize = 24.sp,
-                                fontFamily = RubikFont,
-                                color = theme["text"]!!
-                            )
-                            Text(
-                                text = selectedAddress,
-                                fontSize = 22.sp,
-                                fontFamily = RubikFont,
-                                color = theme["text"]!!
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(32.dp))
-                    }
                     Column(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
@@ -492,7 +494,7 @@ fun AddNewIncidentPage(
                             }
                             incidentPhotos.forEachIndexed { index, uri ->
                                 val fileName = getFileNameFromUri(
-                                    uri = uri ?: Uri.EMPTY,
+                                    uri = uri,
                                     context = context,
                                     localization = localization
                                 )
@@ -521,7 +523,7 @@ fun AddNewIncidentPage(
                                         }
                                         IconButton(
                                             onClick = {
-                                                incidentPhotos = incidentPhotos.toMutableList().apply { removeAt(index) }
+                                                incidentPhotos.removeAt(index)
                                             }
                                         ) {
                                             Icon(
@@ -544,6 +546,25 @@ fun AddNewIncidentPage(
                         }
                     }
                     Spacer(modifier = Modifier.height(8.dp))
+                    PhotoPickerDialog(
+                        showDialog = showDialog,
+                        onDismiss = { showDialog = false },
+                        onPickFromGallery = {
+                            galleryLauncher.launch("image/*")
+                        },
+                        onTakePhoto = {
+                            val photoFile = File(context.cacheDir, "${UUID.randomUUID()}.jpg")
+                            val uri = FileProvider.getUriForFile(
+                                context,
+                                "${context.packageName}.provider",
+                                photoFile
+                            )
+                            cameraImageUri.value = uri
+                            cameraLauncher.launch(uri)
+                        },
+                        localization = localization,
+                        theme = theme
+                    )
                     if (incidentPhotos.size < 3) {
                         Row(
                             modifier = Modifier
@@ -552,12 +573,10 @@ fun AddNewIncidentPage(
                             horizontalArrangement = Arrangement.Start
                         ) {
                             TextButton(
+                                enabled = incidentCreationState.value != IncidentCreationState.Loading,
                                 onClick = {
-                                    getContent.launch(
-                                        PickVisualMediaRequest()
-                                    )
-                                },
-                                enabled = incidentCreationState.value != IncidentCreationState.Loading
+                                    showDialog = true
+                                }
                             ) {
                                 Text(
                                     text = localization["add_photos_button"]!!,
@@ -586,22 +605,22 @@ fun AddNewIncidentPage(
                                 Toast.makeText(context, localization["type_error"], Toast.LENGTH_LONG).show()
                                 return@Button
                             }
-                            isUserLocationTaken = userGPS != null
-                            if (isUserLocationTaken == false || selectedAddress.isEmpty()) {
-                                Toast.makeText(context, localization["location_error"]!!, Toast.LENGTH_LONG).show() //TODO()
+                            isUserLocationTaken = userLocation != null
+                            if (!isUserLocationTaken!! || selectedAddress.isEmpty()) {
+                                Toast.makeText(context, localization["location_error"]!!, Toast.LENGTH_LONG).show()
                                 isUserLocationTaken = false
                                 return@Button
                             }
-                            incidentManager.addNewIncident(
+                            incidentsManager.addNewIncident(
                                 authViewModel = authViewModel,
+                                commentManager = commentManager,
                                 context = context,
                                 photoUris = incidentPhotos,
                                 type = selectedIncidentType!!,
                                 description = incidentDescription,
-                                region = selectedRegion,
                                 address = selectedAddress,
-                                latitude = userGPS!!.latitude.toString(),
-                                longitude = userGPS!!.longitude.toString(),
+                                latitude = userLocation!!.latitude.toString(),
+                                longitude = userLocation.longitude.toString(),
                                 localization = localization
                             )
                         },
@@ -708,102 +727,6 @@ fun getFileNameFromUri(
     }
 
     return result
-}
-
-fun getCurrentLocation(context: Context, localization: Map<String, String>, onLocationReceived: (GPS?) -> Unit) {
-    val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
-    if (ActivityCompat.checkSelfPermission(
-            context,
-            Manifest.permission.ACCESS_FINE_LOCATION
-        ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-            context,
-            Manifest.permission.ACCESS_COARSE_LOCATION
-        ) != PackageManager.PERMISSION_GRANTED
-    ) {
-        onLocationReceived(null)
-        return
-    }
-
-    fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
-        location?.let {
-            onLocationReceived(GPS(it.longitude, it.latitude))
-        } ?: run {
-            Toast.makeText(context, localization["get_location_fail"]!!, Toast.LENGTH_LONG).show()
-            onLocationReceived(null)
-        }
-    }
-}
-
-fun showLocationPermissionDialog(
-    context: Context,
-    localization: Map<String, String>
-) {
-    val dialog = AlertDialog.Builder(context)
-        .setTitle(localization["permission_title"]!!)
-        .setMessage(localization["permission_message"]!!)
-        .setPositiveButton(localization["permission_positive_button"]!!) { _, _ ->
-            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-            val uri: Uri = Uri.fromParts("package", context.packageName, null)
-            intent.data = uri
-            context.startActivity(intent)
-        }
-        .setNegativeButton(localization["permission_negative_button"]!!) { dialog, _ -> dialog.dismiss() }
-        .create()
-
-    dialog.show()
-}
-
-data class GPS(
-    val longitude: Double,
-    val latitude: Double
-)
-
-@Suppress("DEPRECATION")
-fun getAddressFromCoordinates(
-    context: Context,
-    localization: Map<String, String>,
-    latitude: Double,
-    longitude: Double,
-    callback: (String?) -> Unit
-) {
-    val geocoder = Geocoder(context, Locale.getDefault())
-
-    try {
-        val addresses = geocoder.getFromLocation(latitude, longitude, 1)
-        if (addresses?.isNotEmpty() == true) {
-            val address = addresses[0].getAddressLine(0) ?: localization["unknown_location"]!!
-            callback(address)
-            return
-        }
-    } catch (e: Exception) {
-        Toast.makeText(context, "${e.message}", Toast.LENGTH_LONG).show()
-    }
-
-    val apiKey = BuildConfig.MAPS_API_KEY
-    val url = "https://maps.googleapis.com/maps/api/geocode/json?latlng=$latitude,$longitude&key=$apiKey"
-
-    val client = OkHttpClient()
-    val request = Request.Builder().url(url).build()
-
-    Thread {
-        try {
-            val response = client.newCall(request).execute()
-            val body = response.body?.string()
-            if (body != null) {
-                val moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
-                val jsonAdapter = moshi.adapter(GeocodingResponse::class.java)
-                val result = jsonAdapter.fromJson(body)
-
-                val fullAddress = result?.results?.firstOrNull()?.formattedAddress
-                callback(fullAddress)
-            } else {
-                callback(null)
-            }
-        } catch (e: Exception) {
-            Toast.makeText(context, "${e.message}", Toast.LENGTH_LONG).show()
-            callback(null)
-        }
-    }.start()
 }
 
 data class GeocodingResponse(

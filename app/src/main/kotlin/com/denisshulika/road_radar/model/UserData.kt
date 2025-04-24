@@ -6,6 +6,5 @@ data class UserData(
     val password: String,
     val name: String,
     val phoneNumber: String,
-    val region: String,
     val photoUrl: String? = null
 )

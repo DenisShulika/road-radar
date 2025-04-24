@@ -1,6 +1,5 @@
 package com.denisshulika.road_radar.pages
 
-import android.graphics.Paint
 import android.util.Patterns
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -25,7 +24,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -73,7 +71,6 @@ val RubikFont = FontFamily(
 
 @Composable
 fun LoginPage(
-    @Suppress("UNUSED_PARAMETER") modifier: Modifier = Modifier,
     navController: NavController,
     authViewModel: AuthViewModel,
     settingsViewModel: SettingsViewModel
@@ -109,7 +106,7 @@ fun LoginPage(
         when(authState.value) {
             is AuthState.Authenticated ->
                 navController.navigate(Routes.INCIDENTS)
-            is AuthState.Registrating ->
+            is AuthState.GoogleRegistrating ->
                 navController.navigate(Routes.GOOGLE_REGISTRATING)
             is AuthState.Error -> {
                 Toast.makeText(context, (authState.value as AuthState.Error).message, Toast.LENGTH_LONG).show()
@@ -122,7 +119,10 @@ fun LoginPage(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .paint(painterResource(id = if (settingsViewModel.getTheme() == ThemeState.DARK) R.drawable.auth_dark_background else R.drawable.auth_light_background), contentScale = ContentScale.Crop)
+            .paint(
+                painterResource(id = if (settingsViewModel.getTheme() == ThemeState.DARK) R.drawable.auth_dark_background else R.drawable.auth_light_background),
+                contentScale = ContentScale.Crop
+            )
     ) {
         Column(
             modifier = Modifier

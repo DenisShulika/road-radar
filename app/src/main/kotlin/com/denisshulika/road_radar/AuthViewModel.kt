@@ -59,7 +59,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 if (userFinishedRegistrating()) {
                     _authState.value = AuthState.Authenticated
                 } else {
-                    _authState.value = AuthState.Registrating
+                    _authState.value = AuthState.GoogleRegistrating
                 }
             }
         }
@@ -104,12 +104,29 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             photoUri = Uri.parse(photo)
         }
 
+        val userData = hashMapOf(
+            "photoUrl" to photo,
+            "name" to name
+        )
+
+        firestore.collection("users").document(user.uid)
+            .update(userData as Map<String, Any>)
+            .addOnSuccessListener {
+
+            }
+            .addOnFailureListener {
+                Toast.makeText(context,
+                    localization["user_data_saving_fail"]!!,
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+
         user.updateProfile(profileUpdates)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    Toast.makeText(context, localization["profile_updating_success"] ?: localization["something_went_wrong"] ?: "Something went wrong", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, localization["profile_updating_success"]!!, Toast.LENGTH_SHORT).show()
                 } else {
-                    Toast.makeText(context, localization["profile_updating_fail"] ?: localization["something_went_wrong"] ?: "Something went wrong", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, localization["profile_updating_fail"]!!, Toast.LENGTH_SHORT).show()
                 }
             }
     }
@@ -126,12 +143,18 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     val user = auth.currentUser
+
+                    if (user != null && !user.isEmailVerified) {
+                        auth.signOut()
+                        _authState.value = AuthState.Error(localization["email_not_verified"]!!)
+                        return@addOnCompleteListener
+                    }
+
                     user?.let { firebaseUser ->
                         val uid = firebaseUser.uid
                         firestore.collection("users").document(uid).get()
                             .addOnSuccessListener { document ->
                                 val phoneNumber = document.getString("phoneNumber") ?: ""
-                                val region = document.getString("region") ?: ""
                                 val photoUrl = firebaseUser.photoUrl?.toString()
 
                                 val userData = UserData(
@@ -140,7 +163,6 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                                     password = password,
                                     name = firebaseUser.displayName ?: "",
                                     phoneNumber = phoneNumber,
-                                    region = region,
                                     photoUrl = photoUrl
                                 )
 
@@ -151,17 +173,17 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                                 }
                             }
                             .addOnFailureListener {
-                                _authState.value = AuthState.Error(localization["user_data_loading_fail"] ?: localization["something_went_wrong"] ?: "Something went wrong")
+                                _authState.value = AuthState.Error(localization["user_data_loading_fail"]!!)
                             }
                     }
                 } else {
                     if (task.exception?.message!!.contains("The supplied auth credential is incorrect")) {
                         _authState.value = AuthState.Error(
-                            localization["wrong_email_or_password"] ?: localization["something_went_wrong"] ?: "Something went wrong"
+                            localization["wrong_email_or_password"]!!
                         )
                     } else {
                         _authState.value = AuthState.Error(
-                            task.exception?.message ?: localization["something_went_wrong"] ?: "Something went wrong"
+                            task.exception?.message ?: localization["something_went_wrong"]!!
                         )
                     }
                 }
@@ -173,11 +195,9 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         password: String,
         name: String,
         phoneNumber: String,
-        region: String,
         photo: String,
-        context: Context,
-        coroutineScope: CoroutineScope,
-        localization: Map<String, String>
+        localization: Map<String, String>,
+        callback: () -> Unit
     ) {
         _authState.value = AuthState.Loading
         auth.createUserWithEmailAndPassword(email, password)
@@ -186,6 +206,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                     val user = auth.currentUser
                     val uid = user?.uid ?: ""
 
+                    user?.sendEmailVerification()
+
                     val profileUpdates = userProfileChangeRequest {
                         displayName = name
                         photoUri = Uri.parse(photo)
@@ -193,50 +215,39 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
                     user?.updateProfile(profileUpdates)
                         ?.addOnCompleteListener { profileTask ->
-                            if (!profileTask.isSuccessful) {
+                            if (profileTask.isSuccessful) {
+                                val userData = hashMapOf(
+                                    "phoneNumber" to phoneNumber,
+                                    "photoUrl" to photo,
+                                    "name" to name
+                                )
+                                firestore.collection("users")
+                                    .document(uid)
+                                    .set(userData)
+                                    .addOnSuccessListener {
+                                        callback()
+                                        _authState.value = AuthState.Error(localization["email_verification_sent"]!!)
+                                    }
+                                    .addOnFailureListener {
+                                        user.delete()
+                                        _authState.value = AuthState.Error(localization["user_data_saving_fail"]!!)
+                                    }
+                            } else {
+                                user.delete()
                                 _authState.value = AuthState.Error(
-                                    task.exception?.message ?: localization["something_went_wrong"] ?: "Something went wrong"
+                                    task.exception?.message ?: localization["something_went_wrong"]!!
                                 )
                             }
-                        }
-
-                    val userData = hashMapOf(
-                        "phoneNumber" to phoneNumber,
-                        "region" to region
-                    )
-                    firestore.collection("users")
-                        .document(uid)
-                        .set(userData)
-                        .addOnSuccessListener {
-                            val userDataToSave = UserData(
-                                uid = uid,
-                                email = email,
-                                password = password,
-                                name = name,
-                                phoneNumber = phoneNumber,
-                                region = region,
-                                photoUrl = photo
-                            )
-
-                            coroutineScope.launch {
-                                val localStorage = UserLocalStorage(context)
-                                localStorage.saveUser(userDataToSave)
-                                _authState.value = AuthState.Authenticated
-                            }
-                            _authState.value = AuthState.Authenticated
-                        }
-                        .addOnFailureListener {
-                            _authState.value = AuthState.Error(localization["user_data_saving_fail"] ?: localization["something_went_wrong"] ?: "Something went wrong")
                         }
 
                 } else {
                     if (task.exception?.message!!.contains("is already in use")) {
                         _authState.value = AuthState.Error(
-                            localization["email_in_use"] ?: localization["something_went_wrong"] ?: "Something went wrong"
+                            localization["email_in_use"]!!
                         )
                     } else {
                         _authState.value = AuthState.Error(
-                            task.exception?.message ?: localization["something_went_wrong"] ?: "Something went wrong"
+                            task.exception?.message ?: localization["something_went_wrong"]!!
                         )
                     }
                 }
@@ -293,7 +304,6 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                                         firestore.collection("users").document(uid).get()
                                             .addOnSuccessListener { document ->
                                                 val phoneNumber = document.getString("phoneNumber") ?: ""
-                                                val region = document.getString("region") ?: ""
                                                 val photoUrl = firebaseUser.photoUrl?.toString()
 
                                                 val userData = UserData(
@@ -302,7 +312,6 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                                                     password = "",
                                                     name = firebaseUser.displayName ?: "",
                                                     phoneNumber = phoneNumber,
-                                                    region = region,
                                                     photoUrl = photoUrl
                                                 )
 
@@ -313,30 +322,30 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                                                 _authState.value = AuthState.Authenticated
                                             }
                                             .addOnFailureListener {
-                                                _authState.value = AuthState.Error(localization["user_data_loading_fail"] ?: localization["something_went_wrong"] ?: "Something went wrong")
+                                                _authState.value = AuthState.Error(localization["user_data_loading_fail"]!!)
                                             }
                                     }
                                 } else {
-                                    _authState.value = AuthState.Registrating
+                                    _authState.value = AuthState.GoogleRegistrating
                                 }
                             } else {
                                 _authState.value = AuthState.Error(
-                                    task.exception?.message ?: localization["something_went_wrong"] ?: "Something went wrong"
+                                    task.exception?.message ?: localization["something_went_wrong"]!!
                                 )
                             }
                         }
                     }
             } catch (e: GetCredentialException) {
                 coroutineScope.launch(Dispatchers.Main) {
-                    _authState.value = AuthState.Error(e.message ?: localization["something_went_wrong"] ?: "Something went wrong")
+                    _authState.value = AuthState.Error(e.message ?: localization["something_went_wrong"]!!)
                 }
             } catch (e: GoogleIdTokenParsingException) {
                 coroutineScope.launch(Dispatchers.Main) {
-                    _authState.value = AuthState.Error(e.message ?: localization["something_went_wrong"] ?: "Something went wrong")
+                    _authState.value = AuthState.Error(e.message ?: localization["something_went_wrong"]!!)
                 }
             } catch (e: Exception) {
                 coroutineScope.launch(Dispatchers.Main) {
-                    _authState.value = AuthState.Error(e.message ?: localization["unknown_error"] ?: "Unknown error occupied")
+                    _authState.value = AuthState.Error(e.message ?: localization["unknown_error"]!!)
                 }
             }
         }
@@ -344,21 +353,24 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     fun completeRegistrationViaGoogle(
         phoneNumber: String,
-        region: String,
         context: Context,
         coroutineScope: CoroutineScope,
         localization: Map<String, String>
     ) {
         val user = auth.currentUser
         if (user == null) {
-            _authState.value = AuthState.Error(localization["user_not_authenticated"] ?: localization["something_went_wrong"] ?: "Something went wrong")
+            _authState.value = AuthState.Error(localization["user_not_authenticated"]!!)
             return
         }
 
+        val name = user.displayName
+        val photo = user.photoUrl
+
         val firestore = FirebaseFirestore.getInstance()
         val userData = hashMapOf(
-            "phoneNumber" to (phoneNumber),
-            "region" to region
+            "phoneNumber" to phoneNumber,
+            "photoUrl" to photo,
+            "name" to name
         )
 
         val uid = user.uid
@@ -372,7 +384,6 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                     password = "",
                     name = user.displayName ?: "",
                     phoneNumber = phoneNumber,
-                    region = region,
                     photoUrl = user.photoUrl?.toString() ?: ""
                 )
 
@@ -384,7 +395,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 _authState.value = AuthState.Authenticated
             }
             .addOnFailureListener { e ->
-                _authState.value = AuthState.Error("${localization["user_data_saving_fail"] ?: localization["something_went_wrong"] ?: "Something went wrong"}: ${e.message}")
+                _authState.value = AuthState.Error("${localization["user_data_saving_fail"]!!}: ${e.message}")
             }
     }
 
@@ -397,8 +408,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
         return try {
             val document = userRef.get().await()
-            val region = document.getString("region")
-            !region.isNullOrEmpty()
+            val phone = document.getString("phoneNumber")
+            !phone.isNullOrEmpty()
         } catch (e: Exception) {
             false
         }
@@ -407,11 +418,11 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     fun signout(
         context: Context,
         coroutineScope: CoroutineScope,
-        incidentManager: IncidentManager
+        incidentsManager: IncidentsManager
     ) {
         _authState.value = AuthState.Unauthenticated
 
-        incidentManager.resetDocumentList()
+        incidentsManager.resetDocumentList()
 
         auth.signOut()
 
@@ -426,7 +437,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         password: String,
         context: Context,
         coroutineScope: CoroutineScope,
-        incidentManager: IncidentManager,
+        incidentsManager: IncidentsManager,
         localization: Map<String, String>
     ) {
         val user = auth.currentUser
@@ -446,7 +457,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 user.reauthenticate(credential)
                     .addOnCompleteListener {}
             } else {
-                Toast.makeText(context, localization["reauthenticate_fail"] ?: localization["something_went_wrong"] ?: "Something went wrong", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, localization["reauthenticate_fail"], Toast.LENGTH_LONG).show()
                 return
             }
 
@@ -456,11 +467,11 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                         firebaseUser.delete()
                             .addOnCompleteListener { deleteTask ->
                                 if (deleteTask.isSuccessful) {
-                                    signout(context, coroutineScope, incidentManager)
+                                    signout(context, coroutineScope, incidentsManager)
                                 } else {
                                     Toast.makeText(
                                         context,
-                                        deleteTask.exception?.message ?: localization["account_deleting_fail"] ?: localization["something_went_wrong"] ?: "Something went wrong",
+                                        deleteTask.exception?.message ?: localization["account_deleting_fail"],
                                         Toast.LENGTH_LONG
                                     ).show()
                                 }
@@ -468,7 +479,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                     } else {
                         Toast.makeText(
                             context,
-                            task.exception?.message ?: localization["firestore_deleting_fail"] ?: localization["something_went_wrong"] ?: "Something went wrong",
+                            task.exception?.message ?: localization["firestore_deleting_fail"],
                             Toast.LENGTH_LONG
                         ).show()
                     }
@@ -480,7 +491,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         emailAddress: String,
         context: Context,
         coroutineScope: CoroutineScope,
-        incidentManager: IncidentManager,
+        incidentsManager: IncidentsManager,
         localization: Map<String, String>
     ) {
         _resetPasswordState.value = ResetPasswordState.Loading
@@ -489,10 +500,10 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     _resetPasswordState.value = ResetPasswordState.Success
-                    signout(context, coroutineScope, incidentManager)
-                    Toast.makeText(context, localization["password_reset_email_success"] ?: localization["something_went_wrong"] ?: "Something went wrong", Toast.LENGTH_LONG).show()
+                    signout(context, coroutineScope, incidentsManager)
+                    Toast.makeText(context, localization["password_reset_email_success"]!!, Toast.LENGTH_LONG).show()
                 } else {
-                    _resetPasswordState.value = ResetPasswordState.Error(task.exception?.message ?: localization["password_reset_email_fail"] ?: localization["something_went_wrong"] ?: "Something went wrong")
+                    _resetPasswordState.value = ResetPasswordState.Error(task.exception?.message ?: localization["password_reset_email_fail"]!!)
                 }
             }
     }
@@ -503,7 +514,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         password: String,
         context: Context,
         coroutineScope: CoroutineScope,
-        incidentManager: IncidentManager,
+        incidentsManager: IncidentsManager,
         localization: Map<String, String>
     ) {
         _resetEmailState.value = ResetEmailState.Loading
@@ -523,7 +534,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 user.reauthenticate(credential)
                     .addOnCompleteListener {}
             } else {
-                Toast.makeText(context, localization["reauthenticate_fail"] ?: localization["something_went_wrong"] ?: "Something went wrong", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, localization["reauthenticate_fail"]!!, Toast.LENGTH_LONG).show()
                 return
             }
         }
@@ -532,14 +543,14 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 .addOnCompleteListener { task ->
                     if (task.isSuccessful) {
                         _resetEmailState.value = ResetEmailState.Success
-                        signout(context, coroutineScope, incidentManager)
-                        Toast.makeText(context, localization["email_reset_email_success"] ?: localization["something_went_wrong"] ?: "Something went wrong", Toast.LENGTH_LONG).show()
+                        signout(context, coroutineScope, incidentsManager)
+                        Toast.makeText(context, localization["email_reset_email_success"]!!, Toast.LENGTH_LONG).show()
                     } else {
-                        _resetEmailState.value = ResetEmailState.Error(task.exception?.message ?: localization["email_reset_email_fail"] ?: localization["something_went_wrong"] ?: "Something went wrong")
+                        _resetEmailState.value = ResetEmailState.Error(task.exception?.message ?: localization["email_reset_email_fail"]!!)
                     }
                 }
         } else {
-            Toast.makeText(context, localization["reauthenticate_fail"] ?: localization["something_went_wrong"] ?: "Something went wrong", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, localization["reauthenticate_fail"]!!, Toast.LENGTH_LONG).show()
         }
     }
 }
@@ -571,7 +582,7 @@ sealed class AuthState {
     data object Authenticated : AuthState()
     data object Unauthenticated : AuthState()
     data object Loading : AuthState()
-    data object Registrating : AuthState()
+    data object GoogleRegistrating : AuthState()
     data object Null : AuthState()
     data class Error(val message: String) : AuthState()
 }

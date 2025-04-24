@@ -1,17 +1,23 @@
 [versions]
+accompanistFlowlayout = "<version>"
 accompanistNavigationMaterial = "0.28.0"
 accompanistSvg = "<latest-version>"
 accompanistSystemuicontroller = "0.27.0"
 activityCompose = "1.9.3"
 agp = "8.7.3"
+androidImageCropper = "4.6.0"
+androidImageCropperVersion = "4.0.0"
 appcompat = "1.7.0"
 coilCompose = "2.5.0"
+coilComposeZoom = "2.5.0"
+coilNetworkOkhttp = "3.1.0"
 coilSvg = "2.2.2"
 converterMoshi = "2.9.0"
 datastorePreferences = "1.1.1"
 firebaseAuthKtx = "23.1.0"
 firebaseFirestoreKtx = "25.1.1"
 firebaseStorageKtx = "21.0.1"
+geofireAndroid = "3.0.0"
 googleid = "1.1.1"
 gson = "2.10.1"
 kotlin = "2.0.0"
@@ -26,6 +32,7 @@ materialIconsExtended = "1.7.6"
 moshi = "1.15.0"
 moshiKotlin = "1.15.0"
 navigationCompose = "2.8.5"
+photoview = "2.3.0"
 places = "4.1.0"
 playServicesIdentityVersion = "20.3.0"
 playServicesLocation = "21.3.0"
@@ -34,12 +41,15 @@ secretsGradlePlugin = "2.0.1"
 timber = "5.0.1"
 ui = "1.7.6"
 runtimeLivedata = "1.7.6"
+roomRuntimeAndroid = "2.7.0"
 
 [libraries]
 accompanist-coil = { module = "com.google.accompanist:accompanist-coil", version = "0.15.0" }
+accompanist-flowlayout = { module = "com.google.accompanist:accompanist-flowlayout", version.ref = "accompanistFlowlayout" }
 accompanist-navigation-material = { module = "com.google.accompanist:accompanist-navigation-material", version.ref = "accompanistNavigationMaterial" }
 accompanist-svg = { module = "com.google.accompanist:accompanist-svg" }
 accompanist-systemuicontroller = { module = "com.google.accompanist:accompanist-systemuicontroller", version.ref = "accompanistSystemuicontroller" }
+android-image-cropper = { module = "com.vanniktech:android-image-cropper", version.ref = "androidImageCropper" }
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
 androidx-core = { module = "androidx.core:core", version.ref = "coreKtx" }
@@ -51,7 +61,10 @@ androidx-material-icons-extended = { module = "androidx.compose.material:materia
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
+canhub-android-image-cropper = { module = "com.github.CanHub:Android-Image-Cropper", version.ref = "androidImageCropperVersion" }
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
+coil-compose-zoom = { module = "io.coil-kt:coil-compose-zoom", version.ref = "coilComposeZoom" }
+coil-network-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coilNetworkOkhttp" }
 coil-svg = { module = "io.coil-kt:coil-svg", version.ref = "coilSvg" }
 converter-moshi = { module = "com.squareup.retrofit2:converter-moshi", version.ref = "converterMoshi" }
 firebase-auth = { module = "com.google.firebase:firebase-auth", version.ref = "firebaseAuthKtx" }
@@ -60,6 +73,7 @@ firebase-firestore = { module = "com.google.firebase:firebase-firestore", versio
 firebase-firestore-ktx = { module = "com.google.firebase:firebase-firestore-ktx", version.ref = "firebaseFirestoreKtx" }
 firebase-storage = { module = "com.google.firebase:firebase-storage", version.ref = "firebaseStorageKtx" }
 firebase-storage-ktx = { module = "com.google.firebase:firebase-storage-ktx", version.ref = "firebaseStorageKtx" }
+geofire-android = { module = "com.firebase:geofire-android", version.ref = "geofireAndroid" }
 gms-play-services-identity = { module = "com.google.android.gms:play-services-identity", version.ref = "playServicesIdentityVersion" }
 googleid = { module = "com.google.android.libraries.identity.googleid:googleid", version.ref = "googleid" }
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
@@ -69,6 +83,7 @@ maps-utils-ktx = { module = "com.google.maps.android:maps-utils-ktx", version.re
 material3 = { module = "androidx.compose.material3:material3", version.ref = "material3" }
 moshi = { module = "com.squareup.moshi:moshi", version.ref = "moshi" }
 moshi-kotlin = { module = "com.squareup.moshi:moshi-kotlin", version.ref = "moshiKotlin" }
+photoview = { module = "com.github.chrisbanes:PhotoView", version.ref = "photoview" }
 places = { module = "com.google.android.libraries.places:places", version.ref = "places" }
 play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "playServicesLocation" }
 play-services-identity = { module = "com.google.android.gms:play-services-identity" }
@@ -78,6 +93,7 @@ secrets-gradle-plugin = { module = "com.google.android.libraries.mapsplatform.se
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 ui = { module = "androidx.compose.ui:ui", version.ref = "ui" }
 androidx-runtime-livedata = { group = "androidx.compose.runtime", name = "runtime-livedata", version.ref = "runtimeLivedata" }
+androidx-room-runtime-android = { group = "androidx.room", name = "room-runtime-android", version.ref = "roomRuntimeAndroid" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

@@ -67,7 +67,6 @@
   "developer_name": "Denis Shulika Hennadiyovych",
   "developer_email_title": "Email: ",
   "developer_email": "Email: denisshulika31@gmail.com",
-  "developer_phone": "Phone: +380 67 880 50 16",
   "developer_telegram_title": "Telegram: ",
   "developer_telegram": "Telegram: t.me/denisshulika",
   "developer_github_title": "GitHub: ",
@@ -91,12 +90,7 @@
   "description_placeholder": "Enter a description to an accident",
   "description_empty_text": "Description can't be empty",
 
-  "region_title": "Region",
-  "region_placeholder": "Enter region",
-  "region_empty": "Region can't be empty",
-
   "address_title": "Address",
-  "enter_region_firstly": "Enter a region firstly",
   "address_placeholder": "Enter address",
   "address_empty": "Address can't be empty",
 
@@ -107,9 +101,6 @@
   "type_error": "Please, choose an incident type",
 
   "description_error": "Please, enter a description",
-
-  "region_enter_error": "Please, enter region",
-  "region_select_error": "Please, select region",
 
   "address_enter_error": "Please, enter address",
   "address_select_error": "Please, select address",
@@ -143,9 +134,6 @@
 
   "google_sign_in_info": "To complete Google sign in, please provide us with additional information",
 
-  "region_tip_title": "Region",
-  "region_tip_text": "Incidents are filtered by region, so enter the one you live in",
-
   "phone_title": "Phone Number",
   "phone_placeholder": "Your phone",
   "phone_empty": "Phone number can't be empty",
@@ -164,8 +152,7 @@
   "incident_address_subtext": "Address:",
   "incident_description_subtext": "Description:",
   "incident_created_by_subtext": "Created by:",
-
-  "no_incidents_in_region": "Great news!\nNo incidents in your region.",
+  "no_incidents_in_radius": "Great news!\nNo incidents found nearby",
   "smile": ":)",
 
   "incident_has_been_ended": "This incident has been ended",
@@ -265,7 +252,6 @@
 
   "unknown_location": "Unknown location",
   "unknown_street": "Unknown street",
-  "unknown_region": "Unknown region",
   "unknown_number": "Unknown number",
   "get_address_fail": "Failed to get your address",
   "get_location_fail": "Turn on your GPS",
@@ -277,5 +263,41 @@
   "permission_negative_button": "Cancel",
   "location": "Location",
   "location_button": "Provide your location",
-  "location_empty": "You must provide your location"
+  "location_empty": "You must provide your location",
+
+  "location_not_available": "Location not available",
+  "location_permission_denied": "Location permission denied",
+
+  "comments_title": "Comments",
+
+  "unknown_author": "Unknown author",
+  "comment_placeholder": "Write a comment...",
+
+  "<system_report_duplicate>": "reported this incident again!",
+
+  "choose_option_title": "Choose Option",
+  "camera_option": "Camera",
+  "photo_library_option": "Photo Library",
+
+  "loading_documents_state_error": "Oops... Something went wrong",
+  "location_request_state_loading": "Detecting location...",
+  "location_request_state_no_location": "Location not available",
+  "location_request_state_error": "Oops... Something went wrong",
+  "location_permission_needed": "Location permission required",
+  "grant_permission": "Grant permission",
+
+  "image_cropping_error": "Failed to crop the image",
+  "radius_title": "Search radius",
+  "incident_extended": "Incident extended",
+
+  "email_verification_sent": "A verification email has been sent. Please check your inbox.",
+  "email_not_verified": "Please verify your email before signing in.",
+
+  "comments_zero": "comments",
+  "comments_one": "comment",
+  "comments_few": "comments",
+  "comments_many": "comments",
+
+  "privacy_policy_title": "Privacy Policy",
+  "privacy_policy_text_button": "Privacy policy"
 }

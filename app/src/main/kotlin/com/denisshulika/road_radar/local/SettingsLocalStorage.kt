@@ -1,8 +1,6 @@
 package com.denisshulika.road_radar.local
 
 import android.content.Context
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -23,6 +21,7 @@ class SettingsLocalStorage(
     private val settingsViewModel: SettingsViewModel
 ) {
     companion object {
+        private val RADIUS_KEY = stringPreferencesKey("radius")
         private val THEME_KEY = stringPreferencesKey("theme")
         private val LANGUAGE_KEY = stringPreferencesKey("language")
         private val FIRST_LAUNCH_KEY = stringPreferencesKey("first_launch")
@@ -34,6 +33,7 @@ class SettingsLocalStorage(
             .firstOrNull() == null
 
         if (isFirstLaunch) {
+            saveRadius(10000f, context)
             saveTheme(ThemeState.DARK, isSystemInDarkTheme)
             saveLanguage(LanguageState.UKRAINIAN, context)
 
@@ -41,13 +41,29 @@ class SettingsLocalStorage(
                 prefs[FIRST_LAUNCH_KEY] = "false"
             }
 
+            settingsViewModel.setRadius(10000f)
             settingsViewModel.setTheme(ThemeState.DARK)
             settingsViewModel.setLanguage(LanguageState.UKRAINIAN)
         }
 
+        settingsViewModel.setRadius(getRadius())
         saveTheme(getTheme(), isSystemInDarkTheme)
         settingsViewModel.setTheme(getTheme())
         settingsViewModel.setLanguage(getLanguage())
+    }
+
+    suspend fun saveRadius(radius: Float, context: Context) {
+        context.settingsDataStore.edit { prefs ->
+            prefs[RADIUS_KEY] = radius.toString()
+        }
+        settingsViewModel.setRadius(radius)
+    }
+
+    suspend fun getRadius(): Float {
+        val radiusValue = context.settingsDataStore.data.map { prefs ->
+            prefs[RADIUS_KEY]
+        }.firstOrNull()
+        return radiusValue?.toFloat() ?: 10000f
     }
 
     suspend fun saveTheme(theme: ThemeState, isSystemInDarkTheme: Boolean) {

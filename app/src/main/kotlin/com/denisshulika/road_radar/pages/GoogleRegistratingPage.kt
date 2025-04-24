@@ -11,12 +11,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -24,15 +22,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RichTooltip
-import androidx.compose.material3.RichTooltipColors
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TooltipBox
-import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -47,11 +38,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.paint
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -59,27 +48,22 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.denisshulika.road_radar.AuthState
 import com.denisshulika.road_radar.AuthViewModel
-import com.denisshulika.road_radar.IncidentManager
+import com.denisshulika.road_radar.IncidentsManager
 import com.denisshulika.road_radar.R
 import com.denisshulika.road_radar.Routes
 import com.denisshulika.road_radar.SettingsViewModel
 import com.denisshulika.road_radar.isValidPhoneNumber
 import com.denisshulika.road_radar.model.ThemeState
-import com.denisshulika.road_radar.ui.components.AutocompleteTextFieldForRegion
 import com.denisshulika.road_radar.ui.components.StyledBasicTextField
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.google.android.libraries.places.api.net.PlacesClient
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GoogleRegistratingPage(
-    @Suppress("UNUSED_PARAMETER") modifier: Modifier = Modifier,
     navController: NavController,
     authViewModel: AuthViewModel,
     settingsViewModel: SettingsViewModel,
-    placesClient: PlacesClient,
-    incidentManager: IncidentManager
+    incidentsManager: IncidentsManager
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -104,10 +88,6 @@ fun GoogleRegistratingPage(
     var phoneNumberError by remember { mutableStateOf(false) }
     var isPhoneNumberEmpty by remember { mutableStateOf(false) }
 
-    var selectedRegion by remember { mutableStateOf("") }
-    var isRegionSelected by remember { mutableStateOf(false) }
-    var isSelectedRegionEmpty by remember { mutableStateOf(false) }
-
     LaunchedEffect(authState.value) {
         authViewModel.checkAuthStatus()
         when(authState.value) {
@@ -127,7 +107,10 @@ fun GoogleRegistratingPage(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .paint(painterResource(id = if (settingsViewModel.getTheme() == ThemeState.DARK) R.drawable.auth_dark_background else R.drawable.auth_light_background), contentScale = ContentScale.Crop)
+            .paint(
+                painterResource(id = if (settingsViewModel.getTheme() == ThemeState.DARK) R.drawable.auth_dark_background else R.drawable.auth_light_background),
+                contentScale = ContentScale.Crop
+            )
     ) {
         Column(
             modifier = Modifier
@@ -189,95 +172,6 @@ fun GoogleRegistratingPage(
                             )
                         }
                         Spacer(modifier = Modifier.size(20.dp))
-                        Column {
-                            Column(
-                                verticalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = localization["region_title"]!!,
-                                        fontSize = 24.sp,
-                                        fontFamily = RubikFont,
-                                        fontWeight = FontWeight.Normal,
-                                        color = theme["text"]!!
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-
-                                    TooltipBox(
-                                        positionProvider = TooltipDefaults.rememberRichTooltipPositionProvider(),
-                                        tooltip = {
-                                            RichTooltip(
-                                                modifier = Modifier.padding(20.dp),
-                                                title = {
-                                                    Text(
-                                                        text = localization["region_tip_title"]!!,
-                                                        fontSize = 20.sp,
-                                                        fontFamily = RubikFont,
-                                                        fontWeight = FontWeight.SemiBold
-                                                    )
-                                                },
-                                                text = {
-                                                    Text(
-                                                        text = localization["region_tip_text"]!!,
-                                                        fontSize = 16.sp,
-                                                        fontFamily = RubikFont,
-                                                        fontWeight = FontWeight.Normal
-                                                    )
-                                                },
-                                                colors = RichTooltipColors(
-                                                    containerColor = theme["primary"]!!,
-                                                    contentColor = theme["text"]!!,
-                                                    titleContentColor = theme["text"]!!,
-                                                    actionContentColor = theme["text"]!!
-                                                )
-                                            )
-                                        },
-                                        state = tooltipState
-                                    ) {
-                                        IconButton(
-                                            onClick = { scope.launch { tooltipState.show() } },
-                                            modifier = Modifier
-                                                .size(20.dp)
-                                        ) {
-                                            Icon(
-                                                imageVector = ImageVector.vectorResource(R.drawable.info),
-                                                contentDescription = "",
-                                                tint = theme["icon"]!!
-                                            )
-                                        }
-                                    }
-                                }
-                                AutocompleteTextFieldForRegion(
-                                    modifier = Modifier.heightIn(min = 0.dp, max = 300.dp),
-                                    value = selectedRegion,
-                                    placesClient = placesClient,
-                                    onPlaceSelected = { value ->
-                                        selectedRegion = value
-                                        isRegionSelected = true
-                                    },
-                                    onValueChange = { value ->
-                                        selectedRegion = value
-                                        isRegionSelected = false
-                                        isSelectedRegionEmpty = selectedRegion.isEmpty()
-                                    },
-                                    placeholder = localization["region_placeholder"]!!,
-                                    settingsViewModel = settingsViewModel
-                                )
-                            }
-                            if (isSelectedRegionEmpty) {
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    localization["region_empty"]!!,
-                                    color = theme["error"]!!,
-                                    fontSize = 12.sp,
-                                    fontFamily = RubikFont,
-                                    fontWeight = FontWeight.Normal
-                                )
-                            }
-                        }
-                        Spacer(modifier = Modifier.size(32.dp))
                         Column (
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
@@ -331,18 +225,8 @@ fun GoogleRegistratingPage(
                                     Toast.makeText(context, localization["phone_invalid_error"]!!, Toast.LENGTH_LONG).show()
                                     return@Button
                                 }
-                                isSelectedRegionEmpty = selectedRegion.isEmpty()
-                                if(isSelectedRegionEmpty) {
-                                    Toast.makeText(context, localization["region_enter_error"]!!, Toast.LENGTH_LONG).show()
-                                    return@Button
-                                }
-                                if(!isRegionSelected) {
-                                    Toast.makeText(context, localization["region_select_error"]!!, Toast.LENGTH_LONG).show()
-                                    return@Button
-                                }
                                 authViewModel.completeRegistrationViaGoogle(
                                     phoneNumber,
-                                    selectedRegion,
                                     context,
                                     coroutineScope,
                                     localization
@@ -390,7 +274,7 @@ fun GoogleRegistratingPage(
                                         password = "",
                                         context = context,
                                         coroutineScope = coroutineScope,
-                                        incidentManager = incidentManager,
+                                        incidentsManager = incidentsManager,
                                         localization = localization
                                     )
                                 }

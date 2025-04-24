@@ -67,7 +67,6 @@
   "developer_name": "Денис Шуліка Геннадійович",
   "developer_email_title": "Пошта: ",
   "developer_email": "Пошта: denisshulika31@gmail.com",
-  "developer_phone": "Телефон: +380 67 880 50 16",
   "developer_telegram_title": "Telegram: ",
   "developer_telegram": "Telegram: t.me/denisshulika",
   "developer_github_title": "GitHub: ",
@@ -91,12 +90,7 @@
   "description_placeholder": "Введіть опис до інциденту",
   "description_empty_text": "Опис не може бути порожнім",
 
-  "region_title": "Область",
-  "region_placeholder": "Введіть область",
-  "region_empty": "Область не може бути порожньою",
-
   "address_title": "Адреса",
-  "enter_region_firstly": "Спочатку введіть область",
   "address_placeholder": "Введіть адресу",
   "address_empty": "Адреса не може бути порожньою",
 
@@ -107,9 +101,6 @@
   "type_error": "Будь-ласка, оберіть тип інциденту",
 
   "description_error": "Будь-ласка, введіть опис",
-
-  "region_enter_error": "Будь-ласка, введіть область",
-  "region_select_error": "Будь-ласка, оберіть область",
 
   "address_enter_error": "Будь-ласка, введіть адресу",
   "address_select_error": "Будь-ласка, оберіть адресу",
@@ -143,9 +134,6 @@
 
   "google_sign_in_info": "Щоб завершити вхід у Google, надайте нам додаткову інформацію",
 
-  "region_tip_title": "Область",
-  "region_tip_text": "Інциденти відфільтровано за областю, тому введіть ту, у якій Ви живете",
-
   "phone_title": "Телефон",
   "phone_placeholder": "Ваш телефон",
   "phone_empty": "Телефон не може бути порожнім",
@@ -164,8 +152,7 @@
   "incident_address_subtext": "Адреса:",
   "incident_description_subtext": "Опис:",
   "incident_created_by_subtext": "Створено:",
-
-  "no_incidents_in_region": "Чудові новини!\nЖодних інцидентів у Вашій області",
+  "no_incidents_in_radius": "Чудові новини!\nЖодних інцидентів поблизу.",
   "smile": ":)",
 
   "incident_has_been_ended": "Цей інцидент завершився",
@@ -265,7 +252,6 @@
 
   "unknown_location": "Невідома локація",
   "unknown_street": "Невідома вулиця",
-  "unknown_region": "Невідома область",
   "unknown_number": "Невідомий номер",
   "get_address_fail": "Не вдалося отримати вашу адресу",
   "get_location_fail": "Увімкніть ваш GPS",
@@ -277,5 +263,41 @@
   "permission_negative_button": "Скасувати",
   "location": "Локація",
   "location_button": "Надати вашу локацію",
-  "location_empty": "Ви повинні надати вашу локацію"
+  "location_empty": "Ви повинні надати вашу локацію",
+
+  "location_not_available": "Місцезнаходження недоступне",
+  "location_permission_denied": "Доступ до місцезнаходження заборонено",
+
+  "comments_title": "Коментарі",
+
+  "unknown_author": "Невідомий автор",
+  "comment_placeholder": "Напишіть коментар...",
+
+  "<system_report_duplicate>": "повторно повідомив про цей інцидент!",
+
+  "choose_option_title": "Виберіть опцію",
+  "camera_option": "Камера",
+  "photo_library_option": "Галерея",
+
+  "loading_documents_state_error": "Ой... Щось пішло не так",
+  "location_request_state_loading": "Визначаємо місцезнаходження...",
+  "location_request_state_no_location": "Місцезнаходження недоступне",
+  "location_request_state_error": "Ой... Щось пішло не так",
+  "location_permission_needed": "Потрібен дозвіл на доступ до місцезнаходження",
+  "grant_permission": "Надати дозвіл",
+
+  "image_cropping_error": "Не вдалося обрізати зображення",
+  "radius_title": "Радіус пошуку",
+  "incident_extended": "Інцидент продовжено",
+
+  "email_verification_sent": "Лист для підтвердження електронної пошти надіслано. Перевірте вашу пошту.",
+  "email_not_verified": "Підтвердіть вашу електронну пошту перед входом у систему.",
+
+  "comments_zero": "коментарів",
+  "comments_one": "коментар",
+  "comments_few": "коментарі",
+  "comments_many": "коментарів",
+
+  "privacy_policy_title": "Політика Конфіденційності",
+  "privacy_policy_text_button": "Політика конфіденційності"
 }

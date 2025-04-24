@@ -1,21 +1,22 @@
 package com.denisshulika.road_radar.ui.components
 
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -30,22 +31,11 @@ fun StyledBasicTextField(
     value: String,
     onValueChange: (String) -> Unit,
     placeholder: String,
-    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     isVisible: Boolean = true,
     singleLine: Boolean = true,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     theme: Map<String, Color>
 ) {
-    val textLayoutResult = remember { mutableStateOf<TextLayoutResult?>(null) }
-
-    val lineCount = textLayoutResult.value?.lineCount ?: 1
-    val targetHeight = if (singleLine) 26.dp else (lineCount * 26).dp
-
-    val animatedHeight = animateDpAsState(
-        targetValue = targetHeight,
-        animationSpec = tween(durationMillis = 900),
-        label = "TextField Anim"
-    )
-
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -53,7 +43,7 @@ fun StyledBasicTextField(
                 val strokeWidth = 1.dp.toPx()
                 val y = size.height - strokeWidth / 2
                 drawLine(
-                    color = theme["placeholder"]!!,
+                    color = theme["placeholder"] ?: Color.Gray,
                     start = Offset(0f, y),
                     end = Offset(size.width, y),
                     strokeWidth = strokeWidth
@@ -63,34 +53,91 @@ fun StyledBasicTextField(
         BasicTextField(
             value = value,
             onValueChange = onValueChange,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(animatedHeight.value),
+            modifier = Modifier.fillMaxWidth(),
             textStyle = TextStyle(
-                color = theme["text"]!!,
+                color = theme["text"] ?: Color.Black,
                 fontSize = 22.sp,
                 fontFamily = RubikFont,
                 fontWeight = FontWeight.Normal
             ),
+            cursorBrush = SolidColor(theme["text"]!!),
             decorationBox = { innerTextField ->
-                if (value.isEmpty()) {
+                Box {
+                    if (value.isEmpty()) {
+                        Text(
+                            text = placeholder,
+                            color = theme["placeholder"]!!,
+                            fontSize = 22.sp,
+                            lineHeight = 24.sp,
+                            fontFamily = RubikFont,
+                            fontWeight = FontWeight.Normal
+                        )
+                    }
+                    innerTextField()
+                }
+            },
+            singleLine = singleLine,
+            maxLines = if (singleLine) 1 else 4,
+            keyboardOptions = keyboardOptions,
+            visualTransformation = if (isVisible) VisualTransformation.None else PasswordVisualTransformation()
+        )
+    }
+}
+
+@Composable
+fun CommentInputTextField(
+    modifier: Modifier = Modifier,
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    theme: Map<String, Color>
+) {
+    Surface(
+        color = theme["input_background"]!!,
+        modifier = modifier
+            .fillMaxWidth()
+            .wrapContentHeight(),
+        tonalElevation = 1.dp
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            TextField(
+                value = value,
+                onValueChange = onValueChange,
+                modifier = Modifier.weight(1f),
+                textStyle = TextStyle(
+                    color = theme["text"]!!,
+                    fontSize = 20.sp,
+                    fontFamily = RubikFont,
+                    fontWeight = FontWeight.Normal
+                ),
+                placeholder = {
                     Text(
                         text = placeholder,
                         color = theme["placeholder"]!!,
-                        fontSize = 22.sp,
-                        lineHeight = 24.sp,
+                        fontSize = 20.sp,
                         fontFamily = RubikFont,
                         fontWeight = FontWeight.Normal
                     )
-                }
-                innerTextField()
-            },
-            singleLine = singleLine,
-            keyboardOptions = keyboardOptions,
-            visualTransformation = if (isVisible) VisualTransformation.None else PasswordVisualTransformation(),
-            onTextLayout = { layoutResult ->
-                textLayoutResult.value = layoutResult
-            },
-        )
+                },
+                colors = TextFieldDefaults.colors().copy(
+                    focusedContainerColor = theme["input_background"]!!,
+                    unfocusedContainerColor = theme["input_background"]!!,
+                    focusedTextColor = theme["text"]!!,
+                    unfocusedTextColor = theme["text"]!!,
+                    focusedPlaceholderColor = theme["placeholder"]!!,
+                    unfocusedPlaceholderColor = theme["placeholder"]!!,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    disabledIndicatorColor = Color.Transparent,
+                    errorIndicatorColor = Color.Transparent,
+                    cursorColor = theme["text"]!!,
+                ),
+                keyboardOptions = KeyboardOptions.Default,
+                maxLines = 4
+            )
+        }
     }
 }

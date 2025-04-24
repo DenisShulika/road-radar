@@ -9,6 +9,9 @@ import com.denisshulika.road_radar.model.LanguageState
 import com.denisshulika.road_radar.model.ThemeState
 
 class SettingsViewModel(application: Application) : AndroidViewModel(application) {
+    private val _radius = MutableLiveData<Float>()
+    val radius: LiveData<Float> get() = _radius
+
     private val _theme = MutableLiveData<ThemeState>()
     val theme: LiveData<ThemeState> get() = _theme
 
@@ -20,6 +23,10 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     private val _themeColors = MutableLiveData<Map<String, Color>>(emptyMap())
     val themeColors: LiveData<Map<String, Color>> get() = _themeColors
+
+    fun setRadius(radius: Float) {
+        _radius.value = radius
+    }
 
     fun setTheme(state : ThemeState) {
         _theme.value = state
@@ -35,6 +42,10 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     fun setLocalisation(map : Map<String, String>) {
         _localization.value = map
+    }
+
+    fun getRadius(): Float {
+        return _radius.value!!
     }
 
     fun getTheme(): ThemeState {

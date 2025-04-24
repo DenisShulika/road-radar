@@ -22,7 +22,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -47,7 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.denisshulika.road_radar.AuthViewModel
-import com.denisshulika.road_radar.IncidentManager
+import com.denisshulika.road_radar.IncidentsManager
 import com.denisshulika.road_radar.R
 import com.denisshulika.road_radar.ResetPasswordState
 import com.denisshulika.road_radar.Routes
@@ -58,11 +57,10 @@ import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
 @Composable
 fun PasswordResetPage(
-    @Suppress("UNUSED_PARAMETER") modifier: Modifier = Modifier,
     navController: NavController,
     authViewModel: AuthViewModel,
     settingsViewModel: SettingsViewModel,
-    incidentManager: IncidentManager
+    incidentsManager: IncidentsManager
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -104,7 +102,10 @@ fun PasswordResetPage(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .paint(painterResource(id = if (settingsViewModel.getTheme() == ThemeState.DARK) R.drawable.auth_dark_background else R.drawable.auth_light_background), contentScale = ContentScale.Crop)
+            .paint(
+                painterResource(id = if (settingsViewModel.getTheme() == ThemeState.DARK) R.drawable.auth_dark_background else R.drawable.auth_light_background),
+                contentScale = ContentScale.Crop
+            )
     ) {
         Column(
             modifier = Modifier
@@ -209,7 +210,7 @@ fun PasswordResetPage(
                                 emailAddress = email,
                                 context = context,
                                 coroutineScope = coroutineScope,
-                                incidentManager = incidentManager,
+                                incidentsManager = incidentsManager,
                                 localization = localization
                             )
                         },

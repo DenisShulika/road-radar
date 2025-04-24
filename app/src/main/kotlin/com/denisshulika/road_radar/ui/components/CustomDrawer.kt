@@ -25,10 +25,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -37,14 +35,13 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.denisshulika.road_radar.AuthViewModel
-import com.denisshulika.road_radar.IncidentManager
+import com.denisshulika.road_radar.IncidentsManager
 import com.denisshulika.road_radar.R
 import com.denisshulika.road_radar.Routes
 import com.denisshulika.road_radar.SettingsViewModel
 import com.denisshulika.road_radar.local.UserLocalStorage
 import com.denisshulika.road_radar.model.NavigationItem
 import com.denisshulika.road_radar.pages.RubikFont
-import com.google.android.libraries.places.api.model.kotlin.localTime
 
 @Composable
 fun CustomDrawer (
@@ -54,7 +51,7 @@ fun CustomDrawer (
     navController: NavController,
     authViewModel : AuthViewModel,
     settingsViewModel: SettingsViewModel,
-    incidentManager: IncidentManager
+    incidentsManager: IncidentsManager
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -196,7 +193,7 @@ fun CustomDrawer (
                             }
                         }
                         NavigationItem.Signout -> {
-                            authViewModel.signout(context, coroutineScope, incidentManager)
+                            authViewModel.signout(context, coroutineScope, incidentsManager)
                         }
                         else -> {}
                     }

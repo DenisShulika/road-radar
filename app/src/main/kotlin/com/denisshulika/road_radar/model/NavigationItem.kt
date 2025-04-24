@@ -14,12 +14,12 @@ enum class NavigationItem(
 
     fun getTitle(localization: Map<String, String>): String {
         return when (this) {
-            Incidents -> localization["drawer_incidents"] ?: "Incidents"
-            MapRadar -> localization["drawer_map_radar"] ?: "Map Radar"
-            Profile -> localization["drawer_profile"] ?: "Profile"
-            Settings -> localization["drawer_settings"] ?: "Settings"
-            About -> localization["drawer_about"] ?: "About"
-            Signout -> localization["drawer_signout"] ?: "Sign Out"
+            Incidents -> localization["drawer_incidents"]!!
+            MapRadar -> localization["drawer_map_radar"]!!
+            Profile -> localization["drawer_profile"]!!
+            Settings -> localization["drawer_settings"]!!
+            About -> localization["drawer_about"]!!
+            Signout -> localization["drawer_signout"]!!
         }
     }
 }

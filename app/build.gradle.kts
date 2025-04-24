@@ -22,7 +22,7 @@ android {
         applicationId = "com.denisshulika.road_radar"
         minSdk = 29
         targetSdk = 35
-        versionCode = 1
+        versionCode = 2
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -59,6 +59,7 @@ android {
 
 dependencies {
     implementation(libs.ui)
+    implementation(libs.canhub.android.image.cropper)
     implementation(libs.material3)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.core)
@@ -71,6 +72,7 @@ dependencies {
     implementation(libs.accompanist.systemuicontroller)
     implementation(libs.timber)
     implementation(libs.coil.compose)
+    implementation(libs.photoview)
     implementation(libs.androidx.lifecycle.livedata.ktx)
     implementation(libs.material3)
     implementation(libs.accompanist.systemuicontroller)
@@ -93,4 +95,5 @@ dependencies {
     implementation(libs.maps.ktx)
     implementation(libs.maps.utils.ktx)
     implementation(libs.androidx.runtime.livedata)
+    implementation(libs.androidx.room.runtime.android)
 }

@@ -6,6 +6,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,6 +36,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonColors
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -42,6 +45,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -62,7 +66,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.denisshulika.road_radar.AuthState
 import com.denisshulika.road_radar.AuthViewModel
-import com.denisshulika.road_radar.IncidentManager
+import com.denisshulika.road_radar.IncidentsManager
 import com.denisshulika.road_radar.Routes
 import com.denisshulika.road_radar.SettingsViewModel
 import com.denisshulika.road_radar.local.SettingsLocalStorage
@@ -84,11 +88,10 @@ import kotlin.math.roundToInt
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsPage(
-    @Suppress("UNUSED_PARAMETER") modifier: Modifier = Modifier,
     navController: NavController,
     authViewModel: AuthViewModel,
     settingsViewModel: SettingsViewModel,
-    incidentManager: IncidentManager
+    incidentsManager: IncidentsManager
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -140,6 +143,7 @@ fun SettingsPage(
         darkIcons = settingsViewModel.getTheme() != ThemeState.DARK || !isSystemInDarkTheme()
     )
 
+    var radius by remember { mutableFloatStateOf(1000f) }
     var themeState by remember { mutableStateOf(ThemeState.SYSTEM) }
     var languageState by remember { mutableStateOf(LanguageState.UKRAINIAN) }
 
@@ -149,14 +153,13 @@ fun SettingsPage(
     val userLocalStorage = UserLocalStorage(context)
     val settingsLocalStorage = SettingsLocalStorage(context, settingsViewModel)
     LaunchedEffect(Unit) {
+        radius = settingsLocalStorage.getRadius()
         themeState = settingsLocalStorage.getTheme()
         languageState = settingsLocalStorage.getLanguage()
 
         email = userLocalStorage.getUserEmail().toString()
         password = userLocalStorage.getUserPassword().toString()
     }
-
-
 
     var isDialogVisible by remember { mutableStateOf(false) }
 
@@ -170,7 +173,7 @@ fun SettingsPage(
             password = password,
             context = context,
             coroutineScope = coroutineScope,
-            incidentManager = incidentManager,
+            incidentsManager = incidentsManager,
             localization = localization
         )
         isDialogVisible = false
@@ -179,8 +182,6 @@ fun SettingsPage(
     fun cancelDelete() {
         isDialogVisible = false
     }
-
-
 
     Box(
         modifier = Modifier
@@ -205,7 +206,7 @@ fun SettingsPage(
             authViewModel = authViewModel,
             settingsViewModel = settingsViewModel,
             navController = navController,
-            incidentManager = incidentManager
+            incidentsManager = incidentsManager
         )
         Scaffold(
             modifier = Modifier
@@ -271,6 +272,78 @@ fun SettingsPage(
                                 .padding(14.dp)
                         ) {
                             Text(
+                                text = localization["radius_title"]!!,
+                                fontSize = 24.sp,
+                                fontFamily = RubikFont,
+                                fontWeight = FontWeight.Medium,
+                                color = theme["text"]!!
+                            )
+                        }
+                    }
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 6.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .padding(horizontal = 14.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                modifier = Modifier
+                                    .padding(vertical = 4.dp),
+                                text = (radius / 1000f).let {
+                                    if (it < 1) "$radius m" else "${
+                                        "%.1f".format(
+                                            it
+                                        )
+                                    } km"
+                                },
+                                fontSize = 20.sp,
+                                fontFamily = RubikFont,
+                                fontWeight = FontWeight.Normal,
+                                color = theme["text"]!!
+                            )
+
+                            Slider(
+                                value = radius,
+                                onValueChange = {
+                                    radius = it
+                                    CoroutineScope(Dispatchers.Main).launch {
+                                        settingsLocalStorage.saveRadius(radius, context)
+                                    }
+                                },
+                                valueRange = 1000f..100000f,
+                                steps = 98,
+                                colors = SliderDefaults.colors(
+                                    thumbColor = theme["text"]!!,
+                                    activeTrackColor = theme["primary"]!!,
+                                    inactiveTrackColor = theme["placeholder"]!!,
+                                    activeTickColor = theme["secondary"]!!,
+                                    inactiveTickColor = theme["background"]!!
+                                ),
+                                modifier = Modifier
+                                    .padding(top = 8.dp)
+                            )
+                        }
+                    }
+                }
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .background(theme["drawer_background"]!!)
+                            .fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(14.dp)
+                        ) {
+                            Text(
                                 text = localization["theme_title"]!!,
                                 fontSize = 24.sp,
                                 fontFamily = RubikFont,
@@ -287,7 +360,16 @@ fun SettingsPage(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                                .clickable(
+                                    indication = null,
+                                    interactionSource = remember { MutableInteractionSource() }
+                                ) {
+                                    themeState = ThemeState.DARK
+                                    CoroutineScope(Dispatchers.Main).launch {
+                                        settingsLocalStorage.saveTheme(themeState, isSystemInDarkTheme)
+                                    }
+                                },
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             RadioButton(
@@ -323,7 +405,16 @@ fun SettingsPage(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                                .clickable(
+                                    indication = null,
+                                    interactionSource = remember { MutableInteractionSource() }
+                                ) {
+                                    themeState = ThemeState.LIGHT
+                                    CoroutineScope(Dispatchers.Main).launch {
+                                        settingsLocalStorage.saveTheme(themeState, isSystemInDarkTheme)
+                                    }
+                                },
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             RadioButton(
@@ -383,7 +474,16 @@ fun SettingsPage(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                                .clickable(
+                                    indication = null,
+                                    interactionSource = remember { MutableInteractionSource() }
+                                ) {
+                                    languageState = LanguageState.UKRAINIAN
+                                    CoroutineScope(Dispatchers.Main).launch {
+                                        settingsLocalStorage.saveLanguage(languageState, context)
+                                    }
+                                },
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             RadioButton(
@@ -419,7 +519,16 @@ fun SettingsPage(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                                .clickable(
+                                    indication = null,
+                                    interactionSource = remember { MutableInteractionSource() }
+                                ) {
+                                    languageState = LanguageState.ENGLISH
+                                    CoroutineScope(Dispatchers.Main).launch {
+                                        settingsLocalStorage.saveLanguage(languageState, context)
+                                    }
+                                },
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             RadioButton(
@@ -487,7 +596,13 @@ fun SettingsPage(
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                                        .clickable(
+                                            indication = null,
+                                            interactionSource = remember { MutableInteractionSource() }
+                                        ) {
+                                            navController.navigate(Routes.EMAIL_RESET)
+                                        },
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
@@ -527,7 +642,13 @@ fun SettingsPage(
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                                        .clickable(
+                                            indication = null,
+                                            interactionSource = remember { MutableInteractionSource() }
+                                        ) {
+                                            navController.navigate(Routes.PASSWORD_RESET)
+                                        },
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
@@ -568,7 +689,13 @@ fun SettingsPage(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                                    .clickable(
+                                        indication = null,
+                                        interactionSource = remember { MutableInteractionSource() }
+                                    ) {
+                                        showDeleteDialog()
+                                    },
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
@@ -615,7 +742,17 @@ fun SettingsPage(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                                    .clickable(
+                                        indication = null,
+                                        interactionSource = remember { MutableInteractionSource() }
+                                    ) {
+                                        authViewModel.signout(
+                                            context = context,
+                                            coroutineScope = coroutineScope,
+                                            incidentsManager = incidentsManager
+                                        )
+                                    },
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
@@ -631,7 +768,7 @@ fun SettingsPage(
                                         authViewModel.signout(
                                             context = context,
                                             coroutineScope = coroutineScope,
-                                            incidentManager = incidentManager
+                                            incidentsManager = incidentsManager
                                         )
                                     }
                                 ) {
