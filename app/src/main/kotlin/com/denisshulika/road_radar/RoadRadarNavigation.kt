@@ -15,8 +15,9 @@ import com.denisshulika.road_radar.pages.IncidentPage
 import com.denisshulika.road_radar.pages.IncidentsPage
 import com.denisshulika.road_radar.pages.LoginPage
 import com.denisshulika.road_radar.pages.MapRadarPage
+import com.denisshulika.road_radar.pages.OtherProfilePage
 import com.denisshulika.road_radar.pages.PasswordResetPage
-import com.denisshulika.road_radar.pages.ProfilePage
+import com.denisshulika.road_radar.pages.SelfProfilePage
 import com.denisshulika.road_radar.pages.SettingsPage
 import com.denisshulika.road_radar.pages.SignUpPage
 
@@ -85,6 +86,7 @@ fun RoadRadarNavigation(
                     authViewModel,
                     settingsViewModel,
                     incidentsManager,
+                    commentManager,
                     locationHandler
                 )
             }
@@ -97,6 +99,13 @@ fun RoadRadarNavigation(
                     authViewModel,
                     settingsViewModel,
                     incidentsManager,
+                    commentManager
+                )
+            }
+            composable(Routes.OTHER_PROFILE) {
+                OtherProfilePage(
+                    navController,
+                    settingsViewModel,
                     commentManager
                 )
             }
@@ -119,8 +128,8 @@ fun RoadRadarNavigation(
                     locationHandler
                 )
             }
-            composable(Routes.PROFILE) {
-                ProfilePage(
+            composable(Routes.SELF_PROFILE) {
+                SelfProfilePage(
                     navController,
                     authViewModel,
                     settingsViewModel,
@@ -156,9 +165,10 @@ object Routes {
     const val INCIDENTS = "incidents"
     const val INCIDENT = "incident"
     const val COMMENTS = "comments"
+    const val OTHER_PROFILE = "other_profile"
     const val ADD_NEW_INCIDENT = "add_new_incident"
     const val MAP_RADAR = "map_radar"
-    const val PROFILE = "profile"
+    const val SELF_PROFILE = "self_profile"
     const val SETTINGS = "settings"
     const val ABOUT = "about"
 }

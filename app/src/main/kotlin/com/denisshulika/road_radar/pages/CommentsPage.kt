@@ -8,6 +8,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,8 +36,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Attachment
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.PhotoCamera
-import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -46,7 +45,6 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -84,8 +82,10 @@ import com.denisshulika.road_radar.Comment
 import com.denisshulika.road_radar.CommentAdditionState
 import com.denisshulika.road_radar.CommentManager
 import com.denisshulika.road_radar.IncidentsManager
+import com.denisshulika.road_radar.Routes
 import com.denisshulika.road_radar.SettingsViewModel
 import com.denisshulika.road_radar.ui.components.CommentInputTextField
+import com.denisshulika.road_radar.ui.components.PhotoPickerDialog
 import com.github.chrisbanes.photoview.PhotoView
 import kotlinx.coroutines.launch
 import java.io.File
@@ -209,7 +209,9 @@ fun CommentsPage(
                                 comment = comment,
                                 author = authors[comment.authorId]!!,
                                 theme = theme,
-                                localization = localization
+                                localization = localization,
+                                navController = navController,
+                                commentManager = commentManager
                             )
                         }
                         item {}
@@ -315,8 +317,6 @@ fun CommentsPage(
                                                 authorId = authViewModel.getCurrentUser()!!.uid,
                                                 text = newCommentText.value
                                             ),
-                                            authorName = user.displayName!!,
-                                            authorAvatar = user.photoUrl!!.toString(),
                                             photoUris = selectedImages,
                                             localization = localization
                                         )
@@ -396,7 +396,9 @@ fun CommentItem(
     comment: Comment,
     author: Author,
     theme: Map<String, Color>,
-    localization: Map<String, String>
+    localization: Map<String, String>,
+    navController: NavController,
+    commentManager: CommentManager
 ) {
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
@@ -410,11 +412,12 @@ fun CommentItem(
         "d MMMM yyyy, HH:mm",
         Locale(localization["date_format_language"]!!, localization["date_format_country"]!!)
     )
+
     val timestamp = comment.timestamp
     val date = commentDateFormat.format(timestamp)
 
     val userName = author.name
-    val userAvatarUrl = author.avatar
+    val userAvatarUrl = author.photoUrl
 
     if (showBottomSheet) {
         ModalBottomSheet(
@@ -471,11 +474,19 @@ fun CommentItem(
             Row(verticalAlignment = Alignment.Top) {
                 if (userAvatarUrl.isNotBlank()) {
                     SubcomposeAsyncImage(
+
                         model = userAvatarUrl,
                         contentDescription = "",
                         modifier = Modifier
                             .size(40.dp)
-                            .clip(CircleShape),
+                            .clip(CircleShape)
+                            .clickable(
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() }
+                            ) {
+                                commentManager.setSelectedProfileID(author.id)
+                                navController.navigate(Routes.OTHER_PROFILE)
+                            },
                         loading = {
                             CircularProgressIndicator(modifier = Modifier.size(20.dp))
                         },
@@ -500,7 +511,14 @@ fun CommentItem(
                         modifier = Modifier
                             .size(40.dp)
                             .clip(CircleShape)
-                            .background(Color.Gray),
+                            .background(Color.Gray)
+                            .clickable(
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() }
+                            ) {
+                                commentManager.setSelectedProfileID(author.id)
+                                navController.navigate(Routes.OTHER_PROFILE)
+                            },
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -513,8 +531,16 @@ fun CommentItem(
 
                 Spacer(modifier = Modifier.width(8.dp))
 
+
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
+                        modifier = Modifier.clickable(
+                            indication = null,
+                            interactionSource = remember { MutableInteractionSource() }
+                        ) {
+                            commentManager.setSelectedProfileID(author.id)
+                            navController.navigate(Routes.OTHER_PROFILE)
+                        },
                         text = "$userName · $date",
                         style = TextStyle(
                             color = theme["text"]!!,
@@ -526,7 +552,7 @@ fun CommentItem(
                     Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
-                        text = localization[text] ?: text,
+                        text = if (comment.systemComment) {"${localization["user"]} $userName ${localization[text]!!}"} else text,
                         style = TextStyle(
                             color = theme["text"]!!,
                             fontSize = 16.sp
@@ -579,98 +605,6 @@ fun CommentItem(
                                 }
                             }
                         }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun PhotoPickerDialog(
-    showDialog: Boolean,
-    onDismiss: () -> Unit,
-    onPickFromGallery: () -> Unit,
-    onTakePhoto: () -> Unit,
-    localization: Map<String, String>,
-    theme: Map<String, Color>
-) {
-    if (showDialog) {
-        val sheetState = rememberModalBottomSheetState()
-        ModalBottomSheet(
-            sheetState = sheetState,
-            onDismissRequest = { onDismiss() },
-            containerColor = theme["background"]!!,
-            shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
-            contentColor = theme["text"]!!,
-            tonalElevation = 8.dp,
-            scrimColor = Color.Black.copy(alpha = 0.32f),
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp, start = 16.dp, end = 16.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Text(
-                        text = localization["choose_option_title"]!!,
-                        color = theme["text"]!!,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 22.sp
-                    )
-                }
-                Spacer(modifier = Modifier.size(12.dp))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                ) {
-                    TextButton(
-                        onClick = {
-                            onTakePhoto()
-                            onDismiss()
-                        }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.PhotoCamera,
-                            tint = theme["icon"]!!,
-                            contentDescription = "",
-                        )
-                        Spacer(modifier = Modifier.size(12.dp))
-                        Text(
-                            text = localization["camera_option"]!!,
-                            color = theme["text"]!!,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 20.sp
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.size(8.dp))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                ) {
-                    TextButton(
-                        onClick = {
-                            onPickFromGallery()
-                            onDismiss()
-                        }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.PhotoLibrary,
-                            tint = theme["icon"]!!,
-                            contentDescription = "",
-                        )
-                        Spacer(modifier = Modifier.size(12.dp))
-                        Text(
-                            text = localization["photo_library_option"]!!,
-                            color = theme["text"]!!,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 20.sp
-                        )
                     }
                 }
             }

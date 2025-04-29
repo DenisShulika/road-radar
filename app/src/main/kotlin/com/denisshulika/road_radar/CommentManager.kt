@@ -9,6 +9,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.Tasks
+import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
@@ -32,12 +33,22 @@ class CommentManager(application: Application) : AndroidViewModel(application) {
     private val _authors = MutableLiveData<Map<String, Author>>()
     val authors: LiveData<Map<String, Author>> = _authors
 
+    private val _selectedProfileID = MutableLiveData("")
+    val selectedProfileID: LiveData<String> = _selectedProfileID
+
+    fun setSelectedProfileID(selectedProfileID: String) {
+        _selectedProfileID.value = selectedProfileID
+    }
+
     private var listenerRegistration: ListenerRegistration? = null
+
+    fun clearCommentsAndAuthors() {
+        _comments.value = emptyList()
+        _authors.value = emptyMap()
+    }
 
     fun addComment(
         comment: Comment,
-        authorName: String,
-        authorAvatar: String,
         photoUris: List<Uri> = emptyList(),
         localization: Map<String, String>
     ) {
@@ -70,35 +81,58 @@ class CommentManager(application: Application) : AndroidViewModel(application) {
                     comment.photos = photoUrls
                 }
 
-                val authorData = mapOf("name" to authorName, "avatar" to authorAvatar)
+
                 db.collection("incidents")
                     .document(comment.incidentId)
-                    .collection("commentAuthors")
-                    .document(comment.authorId)
-                    .set(authorData)
-                    .addOnSuccessListener {
+                    .get()
+                    .addOnSuccessListener { document ->
+                        val authors = document.get("authors")?.let {
+                            (it as? List<*>)?.filterIsInstance<String>()
+                        } ?: emptyList()
+
+                        val updatedAuthors = (authors + comment.authorId).toSet().toList()
+
+                        val updatedData = mapOf(
+                            "authors" to updatedAuthors
+                        )
+
                         db.collection("incidents")
                             .document(comment.incidentId)
-                            .collection("comments")
-                            .document(comment.id)
-                            .set(comment)
+                            .update(updatedData)
                             .addOnSuccessListener {
-                                _commentAdditionState.value = CommentAdditionState.Success
+                                db.collection("incidents")
+                                    .document(comment.incidentId)
+                                    .get()
+                                    .addOnSuccessListener {
+                                        db.collection("incidents")
+                                            .document(comment.incidentId)
+                                            .collection("comments")
+                                            .document(comment.id)
+                                            .set(comment)
+                                            .addOnSuccessListener {
+                                                _commentAdditionState.value = CommentAdditionState.Success
+                                            }
+                                            .addOnFailureListener { e ->
+                                                _commentAdditionState.value = CommentAdditionState.Error(
+                                                    e.localizedMessage ?: localization["unknown_error"]!!
+                                                )
+                                                Toast.makeText(context, e.localizedMessage, Toast.LENGTH_LONG).show()
+                                            }
+                                    }
+                                    .addOnFailureListener { e ->
+                                        _commentAdditionState.value = CommentAdditionState.Error(
+                                            e.localizedMessage ?: localization["unknown_error"]!!
+                                        )
+                                        Toast.makeText(context, e.localizedMessage, Toast.LENGTH_LONG).show()
+                                    }
                             }
-                            .addOnFailureListener { e ->
-                                _commentAdditionState.value = CommentAdditionState.Error(
-                                    e.localizedMessage ?: localization["unknown_error"]!!
-                                )
-                                Toast.makeText(context, e.localizedMessage, Toast.LENGTH_LONG).show()
-                            }
-                    }
-                    .addOnFailureListener { e ->
-                        _commentAdditionState.value = CommentAdditionState.Error(
-                            e.localizedMessage ?: localization["unknown_error"]!!
-                        )
-                        Toast.makeText(context, e.localizedMessage, Toast.LENGTH_LONG).show()
-                    }
+                            .addOnFailureListener {
 
+                            }
+                    }
+                    .addOnFailureListener {
+
+                    }
             } catch (e: Exception) {
                 _commentAdditionState.value = CommentAdditionState.Error(
                     e.message ?: localization["photos_adding_fail"]!!
@@ -121,18 +155,30 @@ class CommentManager(application: Application) : AndroidViewModel(application) {
 
                 db.collection("incidents")
                     .document(incidentId)
-                    .collection("commentAuthors")
                     .get()
-                    .addOnSuccessListener { documents ->
-                        _authors.value = documents.documents.mapNotNull { doc ->
-                            val author = doc.toObject(Author::class.java)
-                            val id = doc.id
-                            if (author != null) id to author else null
-                        }.toMap()
-                        _comments.value = commentList
+                    .addOnSuccessListener { document ->
+                        val authorIds = (document.get("authors") as? List<*>)?.filterIsInstance<String>() ?: emptyList()
+
+                        if (authorIds.isNotEmpty()) {
+                            db.collection("users")
+                                .whereIn(FieldPath.documentId(), authorIds)
+                                .get()
+                                .addOnSuccessListener { userDocuments ->
+                                    _authors.value = userDocuments.documents.mapNotNull { doc ->
+                                        doc.toObject(Author::class.java)?.let { author ->
+                                            doc.id to author.apply { id = doc.id }
+                                        }
+                                    }.toMap()
+
+                                    _comments.value = commentList
+                                }
+                                .addOnFailureListener {
+                                }
+                        } else {
+                            _comments.value = commentList
+                        }
                     }
                     .addOnFailureListener {
-
                     }
             }
     }
@@ -154,8 +200,9 @@ data class Comment(
 )
 
 data class Author(
+    var id: String = "",
     val name: String = "",
-    val avatar: String = ""
+    val photoUrl: String = ""
 )
 
 sealed class CommentAdditionState {

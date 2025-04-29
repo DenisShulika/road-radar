@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
@@ -31,11 +32,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -280,7 +281,7 @@ fun MapRadarPage(
                     shadowRadius = 30.dp
                 ),
             topBar = {
-                if (locationRequestState != LocationRequestState.Success) {
+                if (locationRequestState != LocationRequestState.Success && loadingDocumentsState != LoadingDocumentsState.Success) {
                     CenterAlignedTopAppBar(
                         colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                             containerColor = theme["top_bar_background"]!!,
@@ -488,8 +489,10 @@ fun MapRadarPage(
                                         textAlign = TextAlign.Center
                                     )
                                     Spacer(modifier = Modifier.size(12.dp))
-                                    CircularProgressIndicator(
-                                        color = theme["primary"]!!
+                                    LinearProgressIndicator(
+                                        modifier = Modifier.fillMaxWidth(0.5f),
+                                        color = theme["primary"]!!,
+                                        trackColor = theme["placeholder"]!!
                                     )
                                 }
                             }
@@ -534,8 +537,10 @@ fun MapRadarPage(
                                 textAlign = TextAlign.Center
                             )
                             Spacer(modifier = Modifier.size(12.dp))
-                            CircularProgressIndicator(
-                                color = theme["primary"]!!
+                            LinearProgressIndicator(
+                                modifier = Modifier.fillMaxWidth(0.5f),
+                                color = theme["primary"]!!,
+                                trackColor = theme["placeholder"]!!
                             )
                         }
                     }

@@ -299,5 +299,30 @@
   "comments_many": "comments",
 
   "privacy_policy_title": "Privacy Policy",
-  "privacy_policy_text_button": "Privacy policy"
+  "privacy_policy_text_button": "Privacy policy",
+
+  "user": "User",
+
+  "helped_me": "This helped me",
+
+  "other_profile_page_title": "User Profile",
+
+  "rank_1": "Novice",
+  "rank_2": "Scout",
+  "rank_3": "Pathfinder",
+  "rank_4": "Keeper of Order",
+  "rank_5": "Community Patrol",
+  "rank_6": "Radar",
+  "rank_7": "District Legend",
+  "rank_8": "Community Defender",
+
+  "joined_subtext": "Joined",
+
+  "experience_title": "Experience",
+  "rank_subtext": "Rank:",
+  "user_statistics_title": "User Statistics",
+  "thanks_count_title": "Thanks Received:",
+  "reports_count_title": "Incidents Reported:",
+  "thanks_given_count_title": "Thanks Given:",
+  "incident_was_reported": "You have already reported the nearest incident"
 }

@@ -84,7 +84,9 @@ fun PasswordResetPage(
     LaunchedEffect(resetPasswordState.value) {
         when (resetPasswordState.value) {
             is ResetPasswordState.Success -> {
-                navController.navigate(Routes.LOGIN)
+                navController.navigate(Routes.LOGIN) {
+                    popUpTo(0) { inclusive = true }
+                }
                 authViewModel.setResetPasswordState(ResetPasswordState.Null)
             }
             is ResetPasswordState.Error -> {

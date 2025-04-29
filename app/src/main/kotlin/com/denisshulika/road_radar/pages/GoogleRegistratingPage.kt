@@ -92,17 +92,18 @@ fun GoogleRegistratingPage(
         authViewModel.checkAuthStatus()
         when(authState.value) {
             is AuthState.Authenticated ->
-                navController.navigate(Routes.INCIDENTS)
+                navController.navigate(Routes.INCIDENTS) {
+                    popUpTo(0) { inclusive = true }
+                }
             is AuthState.Unauthenticated ->
-                navController.navigate(Routes.LOGIN)
+                navController.navigate(Routes.LOGIN) {
+                    popUpTo(0) { inclusive = true }
+                }
             is AuthState.Error ->
                 Toast.makeText(context, (authState.value as AuthState.Error).message, Toast.LENGTH_LONG).show()
             else -> Unit
         }
     }
-
-    val tooltipState = rememberTooltipState()
-    val scope = rememberCoroutineScope()
 
     Box(
         modifier = Modifier

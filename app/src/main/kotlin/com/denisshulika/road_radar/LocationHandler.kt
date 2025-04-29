@@ -76,49 +76,53 @@ class LocationHandler(application: Application) : AndroidViewModel(application) 
     private fun requestLocation(onLocationReceived: (Location?) -> Unit) {
         val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
 
-        if (ActivityCompat.checkSelfPermission(
-                context,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED &&
-            ActivityCompat.checkSelfPermission(
-                context,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+            ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED
         ) {
             onLocationReceived(null)
             return
         }
 
-        val locationInterval = 1000L
-        val locationFastestInterval = 100L
-        val locationMaxWaitTime = 10000L
-        val locationDuration = 10000L
-        val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, locationInterval)
-            .setWaitForAccurateLocation(false)
-            .setDurationMillis(locationDuration)
-            .setMinUpdateIntervalMillis(locationFastestInterval)
-            .setMaxUpdateDelayMillis(locationMaxWaitTime)
-            .build()
+        fusedLocationClient.lastLocation.addOnSuccessListener { lastLocation ->
+            if (lastLocation != null) {
+                onLocationReceived(lastLocation)
+            } else {
+                fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
+                    .addOnSuccessListener { currentLocation ->
+                        if (currentLocation != null) {
+                            onLocationReceived(currentLocation)
+                        } else {
+                            val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 500L)
+                                .setWaitForAccurateLocation(true)
+                                .setDurationMillis(3000L)
+                                .setMinUpdateIntervalMillis(100L)
+                                .setMaxUpdateDelayMillis(2000L)
+                                .build()
 
-        val locationCallback = object : LocationCallback() {
-            override fun onLocationResult(locationResult: LocationResult) {
-                val location = locationResult.lastLocation
-                location?.let {
-                    onLocationReceived(location)
-                    fusedLocationClient.removeLocationUpdates(this)
-                } ?: run {
-                    onLocationReceived(null)
-                    fusedLocationClient.removeLocationUpdates(this)
-                }
+                            val locationCallback = object : LocationCallback() {
+                                override fun onLocationResult(locationResult: LocationResult) {
+                                    val location = locationResult.lastLocation
+                                    onLocationReceived(location)
+                                    fusedLocationClient.removeLocationUpdates(this)
+                                }
+                            }
+
+                            fusedLocationClient.requestLocationUpdates(
+                                locationRequest,
+                                locationCallback,
+                                Looper.getMainLooper()
+                            )
+                        }
+                    }
+                    .addOnFailureListener {
+                        onLocationReceived(null)
+                    }
             }
+        }.addOnFailureListener {
+            onLocationReceived(null)
         }
-
-        fusedLocationClient.requestLocationUpdates(
-            locationRequest,
-            locationCallback,
-            Looper.getMainLooper()
-        )
     }
+
 
     fun handlePermissionResult(
         permissions: Map<String, Boolean>,

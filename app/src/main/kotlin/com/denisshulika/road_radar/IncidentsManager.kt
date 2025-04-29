@@ -12,6 +12,7 @@ import com.denisshulika.road_radar.model.IncidentType
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentSnapshot
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
@@ -51,10 +52,6 @@ class IncidentsManager(application: Application) : AndroidViewModel(application)
         _incidentCreationState.value = state
     }
 
-    fun setLoadingDocumentsState(state: LoadingDocumentsState) {
-        _loadingDocumentsState.value = state
-    }
-
     fun setSelectedDocumentInfo(selectedDocumentInfo: Incident) {
         _selectedDocumentInfo.value = selectedDocumentInfo
     }
@@ -81,25 +78,46 @@ class IncidentsManager(application: Application) : AndroidViewModel(application)
                             documentRef.collection("comments")
                                 .get()
                                 .addOnSuccessListener { commentsSnapshot ->
-                                    val deleteTasks =
-                                        commentsSnapshot.documents.map { it.reference.delete() }
+                                    val deleteCommentsTasks = commentsSnapshot.documents.map { it.reference.delete() }
 
-                                    Tasks.whenAllSuccess<Void>(deleteTasks)
+                                    Tasks.whenAllSuccess<Void>(deleteCommentsTasks)
                                         .addOnSuccessListener {
-                                            documentRef.delete()
-                                                .addOnSuccessListener {
-                                                    val storageReference =
-                                                        storage.reference.child("/incidents_photos/incident_$id")
-                                                    storageReference.listAll()
-                                                        .addOnSuccessListener { listResult ->
-                                                            listResult.items.forEach { file ->
-                                                                file.delete()
-                                                            }
+                                            documentRef.collection("commentAuthors")
+                                                .get()
+                                                .addOnSuccessListener { authorsSnapshot ->
+                                                    val deleteAuthorsTasks = authorsSnapshot.documents.map { it.reference.delete() }
+
+                                                    Tasks.whenAllSuccess<Void>(deleteAuthorsTasks)
+                                                        .addOnSuccessListener {
+                                                            documentRef.delete()
+                                                                .addOnSuccessListener {
+                                                                    val storageReference = storage.reference.child("/incidents_photos/incident_$id")
+                                                                    storageReference.listAll()
+                                                                        .addOnSuccessListener { listResult ->
+                                                                            listResult.items.forEach { file ->
+                                                                                file.delete()
+                                                                            }
+                                                                        }
+                                                                        .addOnFailureListener { e ->
+                                                                            Toast.makeText(
+                                                                                context,
+                                                                                "Error deleting photos for incident $id: ${e.message}",
+                                                                                Toast.LENGTH_SHORT
+                                                                            ).show()
+                                                                        }
+                                                                }
+                                                                .addOnFailureListener { e ->
+                                                                    Toast.makeText(
+                                                                        context,
+                                                                        "Error deleting incident $id: ${e.message}",
+                                                                        Toast.LENGTH_SHORT
+                                                                    ).show()
+                                                                }
                                                         }
                                                         .addOnFailureListener { e ->
                                                             Toast.makeText(
                                                                 context,
-                                                                "Error deleting photos for incident $id: ${e.message}",
+                                                                "Error deleting comment authors for incident $id: ${e.message}",
                                                                 Toast.LENGTH_SHORT
                                                             ).show()
                                                         }
@@ -107,7 +125,7 @@ class IncidentsManager(application: Application) : AndroidViewModel(application)
                                                 .addOnFailureListener { e ->
                                                     Toast.makeText(
                                                         context,
-                                                        "Error deleting incident $id: ${e.message}",
+                                                        "Error fetching comment authors for incident $id: ${e.message}",
                                                         Toast.LENGTH_SHORT
                                                     ).show()
                                                 }
@@ -115,7 +133,7 @@ class IncidentsManager(application: Application) : AndroidViewModel(application)
                                         .addOnFailureListener { e ->
                                             Toast.makeText(
                                                 context,
-                                                "Error deleting incident $id: ${e.message}",
+                                                "Error deleting comments for incident $id: ${e.message}",
                                                 Toast.LENGTH_SHORT
                                             ).show()
                                         }
@@ -123,7 +141,7 @@ class IncidentsManager(application: Application) : AndroidViewModel(application)
                                 .addOnFailureListener { e ->
                                     Toast.makeText(
                                         context,
-                                        "Error deleting incident $id: ${e.message}",
+                                        "Error fetching comments for incident $id: ${e.message}",
                                         Toast.LENGTH_SHORT
                                     ).show()
                                 }
@@ -164,12 +182,24 @@ class IncidentsManager(application: Application) : AndroidViewModel(application)
                 return@launch
             }
 
+            val currentUser = authViewModel.getCurrentUser()!!
+            val currentUserId = currentUser.uid
+
             val currentTime = Timestamp.now()
 
             val newLatitude = latitude.toDouble()
             val newLongitude = longitude.toDouble()
 
             for (document in incidentsSnapshot.documents) {
+                val reporters = document.get("reporters")?.let {
+                    (it as? List<*>)?.filterIsInstance<String>()
+                } ?: emptyList()
+
+                if (currentUserId in reporters) {
+                    _incidentCreationState.value = IncidentCreationState.Error(localization["incident_was_reported"]!!)
+                    return@launch
+                }
+
                 val storedLatitude = document.getString("latitude")?.toDouble()!!
                 val storedLongitude = document.getString("longitude")?.toDouble()!!
 
@@ -184,23 +214,46 @@ class IncidentsManager(application: Application) : AndroidViewModel(application)
                         "lifetime" to Timestamp(
                             currentTime.seconds + 30 * 60,
                             currentTime.nanoseconds
-                        )
+                        ),
+                        "reporters" to reporters + currentUserId
                     )
 
                     db.collection("incidents")
                         .document(document.id)
                         .update(updatedData)
                         .addOnSuccessListener {
-                            val user = authViewModel.getCurrentUser()!!
+                            db.collection("users")
+                                .document(currentUserId)
+                                .get()
+                                .addOnSuccessListener { documentSnapshot ->
+                                    val currentExperience = documentSnapshot.getLong("experience") ?: 0
+                                    val currentReportsCount = documentSnapshot.getLong("reportsCount") ?: 0
+
+                                    val data = mapOf(
+                                        "experience" to currentExperience + 1,
+                                        "reportsCount" to currentReportsCount + 1
+                                    )
+                                    db.collection("users")
+                                        .document(currentUserId)
+                                        .update(data)
+                                        .addOnSuccessListener {
+
+                                        }
+                                        .addOnFailureListener { e ->
+                                            Toast.makeText(context, e.localizedMessage, Toast.LENGTH_LONG).show()
+                                        }
+                                }
+                                .addOnFailureListener { e ->
+                                    Toast.makeText(context, e.localizedMessage, Toast.LENGTH_LONG).show()
+                                }
+
                             commentManager.addComment(
                                 comment = Comment(
                                     incidentId = document.id,
-                                    authorId = user.uid,
+                                    authorId = currentUser.uid,
                                     text = "<system_report_duplicate>",
                                     systemComment = true
                                 ),
-                                authorName = user.displayName!!,
-                                authorAvatar = user.photoUrl!!.toString(),
                                 photoUris = emptyList(),
                                 localization = localization,
                             )
@@ -209,12 +262,10 @@ class IncidentsManager(application: Application) : AndroidViewModel(application)
                                 commentManager.addComment(
                                     comment = Comment(
                                         incidentId = document.id,
-                                        authorId = user.uid,
+                                        authorId = currentUser.uid,
                                         text = description
                                     ),
                                     photoUris = if (photoUris.isNotEmpty()) photoUris.filterNotNull() else emptyList(),
-                                    authorName = user.displayName!!,
-                                    authorAvatar = user.photoUrl!!.toString(),
                                     localization = localization,
                                 )
                             } else {
@@ -262,22 +313,51 @@ class IncidentsManager(application: Application) : AndroidViewModel(application)
                 val creatorName =
                     authViewModel.getCurrentUser()?.displayName ?: localization["unknown_user"]!!
 
-                val data = mapOf(
-                    "address" to address,
-                    "createdBy" to creatorName,
-                    "creationDate" to currentTime,
-                    "description" to description,
-                    "latitude" to newLatitude.toString(),
-                    "longitude" to newLongitude.toString(),
-                    "photos" to photos,
-                    "type" to type.toString(),
-                    "commentCount" to 0,
-                    "lifetime" to Timestamp(currentTime.seconds + 30 * 60, currentTime.nanoseconds)
+                val incident = Incident(
+                    id = incidentID,
+                    type = type.toString(),
+                    address = address,
+                    commentCount = 0,
+                    createdBy = creatorName,
+                    creationDate = currentTime,
+                    lifetime = Timestamp(currentTime.seconds + 30 * 60, currentTime.nanoseconds),
+                    description = description,
+                    latitude = newLatitude.toString(),
+                    longitude = newLongitude.toString(),
+                    photos = photos,
+                    usersLiked = listOf(currentUserId),
+                    reporters = listOf(currentUserId),
+                    authors = emptyList()
                 )
+
+                db.collection("users")
+                    .document(currentUserId)
+                    .get()
+                    .addOnSuccessListener { documentSnapshot ->
+                        val currentExperience = documentSnapshot.getLong("experience") ?: 0
+                        val currentReportsCount = documentSnapshot.getLong("reportsCount") ?: 0
+
+                        val data = mapOf(
+                            "experience" to currentExperience + 2,
+                            "reportsCount" to currentReportsCount + 1
+                        )
+                        db.collection("users")
+                            .document(currentUserId)
+                            .update(data)
+                            .addOnSuccessListener {
+
+                            }
+                            .addOnFailureListener { e ->
+                                Toast.makeText(context, e.localizedMessage, Toast.LENGTH_LONG).show()
+                            }
+                    }
+                    .addOnFailureListener { e ->
+                        Toast.makeText(context, e.localizedMessage, Toast.LENGTH_LONG).show()
+                    }
 
                 _incidentCreationState.value = IncidentCreationState.CreatingIncident
 
-                db.collection("incidents").document(incidentID).set(data)
+                db.collection("incidents").document(incidentID).set(incident)
                     .addOnSuccessListener {
                         _incidentCreationState.value = IncidentCreationState.Success
                         Toast.makeText(
@@ -300,7 +380,7 @@ class IncidentsManager(application: Application) : AndroidViewModel(application)
     }
 
     fun incrementCommentCount(incidentId: String, incrementBy: Int) {
-        FirebaseFirestore.getInstance().collection("incidents")
+        db.collection("incidents")
             .document(incidentId)
             .get()
             .addOnSuccessListener { documentSnapshot ->
@@ -378,6 +458,72 @@ class IncidentsManager(application: Application) : AndroidViewModel(application)
 
         return earthRadius * c
     }
+
+    fun updateUserThanksGivenCount(userId: String, incidentId: String) {
+        db.collection("users")
+            .document(userId)
+            .get()
+            .addOnSuccessListener { documentSnapshot ->
+                val currentThanksGivenCount = documentSnapshot.getLong("thanksGivenCount") ?: 0
+                db.collection("users")
+                    .document(userId)
+                    .update("thanksGivenCount", currentThanksGivenCount + 1)
+                    .addOnSuccessListener {
+                        updateReportersThanksCount(incidentId)
+                    }
+                    .addOnFailureListener { e ->
+                        Toast.makeText(context, e.localizedMessage, Toast.LENGTH_LONG).show()
+                    }
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(context, e.localizedMessage, Toast.LENGTH_LONG).show()
+            }
+    }
+
+    private fun updateReportersThanksCount(incidentId: String) {
+        db.collection("incidents")
+            .document(incidentId)
+            .get()
+            .addOnSuccessListener { documentSnapshot ->
+                val reporters = documentSnapshot.get("reporters")?.let {
+                    (it as? List<*>)?.filterIsInstance<String>()
+                } ?: emptyList()
+
+                if (reporters.isEmpty()) return@addOnSuccessListener
+
+                val batch = db.batch()
+                val tasks = reporters.map { reporterId ->
+                    db.collection("users").document(reporterId).get()
+                }
+
+                Tasks.whenAllSuccess<DocumentSnapshot>(tasks)
+                    .addOnSuccessListener { documents ->
+                        for (document in documents) {
+                            val userRef = document.reference
+                            val currentThanksCount = document.getLong("thanksCount") ?: 0
+                            val currentExperience = document.getLong("experience") ?: 0
+                            batch.update(userRef, mapOf(
+                                "thanksCount" to currentThanksCount + 1,
+                                "experience" to currentExperience + 1
+                            ))
+                        }
+                        batch.commit().addOnFailureListener { e ->
+                            Toast.makeText(context, e.localizedMessage, Toast.LENGTH_LONG).show()
+                        }
+                    }
+                    .addOnFailureListener { e ->
+                        Toast.makeText(context, e.localizedMessage, Toast.LENGTH_LONG).show()
+                    }
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(context, e.localizedMessage, Toast.LENGTH_LONG).show()
+            }
+    }
+
+    fun addUserLike(incidentId: String, userId: String) {
+        val incidentRef = db.collection("incidents").document(incidentId)
+        incidentRef.update("usersLiked", FieldValue.arrayUnion(userId))
+    }
 }
 
 data class Incident(
@@ -391,7 +537,10 @@ data class Incident(
     val description: String = "",
     val latitude: String = "",
     val longitude: String = "",
-    val photos: List<String> = emptyList()
+    val photos: List<String> = emptyList(),
+    var usersLiked: List<String> = emptyList(),
+    var reporters: List<String> = emptyList(),
+    var authors: List<String> = emptyList()
 ) {
     companion object {
         fun fromDocument(doc: DocumentSnapshot): Incident? {
@@ -407,7 +556,9 @@ data class Incident(
                     description = doc.getString("description")!!,
                     photos = (doc.get("photos") as? List<*>)?.filterIsInstance<String>()?.takeIf { it.isNotEmpty() } ?: emptyList(),
                     commentCount = doc.getLong("commentCount")!!.toInt(),
-                    createdBy = doc.getString("createdBy")!!
+                    createdBy = doc.getString("createdBy")!!,
+                    usersLiked = (doc.get("usersLiked") as? List<*>)?.filterIsInstance<String>()?.takeIf { it.isNotEmpty() } ?: emptyList(),
+                    authors = (doc.get("authros") as? List<*>)?.filterIsInstance<String>()?.takeIf { it.isNotEmpty() } ?: emptyList(),
                 )
             } catch (e: Exception) {
                 null

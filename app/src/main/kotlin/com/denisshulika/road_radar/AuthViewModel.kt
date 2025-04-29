@@ -11,17 +11,20 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.NavController
 import com.denisshulika.road_radar.local.UserLocalStorage
 import com.denisshulika.road_radar.model.UserData
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
+import com.google.firebase.Timestamp
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.userProfileChangeRequest
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -92,39 +95,40 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun updateUserProfile(
-        name : String,
+        name: String,
         photo: String,
+        phoneNumber: String,
         context: Context,
-        localization: Map<String, String>
+        localization: Map<String, String>,
     ) {
-        val user = auth.currentUser!!
+        val user = FirebaseAuth.getInstance().currentUser ?: return
+        val firestore = FirebaseFirestore.getInstance()
 
         val profileUpdates = userProfileChangeRequest {
             displayName = name
             photoUri = Uri.parse(photo)
         }
 
-        val userData = hashMapOf(
-            "photoUrl" to photo,
-            "name" to name
-        )
-
-        firestore.collection("users").document(user.uid)
-            .update(userData as Map<String, Any>)
-            .addOnSuccessListener {
-
-            }
-            .addOnFailureListener {
-                Toast.makeText(context,
-                    localization["user_data_saving_fail"]!!,
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
-
         user.updateProfile(profileUpdates)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     Toast.makeText(context, localization["profile_updating_success"]!!, Toast.LENGTH_SHORT).show()
+
+                    val userData = mapOf(
+                        "name" to name,
+                        "photoUrl" to photo,
+                        "phoneNumber" to phoneNumber
+                    )
+
+                    firestore.collection("users")
+                        .document(user.uid)
+                        .set(userData, SetOptions.merge())
+                        .addOnSuccessListener {
+
+                        }
+                        .addOnFailureListener {
+                            Toast.makeText(context, localization["user_data_saving_fail"]!!, Toast.LENGTH_SHORT).show()
+                        }
                 } else {
                     Toast.makeText(context, localization["profile_updating_fail"]!!, Toast.LENGTH_SHORT).show()
                 }
@@ -218,8 +222,13 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                             if (profileTask.isSuccessful) {
                                 val userData = hashMapOf(
                                     "phoneNumber" to phoneNumber,
-                                    "photoUrl" to photo,
-                                    "name" to name
+                                    "photoUrl" to user.photoUrl,
+                                    "name" to name,
+                                    "accountAge" to Timestamp.now(),
+                                    "experience" to 0,
+                                    "reportsCount" to 0,
+                                    "thanksCount" to 0,
+                                    "thanksGivenCount" to 0
                                 )
                                 firestore.collection("users")
                                     .document(uid)
@@ -370,7 +379,12 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         val userData = hashMapOf(
             "phoneNumber" to phoneNumber,
             "photoUrl" to photo,
-            "name" to name
+            "name" to name,
+            "accountAge" to Timestamp.now(),
+            "experience" to 0,
+            "reportsCount" to 0,
+            "thanksCount" to 0,
+            "thanksGivenCount" to 0
         )
 
         val uid = user.uid

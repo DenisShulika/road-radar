@@ -2,6 +2,7 @@ package com.denisshulika.road_radar.pages
 
 import android.graphics.Bitmap
 import android.graphics.ImageDecoder
+import android.icu.text.SimpleDateFormat
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
@@ -11,6 +12,7 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -37,9 +39,11 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -49,6 +53,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -68,6 +73,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.FileProvider
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.canhub.cropper.CropImageContract
@@ -89,18 +95,24 @@ import com.denisshulika.road_radar.model.UserData
 import com.denisshulika.road_radar.model.isOpened
 import com.denisshulika.road_radar.model.opposite
 import com.denisshulika.road_radar.ui.components.CustomDrawer
+import com.denisshulika.road_radar.ui.components.PhotoPickerDialog
 import com.denisshulika.road_radar.ui.components.StyledBasicTextField
 import com.denisshulika.road_radar.util.coloredShadow
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.io.File
+import java.util.Date
+import java.util.Locale
+import java.util.UUID
 import kotlin.math.roundToInt
 
 @ExperimentalMaterial3Api
 @Composable
-fun ProfilePage(
+fun SelfProfilePage(
     navController: NavController,
     authViewModel: AuthViewModel,
     settingsViewModel: SettingsViewModel,
@@ -157,10 +169,8 @@ fun ProfilePage(
 
     var isEditingState by remember { mutableStateOf(false) }
 
-
     var userName by remember { mutableStateOf("") }
     var isNameEmpty by remember { mutableStateOf(false) }
-
 
     var userEmail by remember { mutableStateOf("") }
 
@@ -170,6 +180,41 @@ fun ProfilePage(
 
     var userPhoto by remember { mutableStateOf("") }
 
+    var accountAge by remember { mutableStateOf(Timestamp(Date())) }
+
+    var experience by remember { mutableIntStateOf(0) }
+    val rank = when(experience) {
+        in 0..10 -> localization["rank_1"]!!
+        in 11..30 -> localization["rank_2"]!!
+        in 31..60 -> localization["rank_3"]!!
+        in 61..100 -> localization["rank_4"]!!
+        in 101..150 -> localization["rank_5"]!!
+        in 151..220 -> localization["rank_6"]!!
+        in 221..300 -> localization["rank_7"]!!
+        else -> localization["rank_8"]!!
+    }
+    val (startExp, endExp) = when (experience) {
+        in 0..10 -> 0 to 10
+        in 11..30 -> 11 to 30
+        in 31..60 -> 31 to 60
+        in 61..100 -> 61 to 100
+        in 101..150 -> 101 to 150
+        in 151..220 -> 151 to 220
+        in 221..300 -> 221 to 300
+        else -> 301 to Int.MAX_VALUE
+    }
+
+    val experienceGainedInRank = experience - startExp
+    val experienceNeededForRank = endExp - startExp
+
+    val progress = (experienceGainedInRank.toFloat() / experienceNeededForRank.toFloat())
+
+    var reportsCount by remember { mutableIntStateOf(0) }
+    var thanksCount by remember { mutableStateOf(0) }
+    var thanksGivenCount by remember { mutableStateOf(0) }
+
+    var isDataLoaded by remember { mutableStateOf(false) }
+
     val currentUser = authViewModel.getCurrentUser()
     val userLocalStorage = UserLocalStorage(context)
     LaunchedEffect(Unit) {
@@ -177,6 +222,20 @@ fun ProfilePage(
         userEmail = userLocalStorage.getUserEmail().toString()
         userPhoneNumber = userLocalStorage.getUserPhoneNumber().toString()
         userPhoto = userLocalStorage.getUserPhotoUrl().toString()
+
+        FirebaseFirestore.getInstance()
+            .collection("users")
+            .document(currentUser!!.uid)
+            .get()
+            .addOnSuccessListener { doc ->
+                accountAge = doc.getTimestamp("accountAge")!!
+                experience = doc.getLong("experience")!!.toInt()
+                reportsCount = doc.getLong("reportsCount")!!.toInt()
+                thanksCount = doc.getLong("thanksCount")!!.toInt()
+                thanksGivenCount = doc.getLong("thanksGivenCount")!!.toInt()
+
+                isDataLoaded = true
+            }
     }
 
     var bitmap by remember { mutableStateOf<Bitmap?>(null) }
@@ -197,16 +256,45 @@ fun ProfilePage(
         }
     }
 
+    val accountAgeDateFormat = SimpleDateFormat(
+        "d MMMM yyyy",
+        Locale(localization["date_format_language"]!!, localization["date_format_country"]!!)
+    )
+
     if (imageUri != null) {
         val source = ImageDecoder.createSource(context.contentResolver, imageUri!!)
         bitmap = ImageDecoder.decodeBitmap(source)
     }
 
-    val imagePickerLauncher =
-        rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+    var showDialog by remember { mutableStateOf(false) }
+    val cameraImageUri = remember { mutableStateOf<Uri?>(null) }
+
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        isImageSelected = false
+        val cropOption = CropImageContractOptions(
+            uri,
+            CropImageOptions().apply {
+                guidelines = CropImageView.Guidelines.ON
+                aspectRatioX = 1
+                aspectRatioY = 1
+                fixAspectRatio = true
+                cropShape = CropImageView.CropShape.RECTANGLE
+                showCropOverlay = true
+                autoZoomEnabled = true
+            }
+        )
+        imageCropLauncher.launch(cropOption)
+    }
+
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success) {
             isImageSelected = false
             val cropOption = CropImageContractOptions(
-                uri,
+                cameraImageUri.value!!,
                 CropImageOptions().apply {
                     guidelines = CropImageView.Guidelines.ON
                     aspectRatioX = 1
@@ -219,6 +307,7 @@ fun ProfilePage(
             )
             imageCropLauncher.launch(cropOption)
         }
+    }
 
     Box(
         modifier = Modifier
@@ -295,9 +384,9 @@ fun ProfilePage(
                 Column(
                     modifier = Modifier
                         .fillMaxHeight()
-                        .padding(start = 20.dp, end = 20.dp, bottom = 20.dp)
+                        .padding(start = 20.dp, end = 20.dp)
                         .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.SpaceBetween
+                    verticalArrangement = Arrangement.spacedBy(20.dp)
                 ) {
                     if (!isEditingState) {
                         Column {
@@ -316,7 +405,7 @@ fun ProfilePage(
                                         modifier = Modifier
                                             .clip(RoundedCornerShape(10.dp))
                                             .background(theme["drawer_background"]!!)
-                                            .size(125.dp),
+                                            .size(110.dp),
                                         horizontalAlignment = Alignment.CenterHorizontally,
                                         verticalArrangement = Arrangement.Center
                                     ) {
@@ -328,6 +417,14 @@ fun ProfilePage(
                                                 .clip(RoundedCornerShape(10.dp))
                                         )
                                     }
+                                    Spacer(modifier = Modifier.size(8.dp))
+                                    Text(
+                                        text = "${localization["joined_subtext"]!!} ${accountAgeDateFormat.format(accountAge.toDate())}",
+                                        fontSize = 18.sp,
+                                        fontFamily = RubikFont,
+                                        fontWeight = FontWeight.Normal,
+                                        color = theme["placeholder"]!!
+                                    )
                                 }
                                 Spacer(modifier = Modifier.size(24.dp))
                             }
@@ -337,7 +434,7 @@ fun ProfilePage(
                                 verticalArrangement = Arrangement.spacedBy(32.dp)
                             ) {
                                 Column(
-                                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
                                     Text(
                                         text = localization["name_title"]!!,
@@ -356,7 +453,7 @@ fun ProfilePage(
                                 }
                                 if (authViewModel.isUserLoggedInWithEmailPassword()) {
                                     Column(
-                                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                                        verticalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
                                         Text(
                                             text = localization["email_title"]!!,
@@ -375,7 +472,7 @@ fun ProfilePage(
                                     }
                                 }
                                 Column(
-                                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
                                     Text(
                                         text = localization["phone_title"]!!,
@@ -392,7 +489,129 @@ fun ProfilePage(
                                         color = theme["text"]!!
                                     )
                                 }
+                                if (isDataLoaded) {
+                                    Column(
+                                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Column(
+                                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            Text(
+                                                text = localization["experience_title"]!!,
+                                                fontSize = 24.sp,
+                                                fontFamily = RubikFont,
+                                                fontWeight = FontWeight.Normal,
+                                                color = theme["placeholder"]!!
+                                            )
+                                            Text(
+                                                text = "${localization["rank_subtext"]!!} $rank (${experience}/${endExp})",
+                                                fontSize = 22.sp,
+                                                fontFamily = RubikFont,
+                                                fontWeight = FontWeight.Normal,
+                                                color = theme["text"]!!
+                                            )
+                                            LinearProgressIndicator(
+                                                progress = { progress },
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .height(8.dp)
+                                                    .clip(RoundedCornerShape(50)),
+                                                color = theme["primary"]!!,
+                                                trackColor = theme["drawer_background"]!!,
+                                            )
+                                        }
+                                    }
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .border(
+                                                width = 1.dp,
+                                                color = theme["placeholder"]!!,
+                                                shape = RoundedCornerShape(10.dp)
+                                            )
+                                            .background(theme["drawer_background"]!!)
+                                            .padding(16.dp)
+                                    ) {
+                                        Text(
+                                            text = localization["user_statistics_title"]!!,
+                                            fontSize = 24.sp,
+                                            fontFamily = RubikFont,
+                                            fontWeight = FontWeight.Normal,
+                                            color = theme["placeholder"]!!
+                                        )
+                                        Spacer(modifier = Modifier.size(12.dp))
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Text(
+                                                text = localization["thanks_count_title"]!!,
+                                                fontSize = 20.sp,
+                                                fontFamily = RubikFont,
+                                                fontWeight = FontWeight.Bold,
+                                                color = theme["text"]!!
+                                            )
+                                            Text(
+                                                text = thanksCount.toString(),
+                                                fontSize = 18.sp,
+                                                fontFamily = RubikFont,
+                                                fontWeight = FontWeight.Normal,
+                                                color = theme["text"]!!
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.size(12.dp))
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Text(
+                                                text = localization["reports_count_title"]!!,
+                                                fontSize = 20.sp,
+                                                fontFamily = RubikFont,
+                                                fontWeight = FontWeight.Bold,
+                                                color = theme["text"]!!
+                                            )
+                                            Text(
+                                                text = reportsCount.toString(),
+                                                fontSize = 18.sp,
+                                                fontFamily = RubikFont,
+                                                fontWeight = FontWeight.Normal,
+                                                color = theme["text"]!!
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.size(12.dp))
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Text(
+                                                text = localization["thanks_given_count_title"]!!,
+                                                fontSize = 20.sp,
+                                                fontFamily = RubikFont,
+                                                fontWeight = FontWeight.Bold,
+                                                color = theme["text"]!!
+                                            )
+                                            Text(
+                                                text = thanksGivenCount.toString(),
+                                                fontSize = 18.sp,
+                                                fontFamily = RubikFont,
+                                                fontWeight = FontWeight.Normal,
+                                                color = theme["text"]!!
+                                            )
+                                        }
+                                    }
+                                } else {
+                                    Box(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        CircularProgressIndicator(
+                                            color = theme["primary"]!!
+                                        )
+                                    }
+                                }
                             }
+                            Spacer(Modifier.weight(1f))
                         }
                         Column {
                             Row(
@@ -417,6 +636,7 @@ fun ProfilePage(
                                     )
                                 }
                             }
+                            Spacer(modifier = Modifier.height(20.dp))
                         }
                     } else {
                         Column {
@@ -433,18 +653,38 @@ fun ProfilePage(
                                 ) {
                                     Box(
                                         modifier = Modifier
-                                            .size(125.dp)
+                                            .size(110.dp)
                                     ) {
+                                        PhotoPickerDialog(
+                                            showDialog = showDialog,
+                                            onDismiss = { showDialog = false },
+                                            onPickFromGallery = {
+                                                galleryLauncher.launch("image/*")
+                                            },
+                                            onTakePhoto = {
+                                                val photoFile = File(context.cacheDir, "${UUID.randomUUID()}.jpg")
+                                                val uri = FileProvider.getUriForFile(
+                                                    context,
+                                                    "${context.packageName}.provider",
+                                                    photoFile
+                                                )
+                                                cameraImageUri.value = uri
+                                                cameraLauncher.launch(uri)
+                                            },
+                                            localization = localization,
+                                            theme = theme
+                                        )
+
                                         Column(
                                             modifier = Modifier
                                                 .clip(RoundedCornerShape(10.dp))
                                                 .background(theme["drawer_background"]!!)
-                                                .size(125.dp)
+                                                .size(110.dp)
                                                 .clickable(
                                                     indication = null,
                                                     interactionSource = remember { MutableInteractionSource() }
                                                 ) {
-                                                    imagePickerLauncher.launch("image/*")
+                                                    showDialog = true
                                                 },
                                             horizontalAlignment = Alignment.CenterHorizontally,
                                             verticalArrangement = Arrangement.Center
@@ -477,12 +717,20 @@ fun ProfilePage(
                                                 tint = theme["icon"]!!,
                                                 modifier = Modifier
                                                     .align(Alignment.BottomEnd)
-                                                    .offset(x = 12.dp, y = (-12).dp)
-                                                    .size(36.dp)
+                                                    .offset(x = 8.dp, y = 8.dp)
+                                                    .size(32.dp)
                                             )
                                         }
                                     }
                                 }
+                                Spacer(modifier = Modifier.size(8.dp))
+                                Text(
+                                    text = "${localization["joined_subtext"]!!} ${accountAgeDateFormat.format(accountAge.toDate())}",
+                                    fontSize = 18.sp,
+                                    fontFamily = RubikFont,
+                                    fontWeight = FontWeight.Normal,
+                                    color = theme["placeholder"]!!
+                                )
                                 Spacer(modifier = Modifier.size(24.dp))
                             }
                             Column(
@@ -492,7 +740,7 @@ fun ProfilePage(
                             ) {
                                 Column {
                                     Column(
-                                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                                        verticalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
                                         Text(
                                             text = localization["name_title"]!!,
@@ -524,7 +772,7 @@ fun ProfilePage(
                                 }
                                 if (authViewModel.isUserLoggedInWithEmailPassword()) {
                                     Column(
-                                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                                        verticalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
                                         Text(
                                             text = localization["email_title"]!!,
@@ -544,7 +792,7 @@ fun ProfilePage(
                                 }
                                 Column {
                                     Column(
-                                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                                        verticalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
                                         Text(
                                             text = localization["phone_title"]!!,
@@ -584,11 +832,131 @@ fun ProfilePage(
                                         )
                                     }
                                 }
+                                if (isDataLoaded) {
+                                    Column(
+                                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Column(
+                                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            Text(
+                                                text = localization["experience_title"]!!,
+                                                fontSize = 24.sp,
+                                                fontFamily = RubikFont,
+                                                fontWeight = FontWeight.Normal,
+                                                color = theme["placeholder"]!!
+                                            )
+                                            Text(
+                                                text = "${localization["rank_subtext"]!!} $rank (${experience}/${endExp})",
+                                                fontSize = 22.sp,
+                                                fontFamily = RubikFont,
+                                                fontWeight = FontWeight.Normal,
+                                                color = theme["text"]!!
+                                            )
+                                            LinearProgressIndicator(
+                                                progress = { progress },
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .height(8.dp)
+                                                    .clip(RoundedCornerShape(50)),
+                                                color = theme["primary"]!!,
+                                                trackColor = theme["drawer_background"]!!,
+                                            )
+                                        }
+                                    }
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .border(
+                                                width = 1.dp,
+                                                color = theme["placeholder"]!!,
+                                                shape = RoundedCornerShape(10.dp)
+                                            )
+                                            .background(theme["drawer_background"]!!)
+                                            .padding(16.dp)
+                                    ) {
+                                        Text(
+                                            text = localization["user_statistics_title"]!!,
+                                            fontSize = 24.sp,
+                                            fontFamily = RubikFont,
+                                            fontWeight = FontWeight.Normal,
+                                            color = theme["placeholder"]!!
+                                        )
+                                        Spacer(modifier = Modifier.size(12.dp))
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Text(
+                                                text = localization["thanks_count_title"]!!,
+                                                fontSize = 20.sp,
+                                                fontFamily = RubikFont,
+                                                fontWeight = FontWeight.Bold,
+                                                color = theme["text"]!!
+                                            )
+                                            Text(
+                                                text = thanksCount.toString(),
+                                                fontSize = 18.sp,
+                                                fontFamily = RubikFont,
+                                                fontWeight = FontWeight.Normal,
+                                                color = theme["text"]!!
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.size(12.dp))
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Text(
+                                                text = localization["reports_count_title"]!!,
+                                                fontSize = 20.sp,
+                                                fontFamily = RubikFont,
+                                                fontWeight = FontWeight.Bold,
+                                                color = theme["text"]!!
+                                            )
+                                            Text(
+                                                text = reportsCount.toString(),
+                                                fontSize = 18.sp,
+                                                fontFamily = RubikFont,
+                                                fontWeight = FontWeight.Normal,
+                                                color = theme["text"]!!
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.size(12.dp))
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Text(
+                                                text = localization["thanks_given_count_title"]!!,
+                                                fontSize = 20.sp,
+                                                fontFamily = RubikFont,
+                                                fontWeight = FontWeight.Bold,
+                                                color = theme["text"]!!
+                                            )
+                                            Text(
+                                                text = thanksGivenCount.toString(),
+                                                fontSize = 18.sp,
+                                                fontFamily = RubikFont,
+                                                fontWeight = FontWeight.Normal,
+                                                color = theme["text"]!!
+                                            )
+                                        }
+                                    }
+                                } else {
+                                    Box(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        CircularProgressIndicator(
+                                            color = theme["primary"]!!
+                                        )
+                                    }
+                                }
                             }
+                            Spacer(Modifier.weight(1f))
                         }
-                        Column(
-                            modifier = Modifier.padding(top = 32.dp)
-                        ) {
+                        Column {
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth(),
@@ -637,49 +1005,37 @@ fun ProfilePage(
                                             Toast.makeText(context, localization["phone_invalid_error"]!!, Toast.LENGTH_LONG).show()
                                             return@Button
                                         }
-
-                                        var photoUri = ""
-                                        if (bitmap != null) {
-                                            photoUri = bitmapToUri(context, bitmap!!).toString()
+                                        val photoUri: String = if (bitmap != null) {
+                                            bitmapToUri(context, bitmap!!).toString()
                                         } else {
-                                            photoUri = userPhoto
+                                            userPhoto
                                         }
 
+                                        val uid = currentUser!!.uid
 
-                                        val userData = hashMapOf(
-                                            "phoneNumber" to userPhoneNumber
+                                        authViewModel.updateUserProfile(
+                                            name = userName,
+                                            photo = photoUri,
+                                            context = context,
+                                            localization = localization,
+                                            phoneNumber = userPhoneNumber,
                                         )
 
-                                        val uid = currentUser!!.uid
-                                        val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
-
-                                        firestore.collection("users")
-                                            .document(uid)
-                                            .set(userData)
-                                            .addOnSuccessListener {
-                                                authViewModel.updateUserProfile(
-                                                    name = userName,
-                                                    photo = photoUri,
-                                                    context = context,
-                                                    localization = localization
-                                                )
-
-                                                CoroutineScope(Dispatchers.Main).launch {
-                                                    val userPassword =
-                                                        userLocalStorage.getUserPassword()
-                                                            .toString()
-                                                    val userLocalData = UserData(
-                                                        uid = uid,
-                                                        email = userEmail,
-                                                        password = userPassword,
-                                                        name = userName,
-                                                        phoneNumber = userPhoneNumber,
-                                                        photoUrl = photoUri
-                                                    )
-                                                    userLocalStorage.saveUser(userLocalData)
-                                                    navController.navigate(Routes.PROFILE)
-                                                }
-                                            }
+                                        CoroutineScope(Dispatchers.Main).launch {
+                                            val userPassword =
+                                                userLocalStorage.getUserPassword()
+                                                    .toString()
+                                            val userLocalData = UserData(
+                                                uid = uid,
+                                                email = userEmail,
+                                                password = userPassword,
+                                                name = userName,
+                                                phoneNumber = userPhoneNumber,
+                                                photoUrl = photoUri
+                                            )
+                                            userLocalStorage.saveUser(userLocalData)
+                                            navController.navigate(Routes.SELF_PROFILE)
+                                        }
                                     },
                                     colors = ButtonDefaults.buttonColors(containerColor = theme["primary"]!!)
                                 ) {
@@ -692,6 +1048,7 @@ fun ProfilePage(
                                     )
                                 }
                             }
+                            Spacer(modifier = Modifier.height(20.dp))
                         }
                     }
                 }

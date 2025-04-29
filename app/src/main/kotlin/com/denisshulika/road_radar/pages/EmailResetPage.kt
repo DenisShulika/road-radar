@@ -85,7 +85,9 @@ fun EmailResetPage(
     LaunchedEffect(resetEmailState.value) {
         when (resetEmailState.value) {
             is ResetEmailState.Success -> {
-                navController.navigate(Routes.LOGIN)
+                navController.navigate(Routes.LOGIN) {
+                    popUpTo(0) { inclusive = true }
+                }
                 authViewModel.resetEmailState.value = ResetEmailState.Null
             }
             is ResetEmailState.Error -> {

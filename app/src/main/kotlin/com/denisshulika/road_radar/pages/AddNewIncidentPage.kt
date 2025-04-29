@@ -75,6 +75,7 @@ import com.denisshulika.road_radar.Routes
 import com.denisshulika.road_radar.SettingsViewModel
 import com.denisshulika.road_radar.model.IncidentType
 import com.denisshulika.road_radar.model.ThemeState
+import com.denisshulika.road_radar.ui.components.PhotoPickerDialog
 import com.denisshulika.road_radar.ui.components.StyledBasicTextField
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.android.libraries.places.api.model.AddressComponent
@@ -126,7 +127,7 @@ fun AddNewIncidentPage(
 
     var incidentDescription by remember { mutableStateOf("") }
 
-    var incidentPhotos = remember { mutableStateListOf<Uri>() }
+    val incidentPhotos = remember { mutableStateListOf<Uri>() }
 
     var selectedAddress by remember { mutableStateOf("") }
 

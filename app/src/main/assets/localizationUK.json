@@ -299,5 +299,30 @@
   "comments_many": "коментарів",
 
   "privacy_policy_title": "Політика Конфіденційності",
-  "privacy_policy_text_button": "Політика конфіденційності"
+  "privacy_policy_text_button": "Політика конфіденційності",
+
+  "user": "Користувач",
+
+  "helped_me": "Це мені допомогло",
+
+  "other_profile_page_title": "Профіль користувача",
+
+  "rank_1": "Новачок",
+  "rank_2": "Скаут",
+  "rank_3": "Слідопит",
+  "rank_4": "Хранитель порядку",
+  "rank_5": "Громадський патруль",
+  "rank_6": "Радіорадар",
+  "rank_7": "Легенда району",
+  "rank_8": "Захисник спільноти",
+
+  "joined_subtext": "Приєднався",
+
+  "experience_title": "Досвід",
+  "rank_subtext": "Ранг:",
+  "user_statistics_title": "Статистика користувача",
+  "thanks_count_title": "Подяк отримано:",
+  "reports_count_title": "Інцидентів оповіщенно:",
+  "thanks_given_count_title": "Подяк відправлено:",
+  "incident_was_reported": "Ви вже оповістили про найближчий інцидент"
 }

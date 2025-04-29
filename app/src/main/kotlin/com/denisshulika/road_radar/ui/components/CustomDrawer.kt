@@ -162,7 +162,7 @@ fun CustomDrawer (
                         NavigationItem.Profile -> {
                             if(selectedNavigationItem != NavigationItem.Profile) {
                                 onNavigationItemClick(NavigationItem.Profile)
-                                navController.navigate(Routes.PROFILE)
+                                navController.navigate(Routes.SELF_PROFILE)
                             }
                         }
                         else -> {}

@@ -75,9 +75,11 @@ import com.denisshulika.road_radar.SettingsViewModel
 import com.denisshulika.road_radar.isValidEmail
 import com.denisshulika.road_radar.isValidPhoneNumber
 import com.denisshulika.road_radar.model.ThemeState
+import com.denisshulika.road_radar.ui.components.PhotoPickerDialog
 import com.denisshulika.road_radar.ui.components.StyledBasicTextField
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import java.io.File
+import java.util.UUID
 
 @Composable
 fun SignUpPage(
@@ -86,7 +88,6 @@ fun SignUpPage(
     settingsViewModel: SettingsViewModel
 ) {
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
 
     val localization = settingsViewModel.localization.observeAsState().value!!
     val theme = settingsViewModel.themeColors.observeAsState().value!!
@@ -148,11 +149,35 @@ fun SignUpPage(
         bitmap = ImageDecoder.decodeBitmap(source)
     }
 
-    val imagePickerLauncher =
-        rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+    var showDialog by remember { mutableStateOf(false) }
+    val cameraImageUri = remember { mutableStateOf<Uri?>(null) }
+
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        isImageSelected = false
+        val cropOption = CropImageContractOptions(
+            uri,
+            CropImageOptions().apply {
+                guidelines = CropImageView.Guidelines.ON
+                aspectRatioX = 1
+                aspectRatioY = 1
+                fixAspectRatio = true
+                cropShape = CropImageView.CropShape.RECTANGLE
+                showCropOverlay = true
+                autoZoomEnabled = true
+            }
+        )
+        imageCropLauncher.launch(cropOption)
+    }
+
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success) {
             isImageSelected = false
             val cropOption = CropImageContractOptions(
-                uri,
+                cameraImageUri.value!!,
                 CropImageOptions().apply {
                     guidelines = CropImageView.Guidelines.ON
                     aspectRatioX = 1
@@ -164,12 +189,15 @@ fun SignUpPage(
                 }
             )
             imageCropLauncher.launch(cropOption)
+        }
     }
 
     LaunchedEffect(authState.value) {
         when(authState.value) {
             is AuthState.Authenticated ->
-                navController.navigate(Routes.INCIDENTS)
+                navController.navigate(Routes.INCIDENTS) {
+                    popUpTo(0) { inclusive = true }
+                }
             is AuthState.Error ->
                 Toast.makeText(context, (authState.value as AuthState.Error).message, Toast.LENGTH_LONG).show()
             else -> Unit
@@ -596,6 +624,26 @@ fun SignUpPage(
                         Spacer(modifier = Modifier.size(4.dp))
                     }
                 }
+                PhotoPickerDialog(
+                    showDialog = showDialog,
+                    onDismiss = { showDialog = false },
+                    onPickFromGallery = {
+                        galleryLauncher.launch("image/*")
+                    },
+                    onTakePhoto = {
+                        val photoFile = File(context.cacheDir, "${UUID.randomUUID()}.jpg")
+                        val uri = FileProvider.getUriForFile(
+                            context,
+                            "${context.packageName}.provider",
+                            photoFile
+                        )
+                        cameraImageUri.value = uri
+                        cameraLauncher.launch(uri)
+                    },
+                    localization = localization,
+                    theme = theme
+                )
+
                 Box(
                     modifier = Modifier
                         .size(100.dp)
@@ -604,7 +652,7 @@ fun SignUpPage(
                         .clip(RoundedCornerShape(10.dp))
                         .background(theme["drawer_background"]!!)
                         .clickable {
-                            imagePickerLauncher.launch("image/*")
+                            showDialog = true
                         },
                     contentAlignment = Alignment.Center
                 ) {

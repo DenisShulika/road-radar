@@ -105,9 +105,13 @@ fun LoginPage(
     LaunchedEffect(authState.value) {
         when(authState.value) {
             is AuthState.Authenticated ->
-                navController.navigate(Routes.INCIDENTS)
+                navController.navigate(Routes.INCIDENTS) {
+                    popUpTo(0) { inclusive = true }
+                }
             is AuthState.GoogleRegistrating ->
-                navController.navigate(Routes.GOOGLE_REGISTRATING)
+                navController.navigate(Routes.GOOGLE_REGISTRATING) {
+                    popUpTo(0) { inclusive = true }
+                }
             is AuthState.Error -> {
                 Toast.makeText(context, (authState.value as AuthState.Error).message, Toast.LENGTH_LONG).show()
                 authViewModel.setAuthState(AuthState.Null)
