@@ -287,7 +287,6 @@ fun IncidentPage(
                                 color = theme["accent"]!!
                             )
                         }
-                        Toast.makeText(context, info.createdBy, Toast.LENGTH_LONG).show()
                         Text(
                             text = "${localization["incident_created_by_subtext"]!!} ${info.createdBy}",
                             fontSize = 20.sp,

@@ -15,10 +15,12 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -28,19 +30,27 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -52,6 +62,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
@@ -74,7 +85,9 @@ import com.denisshulika.road_radar.LocationRequestState
 import com.denisshulika.road_radar.R
 import com.denisshulika.road_radar.Routes
 import com.denisshulika.road_radar.SettingsViewModel
+import com.denisshulika.road_radar.SortOrder
 import com.denisshulika.road_radar.model.CustomDrawerState
+import com.denisshulika.road_radar.model.IncidentType
 import com.denisshulika.road_radar.model.NavigationItem
 import com.denisshulika.road_radar.model.ThemeState
 import com.denisshulika.road_radar.model.isOpened
@@ -236,6 +249,16 @@ fun MapRadarPage(
         }
     }
 
+    var showDialog by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState()
+
+    val selectedTypes = incidentsManager.incidentTypeFilters.observeAsState().value!!
+    val incidentTypes = IncidentType.entries
+
+    val sortOrder = incidentsManager.sortOrder.observeAsState().value!!
+
+    var expandedSortOrder by remember { mutableStateOf(false) }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -281,7 +304,7 @@ fun MapRadarPage(
                     shadowRadius = 30.dp
                 ),
             topBar = {
-                if (locationRequestState != LocationRequestState.Success && loadingDocumentsState != LoadingDocumentsState.Success) {
+                if (loadingDocumentsState != LoadingDocumentsState.Success) {
                     CenterAlignedTopAppBar(
                         colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                             containerColor = theme["top_bar_background"]!!,
@@ -310,23 +333,178 @@ fun MapRadarPage(
                             }
                         },
                         actions = {
-                            IconButton(
-                                onClick = {
-                                    locationHandler.setLastUpdateTime(0L)
-                                    incidentLoadingTrigger = !incidentLoadingTrigger
-                                },
-                                enabled = loadingDocumentsState != LoadingDocumentsState.Loading && locationRequestState != LocationRequestState.Loading
-                            ) {
-                                Icon(
-                                    imageVector = ImageVector.vectorResource(R.drawable.refresh),
-                                    contentDescription = ""
-                                )
+                            if (loadingDocumentsState == LoadingDocumentsState.Success && locationRequestState == LocationRequestState.Success) {
+                                IconButton(
+                                    onClick = {
+
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = ImageVector.vectorResource(R.drawable.filter),
+                                        contentDescription = ""
+                                    )
+                                }
+                            } else {
+                                IconButton(
+                                    onClick = {
+                                        locationHandler.setLastUpdateTime(0L)
+                                        incidentLoadingTrigger = !incidentLoadingTrigger
+                                    },
+                                    enabled = loadingDocumentsState != LoadingDocumentsState.Loading && locationRequestState != LocationRequestState.Loading
+                                ) {
+                                    Icon(
+                                        imageVector = ImageVector.vectorResource(R.drawable.refresh),
+                                        contentDescription = ""
+                                    )
+                                }
                             }
                         }
                     )
                 }
             }
         ) { innerPadding ->
+            if (showDialog) {
+                ModalBottomSheet(
+                    sheetState = sheetState,
+                    onDismissRequest = {
+                        incidentsManager.stopListeningIncidents()
+                        incidentsManager.startListeningIncidents(
+                            latitude!!,
+                            longitude!!,
+                            radius.toDouble(),
+                            localization
+                        )
+                        showDialog = false
+                    },
+                    containerColor = theme["background"]!!,
+                    shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+                    contentColor = theme["text"]!!,
+                    tonalElevation = 8.dp,
+                    scrimColor = Color.Black.copy(alpha = 0.32f),
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .padding(horizontal = 20.dp, vertical = 16.dp)
+                            .fillMaxWidth()
+                    ) {
+                        Text(
+                            text = localization["incident_filter_select"]!!,
+                            fontSize = 20.sp,
+                            fontFamily = RubikFont,
+                            fontWeight = FontWeight.Bold,
+                            color = theme["text"]!!
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        incidentTypes.forEach { type ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable (
+                                        indication = null,
+                                        interactionSource = remember { MutableInteractionSource() }
+                                    ) {
+                                        if (selectedTypes.contains(type)) {
+                                            incidentsManager.removeIncidentTypeFilter(type)
+                                        } else {
+                                            incidentsManager.addIncidentTypeFilter(type)
+                                        }
+                                    }
+                                    .padding(vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Checkbox(
+                                    checked = selectedTypes.contains(type),
+                                    onCheckedChange = {
+                                        if (it) {
+                                            incidentsManager.addIncidentTypeFilter(type)
+                                        } else {
+                                            incidentsManager.removeIncidentTypeFilter(type)
+                                        }
+                                    },
+                                    colors = CheckboxDefaults.colors(
+                                        checkedColor = theme["primary"]!!,
+                                        uncheckedColor = theme["icon"]!!
+                                    )
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text(
+                                    text = when (type) {
+                                        IncidentType.CAR_ACCIDENT -> localization["incident_type_car_accident"]!!
+                                        IncidentType.ROADBLOCK -> localization["incident_type_roadblock"]!!
+                                        IncidentType.WEATHER_CONDITIONS -> localization["incident_type_weather_conditions"]!!
+                                        IncidentType.TRAFFIC_JAM -> localization["incident_type_traffic_jam"]!!
+                                        IncidentType.OTHER -> localization["incident_type_other"]!!
+                                    },
+                                    fontSize = 18.sp,
+                                    fontFamily = RubikFont,
+                                    color = theme["text"]!!
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        Text(
+                            text = localization["sort_by"]!!,
+                            fontSize = 20.sp,
+                            fontFamily = RubikFont,
+                            fontWeight = FontWeight.Bold,
+                            color = theme["text"]!!
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable (
+                                    indication = null,
+                                    interactionSource = remember { MutableInteractionSource() }
+                                ) {
+                                    expandedSortOrder = !expandedSortOrder
+                                }
+                                .padding(vertical = 8.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "${localization["sort_order"]!!}: $sortOrder",
+                                    fontSize = 18.sp,
+                                    fontFamily = RubikFont,
+                                    color = theme["text"]!!
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Icon(
+                                    imageVector = Icons.Default.ArrowDropDown,
+                                    contentDescription = null,
+                                    tint = theme["icon"]!!
+                                )
+                            }
+                        }
+
+                        Box {
+                            DropdownMenu(
+                                expanded = expandedSortOrder,
+                                onDismissRequest = {
+                                    expandedSortOrder = false
+                                }
+                            ) {
+                                SortOrder.entries.forEach { option ->
+                                    DropdownMenuItem(
+                                        text = { Text(option.name) },
+                                        onClick = {
+                                            incidentsManager.setSortOrder(option)
+                                            expandedSortOrder = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -354,21 +532,19 @@ fun MapRadarPage(
 
                                         val incidentType = incident.type
                                         val type = when (incidentType) {
-                                            "CAR_ACCIDENT" -> localization["incident_type_car_accident"]!!
-                                            "ROADBLOCK" -> localization["incident_type_roadblock"]!!
-                                            "WEATHER_CONDITIONS" -> localization["incident_type_weather_conditions"]!!
-                                            "TRAFFIC_JAM" -> localization["incident_type_traffic_jam"]!!
-                                            "OTHER" -> localization["incident_type_other"]!!
-                                            else -> localization["incident_type_other"]!!
+                                            IncidentType.CAR_ACCIDENT -> localization["incident_type_car_accident"]!!
+                                            IncidentType.ROADBLOCK -> localization["incident_type_roadblock"]!!
+                                            IncidentType.WEATHER_CONDITIONS -> localization["incident_type_weather_conditions"]!!
+                                            IncidentType.TRAFFIC_JAM -> localization["incident_type_traffic_jam"]!!
+                                            IncidentType.OTHER -> localization["incident_type_other"]!!
                                         }
 
                                         val iconRes = when (incidentType) {
-                                            "CAR_ACCIDENT" -> R.drawable.car_accident
-                                            "ROADBLOCK" -> R.drawable.roadblock
-                                            "WEATHER_CONDITIONS" -> R.drawable.weather_warning
-                                            "TRAFFIC_JAM" -> R.drawable.traffic_jam
-                                            "OTHER" -> R.drawable.warning
-                                            else -> R.drawable.warning
+                                            IncidentType.CAR_ACCIDENT -> R.drawable.car_accident
+                                            IncidentType.ROADBLOCK -> R.drawable.roadblock
+                                            IncidentType.WEATHER_CONDITIONS -> R.drawable.weather_warning
+                                            IncidentType.TRAFFIC_JAM -> R.drawable.traffic_jam
+                                            IncidentType.OTHER -> R.drawable.warning
                                         }
 
                                         val vectorDrawable = AppCompatResources.getDrawable(
@@ -419,7 +595,7 @@ fun MapRadarPage(
 
                                                 val incidentInfo = Incident(
                                                     id = id,
-                                                    type = type,
+                                                    type = IncidentType.fromValue(type),
                                                     address = address,
                                                     description = description,
                                                     createdBy = createdBy,
@@ -449,6 +625,23 @@ fun MapRadarPage(
                                     Icon(
                                         modifier = Modifier.size(32.dp),
                                         imageVector = Icons.Default.Menu,
+                                        contentDescription = "",
+                                        tint = theme["icon"]!!
+                                    )
+                                }
+                                FloatingActionButton(
+                                    onClick = {
+                                        showDialog = true
+                                    },
+                                    modifier = Modifier
+                                        .align(Alignment.BottomEnd)
+                                        .padding(16.dp),
+                                    containerColor = theme["primary"]!!,
+                                    shape = RoundedCornerShape(50)
+                                ) {
+                                    Icon(
+                                        modifier = Modifier.size(32.dp),
+                                        imageVector = ImageVector.vectorResource(R.drawable.filter),
                                         contentDescription = "",
                                         tint = theme["icon"]!!
                                     )

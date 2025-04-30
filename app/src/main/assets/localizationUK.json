@@ -324,5 +324,12 @@
   "thanks_count_title": "Подяк отримано:",
   "reports_count_title": "Інцидентів оповіщенно:",
   "thanks_given_count_title": "Подяк відправлено:",
-  "incident_was_reported": "Ви вже оповістили про найближчий інцидент"
+  "incident_was_reported": "Ви вже оповістили про найближчий інцидент",
+
+  "sort_by": "Сортувати за",
+  "incident_filter_select": "Вибір типів інцидентів",
+  "sort_order": "Порядок сортування",
+
+  "NewestFirst": "Спочатку нові",
+  "OldestFirst": "Спочатку старі"
 }

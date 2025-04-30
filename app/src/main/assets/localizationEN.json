@@ -324,5 +324,12 @@
   "thanks_count_title": "Thanks Received:",
   "reports_count_title": "Incidents Reported:",
   "thanks_given_count_title": "Thanks Given:",
-  "incident_was_reported": "You have already reported the nearest incident"
+  "incident_was_reported": "You have already reported the nearest incident",
+
+  "sort_by": "Sort By",
+  "incident_filter_select": "Select Incident Types",
+  "sort_order": "Sort Order",
+
+  "NewestFirst": "Newest first",
+  "OldestFirst": "Oldest first"
 }

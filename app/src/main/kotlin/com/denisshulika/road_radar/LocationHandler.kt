@@ -57,7 +57,7 @@ class LocationHandler(application: Application) : AndroidViewModel(application) 
     private fun startTimeout() {
         resetTimeout()
         timerJob = CoroutineScope(Dispatchers.Main).launch {
-            delay(10000)
+            delay(3000)
             if (_userLocation.value == null) {
                 _locationTimeout.postValue(true)
                 _locationRequestState.postValue(LocationRequestState.NoLocation)

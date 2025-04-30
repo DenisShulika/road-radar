@@ -3,6 +3,7 @@ package com.denisshulika.road_radar
 import android.app.Application
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
@@ -48,8 +49,30 @@ class IncidentsManager(application: Application) : AndroidViewModel(application)
     private val _selectedDocumentInfo = MutableLiveData<Incident>()
     val selectedDocumentInfo: LiveData<Incident> = _selectedDocumentInfo
 
+    private val _incidentTypeFilters = MutableLiveData<List<IncidentType>>(emptyList())
+    val incidentTypeFilters: LiveData<List<IncidentType>> = _incidentTypeFilters
+
+    private val _sortOrder = MutableLiveData(SortOrder.NewestFirst)
+    val sortOrder: LiveData<SortOrder> = _sortOrder
+
     fun setIncidentCreationState(state: IncidentCreationState) {
         _incidentCreationState.value = state
+    }
+
+    fun addIncidentTypeFilter(type: IncidentType) {
+        val currentFilters = _incidentTypeFilters.value?.toMutableList() ?: mutableListOf()
+        currentFilters.add(type)
+        _incidentTypeFilters.value = currentFilters
+    }
+
+    fun removeIncidentTypeFilter(type: IncidentType) {
+        val currentFilters = _incidentTypeFilters.value?.toMutableList() ?: mutableListOf()
+        currentFilters.remove(type)
+        _incidentTypeFilters.value = currentFilters
+    }
+
+    fun setSortOrder(sortOrder: SortOrder) {
+        _sortOrder.value = sortOrder
     }
 
     fun setSelectedDocumentInfo(selectedDocumentInfo: Incident) {
@@ -315,7 +338,7 @@ class IncidentsManager(application: Application) : AndroidViewModel(application)
 
                 val incident = Incident(
                     id = incidentID,
-                    type = type.toString(),
+                    type = IncidentType.fromValue(type.toString()),
                     address = address,
                     commentCount = 0,
                     createdBy = creatorName,
@@ -420,11 +443,19 @@ class IncidentsManager(application: Application) : AndroidViewModel(application)
         _loadingDocumentsState.value = LoadingDocumentsState.Loading
         listenerRegistration?.remove()
 
-        listenerRegistration = db.collection("incidents")
-            .orderBy("creationDate", Query.Direction.DESCENDING)
-            .addSnapshotListener { snapshot, e ->
+        val selectedTypes = _incidentTypeFilters.value ?: emptyList()
+
+        var query : Query = db.collection("incidents")
+            .orderBy("creationDate", if(_sortOrder.value == SortOrder.NewestFirst) Query.Direction.DESCENDING else Query.Direction.ASCENDING)
+
+        if (selectedTypes.isNotEmpty()) {
+            query = query.whereIn("type", selectedTypes.map { it.name })
+        }
+
+        listenerRegistration = query.addSnapshotListener { snapshot, e ->
                 if (e != null || snapshot == null) {
-                    _loadingDocumentsState.value = LoadingDocumentsState.Error(e?.message ?: localization["incidents_loading_fail"] ?: localization["something_went_wrong"] ?: "Something went wrong")
+                    _loadingDocumentsState.value = LoadingDocumentsState.Error(e?.message ?: localization["incidents_loading_fail"] ?: localization["something_went_wrong"]!!)
+                    Log.e("Firestore", e?.message ?: "Unknown error")
                     return@addSnapshotListener
                 }
 
@@ -528,7 +559,7 @@ class IncidentsManager(application: Application) : AndroidViewModel(application)
 
 data class Incident(
     val id: String = "",
-    val type: String = "",
+    val type: IncidentType = IncidentType.OTHER,
     val address: String = "",
     val commentCount: Int = 0,
     val createdBy: String = "",
@@ -551,14 +582,14 @@ data class Incident(
                     longitude = doc.getString("longitude")!!,
                     creationDate = doc.getTimestamp("creationDate")!!,
                     lifetime = doc.getTimestamp("lifetime")!!,
-                    type = doc.getString("type")!!,
+                    type = IncidentType.fromValue(doc.getString("type")),
                     address = doc.getString("address")!!,
                     description = doc.getString("description")!!,
-                    photos = (doc.get("photos") as? List<*>)?.filterIsInstance<String>()?.takeIf { it.isNotEmpty() } ?: emptyList(),
-                    commentCount = doc.getLong("commentCount")!!.toInt(),
-                    createdBy = doc.getString("createdBy")!!,
-                    usersLiked = (doc.get("usersLiked") as? List<*>)?.filterIsInstance<String>()?.takeIf { it.isNotEmpty() } ?: emptyList(),
-                    authors = (doc.get("authros") as? List<*>)?.filterIsInstance<String>()?.takeIf { it.isNotEmpty() } ?: emptyList(),
+                    photos = (doc.get("photos") as? List<*>)?.filterIsInstance<String>() ?: emptyList(),
+                    commentCount = doc.getLong("commentCount")?.toInt() ?: 0,
+                    createdBy = doc.getString("createdBy") ?: "",
+                    usersLiked = (doc.get("usersLiked") as? List<*>)?.filterIsInstance<String>() ?: emptyList(),
+                    authors = (doc.get("authors") as? List<*>)?.filterIsInstance<String>() ?: emptyList()
                 )
             } catch (e: Exception) {
                 null
@@ -582,3 +613,5 @@ sealed class LoadingDocumentsState {
     data object Idle : LoadingDocumentsState()
     data class Error(val message: String) : LoadingDocumentsState()
 }
+
+enum class SortOrder { NewestFirst, OldestFirst }
