@@ -31,10 +31,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
@@ -68,6 +72,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -259,6 +264,21 @@ fun MapRadarPage(
 
     var expandedSortOrder by remember { mutableStateOf(false) }
 
+    var isFiltersChanged by remember { mutableStateOf(false) }
+
+    LaunchedEffect(showDialog) {
+        if (!showDialog && isFiltersChanged) {
+            incidentsManager.stopListeningIncidents()
+            incidentsManager.startListeningIncidents(
+                latitude!!,
+                longitude!!,
+                radius.toDouble(),
+                localization
+            )
+            isFiltersChanged = false
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -367,14 +387,17 @@ fun MapRadarPage(
                 ModalBottomSheet(
                     sheetState = sheetState,
                     onDismissRequest = {
-                        incidentsManager.stopListeningIncidents()
-                        incidentsManager.startListeningIncidents(
-                            latitude!!,
-                            longitude!!,
-                            radius.toDouble(),
-                            localization
-                        )
                         showDialog = false
+                        if (isFiltersChanged) {
+                            incidentsManager.stopListeningIncidents()
+                            incidentsManager.startListeningIncidents(
+                                latitude!!,
+                                longitude!!,
+                                radius.toDouble(),
+                                localization
+                            )
+                            isFiltersChanged = false
+                        }
                     },
                     containerColor = theme["background"]!!,
                     shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
@@ -382,123 +405,197 @@ fun MapRadarPage(
                     tonalElevation = 8.dp,
                     scrimColor = Color.Black.copy(alpha = 0.32f),
                 ) {
-                    Column(
+                    Box(
                         modifier = Modifier
-                            .padding(horizontal = 20.dp, vertical = 16.dp)
                             .fillMaxWidth()
+                            .verticalScroll(rememberScrollState())
                     ) {
-                        Text(
-                            text = localization["incident_filter_select"]!!,
-                            fontSize = 20.sp,
-                            fontFamily = RubikFont,
-                            fontWeight = FontWeight.Bold,
-                            color = theme["text"]!!
-                        )
+                        Column(
+                            modifier = Modifier
+                                .padding(start = 20.dp, end = 20.dp, bottom = 16.dp)
+                        ) {
+                            Text(
+                                text = localization["sort_by"]!!,
+                                fontSize = 20.sp,
+                                fontFamily = RubikFont,
+                                fontWeight = FontWeight.Bold,
+                                color = theme["text"]!!
+                            )
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                            Spacer(modifier = Modifier.height(8.dp))
 
-                        incidentTypes.forEach { type ->
-                            Row(
+                            Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clickable (
                                         indication = null,
                                         interactionSource = remember { MutableInteractionSource() }
                                     ) {
-                                        if (selectedTypes.contains(type)) {
-                                            incidentsManager.removeIncidentTypeFilter(type)
-                                        } else {
-                                            incidentsManager.addIncidentTypeFilter(type)
-                                        }
+                                        expandedSortOrder = !expandedSortOrder
                                     }
-                                    .padding(vertical = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                                    .padding(vertical = 8.dp)
                             ) {
-                                Checkbox(
-                                    checked = selectedTypes.contains(type),
-                                    onCheckedChange = {
-                                        if (it) {
-                                            incidentsManager.addIncidentTypeFilter(type)
-                                        } else {
-                                            incidentsManager.removeIncidentTypeFilter(type)
-                                        }
-                                    },
-                                    colors = CheckboxDefaults.colors(
-                                        checkedColor = theme["primary"]!!,
-                                        uncheckedColor = theme["icon"]!!
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = "${localization["sort_order"]!!}: ${localization[sortOrder.name]!!}",
+                                        fontSize = 18.sp,
+                                        fontFamily = RubikFont,
+                                        color = theme["text"]!!
                                     )
-                                )
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Text(
-                                    text = when (type) {
-                                        IncidentType.CAR_ACCIDENT -> localization["incident_type_car_accident"]!!
-                                        IncidentType.ROADBLOCK -> localization["incident_type_roadblock"]!!
-                                        IncidentType.WEATHER_CONDITIONS -> localization["incident_type_weather_conditions"]!!
-                                        IncidentType.TRAFFIC_JAM -> localization["incident_type_traffic_jam"]!!
-                                        IncidentType.OTHER -> localization["incident_type_other"]!!
-                                    },
-                                    fontSize = 18.sp,
-                                    fontFamily = RubikFont,
-                                    color = theme["text"]!!
-                                )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Icon(
+                                        imageVector = Icons.Default.ArrowDropDown,
+                                        contentDescription = null,
+                                        tint = theme["icon"]!!
+                                    )
+                                }
                             }
-                        }
 
-                        Spacer(modifier = Modifier.height(24.dp))
-
-                        Text(
-                            text = localization["sort_by"]!!,
-                            fontSize = 20.sp,
-                            fontFamily = RubikFont,
-                            fontWeight = FontWeight.Bold,
-                            color = theme["text"]!!
-                        )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable (
-                                    indication = null,
-                                    interactionSource = remember { MutableInteractionSource() }
+                            Box {
+                                DropdownMenu(
+                                    modifier = Modifier.background(theme["primary"]!!),
+                                    expanded = expandedSortOrder,
+                                    onDismissRequest = {
+                                        expandedSortOrder = false
+                                    }
                                 ) {
-                                    expandedSortOrder = !expandedSortOrder
+                                    SortOrder.entries.forEach { option ->
+                                        DropdownMenuItem(
+                                            text = { Text(
+                                                text = localization[option.name]!!,
+                                                color = Color.White,
+                                                fontSize = 20.sp,
+                                                fontFamily = RubikFont
+                                            ) },
+                                            onClick = {
+                                                isFiltersChanged = true
+                                                incidentsManager.setSortOrder(option)
+                                                expandedSortOrder = false
+                                            }
+                                        )
+                                    }
                                 }
-                                .padding(vertical = 8.dp)
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    text = "${localization["sort_order"]!!}: $sortOrder",
-                                    fontSize = 18.sp,
-                                    fontFamily = RubikFont,
-                                    color = theme["text"]!!
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Icon(
-                                    imageVector = Icons.Default.ArrowDropDown,
-                                    contentDescription = null,
-                                    tint = theme["icon"]!!
-                                )
                             }
-                        }
 
-                        Box {
-                            DropdownMenu(
-                                expanded = expandedSortOrder,
-                                onDismissRequest = {
-                                    expandedSortOrder = false
+                            Spacer(modifier = Modifier.height(24.dp))
+
+                            Text(
+                                text = localization["incident_filter_select"]!!,
+                                fontSize = 20.sp,
+                                fontFamily = RubikFont,
+                                fontWeight = FontWeight.Bold,
+                                color = theme["text"]!!
+                            )
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            incidentTypes.forEach { type ->
+                                val iconRes = when (type) {
+                                    IncidentType.CAR_ACCIDENT -> R.drawable.car_accident
+                                    IncidentType.ROADBLOCK -> R.drawable.roadblock
+                                    IncidentType.WEATHER_CONDITIONS -> R.drawable.weather_warning
+                                    IncidentType.TRAFFIC_JAM -> R.drawable.traffic_jam
+                                    IncidentType.ROAD_WORKS -> R.drawable.road_works
+                                    IncidentType.POLICE_ACTIVITY -> R.drawable.police_activity
+                                    IncidentType.BROKEN_DOWN_VEHICLE -> R.drawable.broken_down_vehicle
+                                    IncidentType.FLOODING -> R.drawable.flooding
+                                    IncidentType.FIRE_NEAR_ROAD -> R.drawable.fire_near_road
+                                    IncidentType.OBSTACLE_ON_ROAD -> R.drawable.obstacle_on_road
+                                    IncidentType.OTHER -> R.drawable.warning
                                 }
-                            ) {
-                                SortOrder.entries.forEach { option ->
-                                    DropdownMenuItem(
-                                        text = { Text(option.name) },
-                                        onClick = {
-                                            incidentsManager.setSortOrder(option)
-                                            expandedSortOrder = false
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable(
+                                            indication = null,
+                                            interactionSource = remember { MutableInteractionSource() }
+                                        ) {
+                                            isFiltersChanged = true
+                                            if (selectedTypes.contains(type)) {
+                                                incidentsManager.removeIncidentTypeFilter(type)
+                                            } else {
+                                                incidentsManager.addIncidentTypeFilter(type)
+                                            }
                                         }
+                                        .padding(vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Checkbox(
+                                        checked = selectedTypes.contains(type),
+                                        onCheckedChange = {
+                                            isFiltersChanged = true
+                                            if (it) {
+                                                incidentsManager.addIncidentTypeFilter(type)
+                                            } else {
+                                                incidentsManager.removeIncidentTypeFilter(type)
+                                            }
+                                        },
+                                        colors = CheckboxDefaults.colors(
+                                            checkedColor = theme["primary"]!!,
+                                            uncheckedColor = theme["icon"]!!
+                                        )
+                                    )
+
+                                    Spacer(modifier = Modifier.width(12.dp))
+
+                                    Icon(
+                                        painter = painterResource(id = iconRes),
+                                        contentDescription = null,
+                                        tint = Color.Unspecified,
+                                        modifier = Modifier
+                                            .size(36.dp)
+                                            .padding(end = 8.dp)
+                                    )
+
+                                    Text(
+                                        text = when (type) {
+                                            IncidentType.CAR_ACCIDENT -> localization["incident_type_car_accident"]!!
+                                            IncidentType.ROADBLOCK -> localization["incident_type_roadblock"]!!
+                                            IncidentType.WEATHER_CONDITIONS -> localization["incident_type_weather_conditions"]!!
+                                            IncidentType.TRAFFIC_JAM -> localization["incident_type_traffic_jam"]!!
+                                            IncidentType.OTHER -> localization["incident_type_other"]!!
+                                            IncidentType.ROAD_WORKS -> localization["incident_type_road_works"]!!
+                                            IncidentType.POLICE_ACTIVITY -> localization["incident_type_police_activity"]!!
+                                            IncidentType.BROKEN_DOWN_VEHICLE -> localization["incident_type_broken_down_vehicle"]!!
+                                            IncidentType.FLOODING -> localization["incident_type_flooding"]!!
+                                            IncidentType.FIRE_NEAR_ROAD -> localization["incident_type_fire_near_road"]!!
+                                            IncidentType.OBSTACLE_ON_ROAD -> localization["incident_type_obstacle_on_road"]!!
+                                        },
+                                        fontSize = 18.sp,
+                                        fontFamily = RubikFont,
+                                        color = theme["text"]!!
                                     )
                                 }
+                            }
+
+                            Button(
+                                onClick = {
+                                    showDialog = false
+                                    if (isFiltersChanged) {
+                                        incidentsManager.stopListeningIncidents()
+                                        incidentsManager.startListeningIncidents(
+                                            latitude!!,
+                                            longitude!!,
+                                            radius.toDouble(),
+                                            localization
+                                        )
+                                        isFiltersChanged = false
+                                    }
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 16.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = theme["primary"]!!,
+                                    contentColor = theme["text"]!!
+                                ),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Text(
+                                    text = localization["apply_filters"]!!,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
                             }
                         }
                     }
@@ -537,6 +634,12 @@ fun MapRadarPage(
                                             IncidentType.WEATHER_CONDITIONS -> localization["incident_type_weather_conditions"]!!
                                             IncidentType.TRAFFIC_JAM -> localization["incident_type_traffic_jam"]!!
                                             IncidentType.OTHER -> localization["incident_type_other"]!!
+                                            IncidentType.ROAD_WORKS -> localization["incident_type_road_works"]!!
+                                            IncidentType.POLICE_ACTIVITY -> localization["incident_type_police_activity"]!!
+                                            IncidentType.BROKEN_DOWN_VEHICLE -> localization["incident_type_broken_down_vehicle"]!!
+                                            IncidentType.FLOODING -> localization["incident_type_flooding"]!!
+                                            IncidentType.FIRE_NEAR_ROAD -> localization["incident_type_fire_near_road"]!!
+                                            IncidentType.OBSTACLE_ON_ROAD -> localization["incident_type_obstacle_on_road"]!!
                                         }
 
                                         val iconRes = when (incidentType) {
@@ -545,6 +648,12 @@ fun MapRadarPage(
                                             IncidentType.WEATHER_CONDITIONS -> R.drawable.weather_warning
                                             IncidentType.TRAFFIC_JAM -> R.drawable.traffic_jam
                                             IncidentType.OTHER -> R.drawable.warning
+                                            IncidentType.ROAD_WORKS -> R.drawable.road_works
+                                            IncidentType.POLICE_ACTIVITY -> R.drawable.police_activity
+                                            IncidentType.BROKEN_DOWN_VEHICLE -> R.drawable.broken_down_vehicle
+                                            IncidentType.FLOODING -> R.drawable.flooding
+                                            IncidentType.FIRE_NEAR_ROAD -> R.drawable.fire_near_road
+                                            IncidentType.OBSTACLE_ON_ROAD -> R.drawable.obstacle_on_road
                                         }
 
                                         val vectorDrawable = AppCompatResources.getDrawable(

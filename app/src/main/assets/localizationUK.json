@@ -77,6 +77,12 @@
   "incident_type_weather_conditions": "Погодні умови",
   "incident_type_traffic_jam": "Затори",
   "incident_type_other": "Інше",
+  "incident_type_road_works": "Дорожні роботи",
+  "incident_type_police_activity": "Активність поліції",
+  "incident_type_broken_down_vehicle": "Зламаний транспорт",
+  "incident_type_flooding": "Підтоплення",
+  "incident_type_fire_near_road": "Пожежа біля дороги",
+  "incident_type_obstacle_on_road": "Перешкода на дорозі",
 
   "select_videos_error": "Ви не можете додати відео",
   "photo_limit_error": "Ви можете додати до 3 фото",
@@ -331,5 +337,7 @@
   "sort_order": "Порядок сортування",
 
   "NewestFirst": "Спочатку нові",
-  "OldestFirst": "Спочатку старі"
+  "OldestFirst": "Спочатку старі",
+
+  "apply_filters": "Застосувати фільтри"
 }

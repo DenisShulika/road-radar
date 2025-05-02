@@ -11,7 +11,6 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
-import androidx.navigation.NavController
 import com.denisshulika.road_radar.local.UserLocalStorage
 import com.denisshulika.road_radar.model.UserData
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption

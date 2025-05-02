@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -27,14 +26,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -60,13 +57,11 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.FileProvider
 import androidx.navigation.NavController
 import com.denisshulika.road_radar.AuthState
 import com.denisshulika.road_radar.AuthViewModel
 import com.denisshulika.road_radar.IncidentCreationState
 import com.denisshulika.road_radar.IncidentsManager
-import com.denisshulika.road_radar.R
 import com.denisshulika.road_radar.Routes
 import com.denisshulika.road_radar.SettingsViewModel
 import com.denisshulika.road_radar.model.CustomDrawerState
@@ -77,7 +72,6 @@ import com.denisshulika.road_radar.model.opposite
 import com.denisshulika.road_radar.ui.components.CustomDrawer
 import com.denisshulika.road_radar.util.coloredShadow
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import java.io.File
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)

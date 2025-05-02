@@ -77,6 +77,12 @@
   "incident_type_weather_conditions": "Weather conditions",
   "incident_type_traffic_jam": "Traffic jam",
   "incident_type_other": "Other",
+  "incident_type_road_works": "Road works",
+  "incident_type_police_activity": "Police activity",
+  "incident_type_broken_down_vehicle": "Broken down vehicle",
+  "incident_type_flooding": "Flooding",
+  "incident_type_fire_near_road": "Fire near road",
+  "incident_type_obstacle_on_road": "Obstacle on road",
 
   "select_videos_error": "You can't select videos",
   "photo_limit_error": "You can select up to 3 photos",
@@ -331,5 +337,7 @@
   "sort_order": "Sort Order",
 
   "NewestFirst": "Newest first",
-  "OldestFirst": "Oldest first"
+  "OldestFirst": "Oldest first",
+
+  "apply_filters": "Apply filters"
 }

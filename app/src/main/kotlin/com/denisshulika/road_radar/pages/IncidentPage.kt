@@ -9,6 +9,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -49,6 +50,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -57,7 +59,9 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImagePainter
 import coil.compose.rememberAsyncImagePainter
 import com.denisshulika.road_radar.IncidentsManager
+import com.denisshulika.road_radar.R
 import com.denisshulika.road_radar.SettingsViewModel
+import com.denisshulika.road_radar.model.IncidentType
 import com.denisshulika.road_radar.model.ThemeState
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import java.util.Locale
@@ -146,6 +150,20 @@ fun IncidentPage(
                     val formatedDate = dateFormat.format(creationDate)
                     val formatedTime = timeFormat.format(creationDate)
 
+                    val type = when (info.type) {
+                        IncidentType.CAR_ACCIDENT -> localization["incident_type_car_accident"]!!
+                        IncidentType.ROADBLOCK -> localization["incident_type_roadblock"]!!
+                        IncidentType.WEATHER_CONDITIONS -> localization["incident_type_weather_conditions"]!!
+                        IncidentType.TRAFFIC_JAM -> localization["incident_type_traffic_jam"]!!
+                        IncidentType.OTHER -> localization["incident_type_other"]!!
+                        IncidentType.ROAD_WORKS -> localization["incident_type_road_works"]!!
+                        IncidentType.POLICE_ACTIVITY -> localization["incident_type_police_activity"]!!
+                        IncidentType.BROKEN_DOWN_VEHICLE -> localization["incident_type_broken_down_vehicle"]!!
+                        IncidentType.FLOODING -> localization["incident_type_flooding"]!!
+                        IncidentType.FIRE_NEAR_ROAD -> localization["incident_type_fire_near_road"]!!
+                        IncidentType.OBSTACLE_ON_ROAD -> localization["incident_type_obstacle_on_road"]!!
+                    }
+
                     if (showBottomSheet) {
                         ModalBottomSheet(
                             onDismissRequest = { showBottomSheet = false },
@@ -197,12 +215,55 @@ fun IncidentPage(
                         verticalArrangement = Arrangement.spacedBy(20.dp)
                     ) {
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "${localization["incident_type_subtext"]!!} ${info.type}",
-                            fontSize = 20.sp,
-                            fontFamily = RubikFont,
-                            color = theme["text"]!!
-                        )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "${localization["incident_type_subtext"]!!} ${
+                                    when (info.type) {
+                                        IncidentType.CAR_ACCIDENT -> localization["incident_type_car_accident"]!!
+                                        IncidentType.ROADBLOCK -> localization["incident_type_roadblock"]!!
+                                        IncidentType.WEATHER_CONDITIONS -> localization["incident_type_weather_conditions"]!!
+                                        IncidentType.TRAFFIC_JAM -> localization["incident_type_traffic_jam"]!!
+                                        IncidentType.OTHER -> localization["incident_type_other"]!!
+                                        IncidentType.ROAD_WORKS -> localization["incident_type_road_works"]!!
+                                        IncidentType.POLICE_ACTIVITY -> localization["incident_type_police_activity"]!!
+                                        IncidentType.BROKEN_DOWN_VEHICLE -> localization["incident_type_broken_down_vehicle"]!!
+                                        IncidentType.FLOODING -> localization["incident_type_flooding"]!!
+                                        IncidentType.FIRE_NEAR_ROAD -> localization["incident_type_fire_near_road"]!!
+                                        IncidentType.OBSTACLE_ON_ROAD -> localization["incident_type_obstacle_on_road"]!!
+                                    }
+                                }",
+                                fontSize = 20.sp,
+                                fontFamily = RubikFont,
+                                color = theme["text"]!!
+                            )
+                            val iconRes = when (type) {
+                                IncidentType.CAR_ACCIDENT.value -> R.drawable.car_accident
+                                IncidentType.ROADBLOCK.value -> R.drawable.roadblock
+                                IncidentType.WEATHER_CONDITIONS.value -> R.drawable.weather_warning
+                                IncidentType.TRAFFIC_JAM.value -> R.drawable.traffic_jam
+                                IncidentType.ROAD_WORKS.value -> R.drawable.road_works
+                                IncidentType.POLICE_ACTIVITY.value -> R.drawable.police_activity
+                                IncidentType.BROKEN_DOWN_VEHICLE.value -> R.drawable.broken_down_vehicle
+                                IncidentType.FLOODING.value -> R.drawable.flooding
+                                IncidentType.FIRE_NEAR_ROAD.value -> R.drawable.fire_near_road
+                                IncidentType.OBSTACLE_ON_ROAD.value -> R.drawable.obstacle_on_road
+                                IncidentType.OTHER.value -> R.drawable.warning
+                                else -> R.drawable.warning
+                            }
+
+                            Spacer(modifier = Modifier.size(8.dp))
+
+                            Icon(
+                                painter = painterResource(id = iconRes),
+                                contentDescription = null,
+                                modifier = Modifier.size(24.dp),
+                                tint = Color.Unspecified
+                            )
+                        }
                         HorizontalDivider(
                             thickness = 1.dp,
                             color = theme["accent"]!!
