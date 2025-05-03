@@ -36,6 +36,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Attachment
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Report
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -86,6 +87,7 @@ import com.denisshulika.road_radar.Routes
 import com.denisshulika.road_radar.SettingsViewModel
 import com.denisshulika.road_radar.ui.components.CommentInputTextField
 import com.denisshulika.road_radar.ui.components.PhotoPickerDialog
+import com.denisshulika.road_radar.ui.components.ReportDialog
 import com.github.chrisbanes.photoview.PhotoView
 import kotlinx.coroutines.launch
 import java.io.File

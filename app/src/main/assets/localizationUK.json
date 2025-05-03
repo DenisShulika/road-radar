@@ -339,5 +339,24 @@
   "NewestFirst": "Спочатку нові",
   "OldestFirst": "Спочатку старі",
 
-  "apply_filters": "Застосувати фільтри"
+  "apply_filters": "Застосувати фільтри",
+
+  "report_reason_fake": "Фейкова інформація",
+  "report_reason_duplicate": "Дубль",
+  "report_reason_irrelevant": "Недоречне",
+  "report_reason_abuse": "Образливий контент",
+  "report_reason_spam": "Спам",
+  "report_reason_other": "Інше",
+
+  "incident_report_title": "Поскаржитись на інцидент",
+  "profile_report_title": "Поскаржитись на профіль",
+
+  "report_reason_placeholder": "Виберіть причину",
+
+  "report_adding_success": "Скаргу успішно додано",
+
+  "report_message_placeholder": "Опишіть проблему (необов'язково)",
+
+  "report_send": "Надіслати",
+  "report_cancel": "Скасувати"
 }

@@ -91,7 +91,12 @@ fun RoadRadarNavigation(
                 )
             }
             composable(Routes.INCIDENT) {
-                IncidentPage(navController, settingsViewModel, incidentsManager)
+                IncidentPage(
+                    authViewModel,
+                    navController,
+                    settingsViewModel,
+                    incidentsManager
+                )
             }
             composable(Routes.COMMENTS) {
                 CommentsPage(
@@ -104,6 +109,7 @@ fun RoadRadarNavigation(
             }
             composable(Routes.OTHER_PROFILE) {
                 OtherProfilePage(
+                    authViewModel,
                     navController,
                     settingsViewModel,
                     commentManager

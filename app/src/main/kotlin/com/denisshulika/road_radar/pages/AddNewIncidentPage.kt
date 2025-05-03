@@ -325,69 +325,6 @@ fun AddNewIncidentPage(
                                         tint = theme["icon"]!!
                                     )
                                 }
-                                DropdownMenu(
-                                    modifier = Modifier.background(theme["primary"]!!),
-                                    expanded = isIncidentTypeDropdownExpanded,
-                                    onDismissRequest = { isIncidentTypeDropdownExpanded = false }
-                                ) {
-                                    incidentTypes.forEach { type ->
-                                        DropdownMenuItem(
-                                            text = {
-                                                Row(
-                                                    verticalAlignment = Alignment.CenterVertically
-                                                ) {
-                                                    val iconRes = when (type) {
-                                                        localization["incident_type_car_accident"]!! -> R.drawable.car_accident
-                                                        localization["incident_type_roadblock"]!! -> R.drawable.roadblock
-                                                        localization["incident_type_weather_conditions"]!! -> R.drawable.weather_warning
-                                                        localization["incident_type_traffic_jam"]!! -> R.drawable.traffic_jam
-                                                        localization["incident_type_other"]!! -> R.drawable.warning
-                                                        localization["incident_type_road_works"]!! -> R.drawable.road_works
-                                                        localization["incident_type_police_activity"]!! -> R.drawable.police_activity
-                                                        localization["incident_type_broken_down_vehicle"]!! -> R.drawable.broken_down_vehicle
-                                                        localization["incident_type_flooding"]!! -> R.drawable.flooding
-                                                        localization["incident_type_fire_near_road"]!! -> R.drawable.fire_near_road
-                                                        localization["incident_type_obstacle_on_road"]!! -> R.drawable.obstacle_on_road
-                                                        else -> R.drawable.warning
-                                                    }
-
-                                                    Icon(
-                                                        painter = painterResource(id = iconRes),
-                                                        contentDescription = null,
-                                                        tint = Color.Unspecified,
-                                                        modifier = Modifier
-                                                            .size(36.dp)
-                                                            .padding(end = 8.dp)
-                                                    )
-
-                                                    Text(
-                                                        text = type,
-                                                        color = Color.White,
-                                                        fontSize = 20.sp,
-                                                        fontFamily = RubikFont
-                                                    )
-                                                }
-                                            },
-                                            onClick = {
-                                                selectedIncidentType = when(type) {
-                                                    localization["incident_type_car_accident"]!! -> IncidentType.CAR_ACCIDENT
-                                                    localization["incident_type_roadblock"]!! -> IncidentType.ROADBLOCK
-                                                    localization["incident_type_weather_conditions"]!! -> IncidentType.WEATHER_CONDITIONS
-                                                    localization["incident_type_traffic_jam"]!! -> IncidentType.TRAFFIC_JAM
-                                                    localization["incident_type_other"]!! -> IncidentType.OTHER
-                                                    localization["incident_type_road_works"]!! -> IncidentType.ROAD_WORKS
-                                                    localization["incident_type_police_activity"]!! -> IncidentType.POLICE_ACTIVITY
-                                                    localization["incident_type_broken_down_vehicle"]!! -> IncidentType.BROKEN_DOWN_VEHICLE
-                                                    localization["incident_type_flooding"]!! -> IncidentType.FLOODING
-                                                    localization["incident_type_fire_near_road"]!! -> IncidentType.FIRE_NEAR_ROAD
-                                                    localization["incident_type_obstacle_on_road"]!! -> IncidentType.OBSTACLE_ON_ROAD
-                                                    else -> IncidentType.OTHER
-                                                }
-                                                isIncidentTypeDropdownExpanded = false
-                                            }
-                                        )
-                                    }
-                                }
                             }
                         }
                     }

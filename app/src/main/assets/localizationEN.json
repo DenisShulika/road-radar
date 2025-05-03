@@ -339,5 +339,24 @@
   "NewestFirst": "Newest first",
   "OldestFirst": "Oldest first",
 
-  "apply_filters": "Apply filters"
+  "apply_filters": "Apply filters",
+
+  "report_reason_fake": "Fake information",
+  "report_reason_duplicate": "Duplicate",
+  "report_reason_irrelevant": "Irrelevant",
+  "report_reason_abuse": "Abusive content",
+  "report_reason_spam": "Spam",
+  "report_reason_other": "Other",
+
+  "incident_report_title": "Report Incident",
+  "profile_report_title": "Report Profile",
+
+  "report_adding_success": "Complaint successfully added",
+
+  "report_reason_placeholder": "Choose the reason",
+
+  "report_message_placeholder": "Describe the problem (optional)",
+
+  "report_send": "Send",
+  "report_cancel": "Cancel"
 }

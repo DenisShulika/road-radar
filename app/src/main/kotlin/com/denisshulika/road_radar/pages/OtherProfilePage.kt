@@ -1,6 +1,7 @@
 package com.denisshulika.road_radar.pages
 
 import android.icu.text.SimpleDateFormat
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -22,6 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ReportGmailerrorred
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -42,25 +44,31 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
+import com.denisshulika.road_radar.AuthViewModel
 import com.denisshulika.road_radar.CommentManager
 import com.denisshulika.road_radar.SettingsViewModel
+import com.denisshulika.road_radar.ui.components.ReportDialog
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
 import java.util.Date
 import java.util.Locale
+import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OtherProfilePage(
+    authViewModel: AuthViewModel,
     navController: NavController,
     settingsViewModel: SettingsViewModel,
     commentManager: CommentManager
 ) {
+    val context = LocalContext.current
 
     val localization = settingsViewModel.localization.observeAsState().value!!
     val theme = settingsViewModel.themeColors.observeAsState().value!!
@@ -127,6 +135,7 @@ fun OtherProfilePage(
             }
     }
 
+    var showReportDialog by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
@@ -157,10 +166,59 @@ fun OtherProfilePage(
                                 contentDescription = ""
                             )
                         }
+                    },
+                    actions = {
+                        IconButton(
+                            onClick = {
+                                showReportDialog = true
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ReportGmailerrorred,
+                                contentDescription = "",
+                                tint = theme["error"]!!
+                            )
+                        }
                     }
                 )
             }
         ) { innerPadding ->
+            if(showReportDialog) {
+                ReportDialog(
+                    onDismiss = {
+                        showReportDialog = false
+                    },
+                    onSend = { type, message ->
+                        val reportId = UUID.randomUUID().toString()
+
+                        val report = mapOf<String, Any>(
+                            "reportId" to reportId,
+                            "reportTargetId" to selectedProfileID,
+                            "type" to "profile",
+                            "reason" to type,
+                            "message" to message,
+                            "timestamp" to Timestamp.now(),
+                            "reporterId" to authViewModel.getCurrentUser()!!.uid
+                        )
+
+                        FirebaseFirestore.getInstance()
+                            .collection("reports")
+                            .document(reportId)
+                            .set(report)
+                            .addOnSuccessListener {
+                                Toast.makeText(context, localization["report_adding_success"]!!, Toast.LENGTH_SHORT).show()
+                                showReportDialog = false
+                            }
+                            .addOnFailureListener { e ->
+                                Toast.makeText(context, e.localizedMessage, Toast.LENGTH_SHORT).show()
+                                showReportDialog = false
+                            }
+                    },
+                    reportTargetType = "profile",
+                    localization = localization,
+                    theme = theme
+                )
+            }
             Column(
                 modifier = Modifier
                     .fillMaxSize()
