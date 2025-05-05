@@ -83,6 +83,7 @@
   "incident_type_flooding": "Flooding",
   "incident_type_fire_near_road": "Fire near road",
   "incident_type_obstacle_on_road": "Obstacle on road",
+  "incident_type_sos": "Emergency alert",
 
   "select_videos_error": "You can't select videos",
   "photo_limit_error": "You can select up to 3 photos",
@@ -358,5 +359,12 @@
   "report_message_placeholder": "Describe the problem (optional)",
 
   "report_send": "Send",
-  "report_cancel": "Cancel"
+  "report_cancel": "Cancel",
+
+  "sos_dialog_title": "SOS Confirmation",
+  "sos_dialog_description": "Press and hold the button to confirm an emergency.",
+  "sos_dialog_confirm_button": "Confirm Emergency",
+  "sos_dialog_cancel_button": "Cancel",
+
+  "at": "at"
 }

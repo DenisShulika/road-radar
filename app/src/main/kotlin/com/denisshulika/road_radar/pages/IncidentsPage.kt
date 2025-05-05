@@ -13,6 +13,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -32,13 +33,16 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Sos
 import androidx.compose.material.icons.filled.ThumbUp
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -50,6 +54,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -66,13 +71,16 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
@@ -90,6 +98,7 @@ import com.denisshulika.road_radar.AuthState
 import com.denisshulika.road_radar.AuthViewModel
 import com.denisshulika.road_radar.CommentManager
 import com.denisshulika.road_radar.Incident
+import com.denisshulika.road_radar.IncidentCreationState
 import com.denisshulika.road_radar.IncidentsManager
 import com.denisshulika.road_radar.LoadingDocumentsState
 import com.denisshulika.road_radar.LocationHandler
@@ -108,6 +117,7 @@ import com.denisshulika.road_radar.ui.components.CustomDrawer
 import com.denisshulika.road_radar.util.coloredShadow
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.firebase.Timestamp
+import kotlinx.coroutines.delay
 import java.util.Locale
 import kotlin.math.roundToInt
 
@@ -149,7 +159,7 @@ fun IncidentsPage(
         Locale(localization["date_format_language"]!!, localization["date_format_country"]!!)
     )
     val timeFormat = SimpleDateFormat(
-        "'at' HH:mm:ss".trimIndent(),
+        "'${localization["at"]!!}' HH:mm:ss".trimIndent(),
         Locale(localization["date_format_language"]!!, localization["date_format_country"]!!)
     )
 
@@ -271,6 +281,20 @@ fun IncidentsPage(
             isFiltersChanged = false
         }
     }
+
+    val incidentCreationState = incidentsManager.incidentCreationState.observeAsState()
+
+    LaunchedEffect(incidentCreationState.value) {
+        when(incidentCreationState.value) {
+            is IncidentCreationState.Error -> {
+                Toast.makeText(context, (incidentCreationState.value as IncidentCreationState.Error).message, Toast.LENGTH_LONG).show()
+                incidentsManager.setIncidentCreationState(IncidentCreationState.Idle)
+            }
+            else -> Unit
+        }
+    }
+
+    var showSosDialog by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
@@ -489,6 +513,7 @@ fun IncidentsPage(
                                     IncidentType.FIRE_NEAR_ROAD -> R.drawable.fire_near_road
                                     IncidentType.OBSTACLE_ON_ROAD -> R.drawable.obstacle_on_road
                                     IncidentType.OTHER -> R.drawable.warning
+                                    IncidentType.SOS -> R.drawable.sos
                                 }
                                 Row(
                                     modifier = Modifier
@@ -547,6 +572,7 @@ fun IncidentsPage(
                                             IncidentType.FLOODING -> localization["incident_type_flooding"]!!
                                             IncidentType.FIRE_NEAR_ROAD -> localization["incident_type_fire_near_road"]!!
                                             IncidentType.OBSTACLE_ON_ROAD -> localization["incident_type_obstacle_on_road"]!!
+                                            IncidentType.SOS -> localization["incident_type_sos"]!!
                                         },
                                         fontSize = 18.sp,
                                         fontFamily = RubikFont,
@@ -653,6 +679,7 @@ fun IncidentsPage(
                                                     IncidentType.FLOODING -> localization["incident_type_flooding"]!!
                                                     IncidentType.FIRE_NEAR_ROAD -> localization["incident_type_fire_near_road"]!!
                                                     IncidentType.OBSTACLE_ON_ROAD -> localization["incident_type_obstacle_on_road"]!!
+                                                    IncidentType.SOS -> localization["incident_type_sos"]!!
                                                 }
                                                 val description = incident.description
                                                 val address = incident.address
@@ -668,10 +695,13 @@ fun IncidentsPage(
                                                 Card(
                                                     modifier = Modifier
                                                         .fillMaxWidth()
-                                                        .padding(vertical = 8.dp),
-                                                    elevation = CardDefaults.cardElevation(
-                                                        defaultElevation = 4.dp
-                                                    ),
+                                                        .padding(vertical = 8.dp)
+                                                        .shadow(
+                                                            elevation = 4.dp,
+                                                            shape = RoundedCornerShape(12.dp),
+                                                            ambientColor = if (incident.type == IncidentType.SOS) theme["error"]!!.copy(0.7f) else Color.Black,
+                                                            spotColor = if (incident.type == IncidentType.SOS) theme["error"]!!.copy(0.7f) else Color.Black
+                                                        ),
                                                     colors = CardDefaults.cardColors(containerColor = theme["drawer_background"]!!)
                                                 ) {
                                                     Column {
@@ -728,7 +758,7 @@ fun IncidentsPage(
                                                                         text = type,
                                                                         fontSize = 20.sp,
                                                                         fontFamily = RubikFont,
-                                                                        color = theme["text"]!!
+                                                                        color = if(incident.type == IncidentType.SOS) theme["error"]!! else theme["text"]!!
                                                                     )
 
                                                                     val iconRes = when (incident.type) {
@@ -743,7 +773,7 @@ fun IncidentsPage(
                                                                         IncidentType.FIRE_NEAR_ROAD -> R.drawable.fire_near_road
                                                                         IncidentType.OBSTACLE_ON_ROAD -> R.drawable.obstacle_on_road
                                                                         IncidentType.OTHER -> R.drawable.warning
-                                                                        else -> R.drawable.warning
+                                                                        IncidentType.SOS -> R.drawable.sos
                                                                     }
 
                                                                     Spacer(modifier = Modifier.size(8.dp))
@@ -1117,6 +1147,145 @@ fun IncidentsPage(
                         imageVector = Icons.Filled.Add,
                         contentDescription = "",
                         tint = theme["icon"]!!
+                    )
+                }
+                if (locationRequestState == LocationRequestState.Success) {
+                    FloatingActionButton(
+                        onClick = { showSosDialog = true },
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(16.dp),
+                        containerColor = theme["error"]!!,
+                        shape = CircleShape,
+                        elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 6.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Sos,
+                            contentDescription = "",
+                            tint = theme["icon"]!!,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
+
+                if (showSosDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showSosDialog = false },
+                        title = {
+                            Text(
+                                text = localization["sos_dialog_title"]!!,
+                                fontFamily = RubikFont,
+                                fontWeight = FontWeight.Medium,
+                                color = theme["text"]!!
+                            )
+                        },
+                        text = {
+                            var pressDuration by remember { mutableLongStateOf(0L) }
+                            val maxPressDuration = 5000L
+                            var isHolding by remember { mutableStateOf(false) }
+                            var timerStarted by remember { mutableStateOf(false) }
+                            var startTime by remember { mutableLongStateOf(0L) }
+
+                            LaunchedEffect(isHolding) {
+                                if (isHolding) {
+                                    if (!timerStarted) {
+                                        timerStarted = true
+                                        pressDuration = 0
+                                    }
+
+                                    while (pressDuration < maxPressDuration) {
+                                        pressDuration = System.currentTimeMillis() - startTime
+                                        delay(100)
+                                    }
+
+                                    locationHandler.getAddressFromCoordinates(
+                                        context, localization,
+                                        latitude!!, longitude!!
+                                    ) { address ->
+                                        if (address != null) {
+                                            val parts = address.split(",").map { it.trim() }
+                                            val street = parts.getOrNull(0) ?: localization["unknown_street"]!!
+                                            val buildingNumber = parts.getOrNull(1) ?: localization["unknown_number"]!!
+
+                                            incidentsManager.addNewIncident(
+                                                authViewModel = authViewModel,
+                                                commentManager = commentManager,
+                                                context = context,
+                                                photoUris = emptyList(),
+                                                type = IncidentType.SOS,
+                                                description = "",
+                                                address = "$street, $buildingNumber",
+                                                latitude = userLocation!!.latitude.toString(),
+                                                longitude = userLocation.longitude.toString(),
+                                                localization = localization
+                                            )
+
+                                            showSosDialog = false
+                                        } else {
+                                            Toast.makeText(context, localization["get_address_fail"]!!, Toast.LENGTH_LONG).show()
+                                        }
+                                    }
+                                }
+                            }
+
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = localization["sos_dialog_description"]!!,
+                                    fontFamily = RubikFont,
+                                    fontWeight = FontWeight.Normal,
+                                    color = theme["placeholder"]!!
+                                )
+                                if (isHolding) {
+                                    LinearProgressIndicator(
+                                        progress = { (pressDuration.toFloat() / maxPressDuration) },
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(16.dp)
+                                            .padding(bottom = 8.dp),
+                                        color = theme["primary"]!!,
+                                        trackColor = theme["placeholder"]!!,
+                                        gapSize = 2.dp,
+                                        strokeCap = StrokeCap.Round
+                                    )
+                                } else {
+                                    TextButton(
+                                        onClick = {
+                                            isHolding = true
+                                            startTime = System.currentTimeMillis()
+                                        },
+                                        shape = RoundedCornerShape(25.dp),
+                                        colors = ButtonDefaults.buttonColors(containerColor = theme["primary"]!!)
+                                    ) {
+                                        Text(
+                                            text = localization["sos_dialog_confirm_button"]!!,
+                                            fontFamily = RubikFont,
+                                            fontWeight = FontWeight.Medium,
+                                            color = theme["text"]!!
+                                        )
+                                    }
+                                }
+                            }
+                        },
+                        confirmButton = {
+
+                        },
+                        dismissButton = {
+                            TextButton(
+                                onClick = { showSosDialog = false },
+                                colors = ButtonDefaults.buttonColors(containerColor = theme["primary"]!!)
+                            ) {
+                                Text(
+                                    text = localization["sos_dialog_cancel_button"]!!,
+                                    fontFamily = RubikFont,
+                                    fontWeight = FontWeight.Medium,
+                                    color = theme["text"]!!
+                                )
+                            }
+                        },
+                        containerColor = theme["background"]!!
                     )
                 }
             }

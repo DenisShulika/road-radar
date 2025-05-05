@@ -1,7 +1,6 @@
 package com.denisshulika.road_radar.pages
 
 import android.icu.text.SimpleDateFormat
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -27,7 +26,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Report
 import androidx.compose.material.icons.filled.ReportGmailerrorred
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
@@ -71,7 +69,6 @@ import com.denisshulika.road_radar.ui.components.ReportDialog
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.rpc.context.AttributeContext.Auth
 import java.util.Locale
 import java.util.UUID
 
@@ -282,6 +279,7 @@ fun IncidentPage(
                                         IncidentType.FLOODING -> localization["incident_type_flooding"]!!
                                         IncidentType.FIRE_NEAR_ROAD -> localization["incident_type_fire_near_road"]!!
                                         IncidentType.OBSTACLE_ON_ROAD -> localization["incident_type_obstacle_on_road"]!!
+                                        IncidentType.SOS -> localization["incident_type_sos"]!!
                                     }
                                 }",
                                 fontSize = 20.sp,
@@ -300,6 +298,7 @@ fun IncidentPage(
                                 IncidentType.FIRE_NEAR_ROAD -> R.drawable.fire_near_road
                                 IncidentType.OBSTACLE_ON_ROAD -> R.drawable.obstacle_on_road
                                 IncidentType.OTHER -> R.drawable.warning
+                                IncidentType.SOS -> R.drawable.sos
                             }
 
                             Spacer(modifier = Modifier.size(8.dp))

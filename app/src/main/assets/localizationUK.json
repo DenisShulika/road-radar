@@ -83,6 +83,7 @@
   "incident_type_flooding": "Підтоплення",
   "incident_type_fire_near_road": "Пожежа біля дороги",
   "incident_type_obstacle_on_road": "Перешкода на дорозі",
+  "incident_type_sos": "Надзвичайна ситуація",
 
   "select_videos_error": "Ви не можете додати відео",
   "photo_limit_error": "Ви можете додати до 3 фото",
@@ -358,5 +359,12 @@
   "report_message_placeholder": "Опишіть проблему (необов'язково)",
 
   "report_send": "Надіслати",
-  "report_cancel": "Скасувати"
+  "report_cancel": "Скасувати",
+
+  "sos_dialog_title": "Підтвердження SOS",
+  "sos_dialog_description": "Натискайте кнопку, щоб підтвердити надзвичайну ситуацію.",
+  "sos_dialog_confirm_button": "Підтвердити надзвичайну ситуацію",
+  "sos_dialog_cancel_button": "Скасувати",
+
+  "at": "в"
 }

@@ -502,6 +502,7 @@ fun MapRadarPage(
                                     IncidentType.FIRE_NEAR_ROAD -> R.drawable.fire_near_road
                                     IncidentType.OBSTACLE_ON_ROAD -> R.drawable.obstacle_on_road
                                     IncidentType.OTHER -> R.drawable.warning
+                                    IncidentType.SOS -> R.drawable.sos
                                 }
                                 Row(
                                     modifier = Modifier
@@ -560,6 +561,7 @@ fun MapRadarPage(
                                             IncidentType.FLOODING -> localization["incident_type_flooding"]!!
                                             IncidentType.FIRE_NEAR_ROAD -> localization["incident_type_fire_near_road"]!!
                                             IncidentType.OBSTACLE_ON_ROAD -> localization["incident_type_obstacle_on_road"]!!
+                                            IncidentType.SOS -> localization["incident_type_sos"]!!
                                         },
                                         fontSize = 18.sp,
                                         fontFamily = RubikFont,
@@ -640,6 +642,7 @@ fun MapRadarPage(
                                             IncidentType.FLOODING -> localization["incident_type_flooding"]!!
                                             IncidentType.FIRE_NEAR_ROAD -> localization["incident_type_fire_near_road"]!!
                                             IncidentType.OBSTACLE_ON_ROAD -> localization["incident_type_obstacle_on_road"]!!
+                                            IncidentType.SOS -> localization["incident_type_sos"]!!
                                         }
 
                                         val iconRes = when (incidentType) {
@@ -654,6 +657,7 @@ fun MapRadarPage(
                                             IncidentType.FLOODING -> R.drawable.flooding
                                             IncidentType.FIRE_NEAR_ROAD -> R.drawable.fire_near_road
                                             IncidentType.OBSTACLE_ON_ROAD -> R.drawable.obstacle_on_road
+                                            IncidentType.SOS -> R.drawable.sos
                                         }
 
                                         val vectorDrawable = AppCompatResources.getDrawable(

@@ -11,6 +11,7 @@ enum class IncidentType(val value: String) {
     FLOODING("FLOODING"),
     FIRE_NEAR_ROAD("FIRE_NEAR_ROAD"),
     OBSTACLE_ON_ROAD("OBSTACLE_ON_ROAD"),
+    SOS("SOS"),
     OTHER("OTHER");
 
     companion object {
